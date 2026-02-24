@@ -1,7 +1,9 @@
 mod commands;
 mod templates;
 
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
+
+use commands::viz::VizFormat;
 
 #[derive(Parser)]
 #[command(
@@ -29,6 +31,50 @@ enum Commands {
         #[arg(long)]
         path: Option<String>,
     },
+    /// Build and run the SmartCrab project
+    Run {
+        /// Build in release mode
+        #[arg(long)]
+        release: bool,
+    },
+    /// Visualize DAG definitions
+    Viz {
+        /// DAG name to visualize (all DAGs if omitted)
+        dag: Option<String>,
+
+        /// Output format
+        #[arg(long, value_enum, default_value_t = VizFormatArg::Mermaid)]
+        format: VizFormatArg,
+
+        /// Output file path (stdout if omitted)
+        #[arg(long)]
+        output: Option<String>,
+
+        /// Hide type annotations
+        #[arg(long)]
+        no_types: bool,
+
+        /// Show execution order numbers
+        #[arg(long)]
+        show_order: bool,
+    },
+}
+
+#[derive(Clone, ValueEnum)]
+enum VizFormatArg {
+    Mermaid,
+    Dot,
+    Ascii,
+}
+
+impl From<VizFormatArg> for VizFormat {
+    fn from(arg: VizFormatArg) -> Self {
+        match arg {
+            VizFormatArg::Mermaid => VizFormat::Mermaid,
+            VizFormatArg::Dot => VizFormat::Dot,
+            VizFormatArg::Ascii => VizFormat::Ascii,
+        }
+    }
 }
 
 fn main() {
@@ -41,6 +87,30 @@ fn main() {
             path,
         } => {
             if let Err(e) = commands::new::run(&name, local_path.as_deref(), path.as_deref()) {
+                eprintln!("Error: {e}");
+                std::process::exit(1);
+            }
+        }
+        Commands::Run { release } => {
+            if let Err(e) = commands::run::run(release) {
+                eprintln!("Error: {e}");
+                std::process::exit(1);
+            }
+        }
+        Commands::Viz {
+            dag,
+            format,
+            output,
+            no_types,
+            show_order,
+        } => {
+            if let Err(e) = commands::viz::run(
+                dag.as_deref(),
+                format.into(),
+                output.as_deref(),
+                no_types,
+                show_order,
+            ) {
                 eprintln!("Error: {e}");
                 std::process::exit(1);
             }

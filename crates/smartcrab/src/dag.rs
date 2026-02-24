@@ -24,15 +24,64 @@ enum Edge {
 /// A validated, immutable DAG ready for execution.
 pub struct Dag {
     name: String,
+    description: Option<String>,
     nodes: HashMap<String, AnyLayer>,
     edges: Vec<Edge>,
     /// Pre-computed execution order (topological sort).
     execution_order: Vec<String>,
 }
 
+/// Describes an edge for visualization purposes (no closures).
+pub struct EdgeInfo {
+    pub from: String,
+    pub to: String,
+    /// `None` for unconditional edges, `Some(label)` for conditional branches.
+    pub label: Option<String>,
+}
+
 impl Dag {
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn description(&self) -> Option<&str> {
+        self.description.as_deref()
+    }
+
+    /// Returns the nodes map (name -> AnyLayer).
+    pub fn nodes(&self) -> &HashMap<String, AnyLayer> {
+        &self.nodes
+    }
+
+    /// Returns the pre-computed execution order.
+    pub fn execution_order(&self) -> &[String] {
+        &self.execution_order
+    }
+
+    /// Returns edge information suitable for visualization.
+    pub fn edge_infos(&self) -> Vec<EdgeInfo> {
+        let mut infos = Vec::new();
+        for edge in &self.edges {
+            match edge {
+                Edge::Unconditional { from, to } => {
+                    infos.push(EdgeInfo {
+                        from: from.clone(),
+                        to: to.clone(),
+                        label: None,
+                    });
+                }
+                Edge::Conditional { from, branches, .. } => {
+                    for (label, to) in branches {
+                        infos.push(EdgeInfo {
+                            from: from.clone(),
+                            to: to.clone(),
+                            label: Some(label.clone()),
+                        });
+                    }
+                }
+            }
+        }
+        infos
     }
 
     /// Execute the DAG to completion.
@@ -122,6 +171,7 @@ impl Dag {
 /// Builder for constructing and validating a `Dag`.
 pub struct DagBuilder {
     name: String,
+    description: Option<String>,
     nodes: HashMap<String, AnyLayer>,
     edges: Vec<Edge>,
     insertion_order: Vec<String>,
@@ -131,10 +181,17 @@ impl DagBuilder {
     pub fn new(name: impl Into<String>) -> Self {
         Self {
             name: name.into(),
+            description: None,
             nodes: HashMap::new(),
             edges: Vec::new(),
             insertion_order: Vec::new(),
         }
+    }
+
+    /// Set the description for this DAG.
+    pub fn description(mut self, desc: impl Into<String>) -> Self {
+        self.description = Some(desc.into());
+        self
     }
 
     /// Add an input layer.
@@ -191,6 +248,7 @@ impl DagBuilder {
 
         Ok(Dag {
             name: self.name,
+            description: self.description,
             nodes: self.nodes,
             edges: self.edges,
             execution_order,
