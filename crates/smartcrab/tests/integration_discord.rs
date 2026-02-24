@@ -11,13 +11,13 @@
 use smartcrab::chat::ChatClient;
 use smartcrab::chat::discord::{DiscordClient, DiscordNotification};
 
-fn env_or_skip(name: &str) -> String {
+fn require_env(name: &str) -> String {
     std::env::var(name).unwrap_or_else(|_| panic!("env var {name} is required for this test"))
 }
 
 fn make_client() -> (DiscordClient, String) {
-    let token = env_or_skip("DISCORD_BOT_TOKEN");
-    let channel_id = env_or_skip("DISCORD_TEST_CHANNEL_ID");
+    let token = require_env("DISCORD_BOT_TOKEN");
+    let channel_id = require_env("DISCORD_TEST_CHANNEL_ID");
     (DiscordClient::new(token), channel_id)
 }
 
@@ -68,7 +68,7 @@ async fn test_send_message_invalid_token() {
 #[tokio::test]
 #[ignore]
 async fn test_send_message_invalid_channel() {
-    let token = env_or_skip("DISCORD_BOT_TOKEN");
+    let token = require_env("DISCORD_BOT_TOKEN");
     let client = DiscordClient::new(token);
 
     let result = client
