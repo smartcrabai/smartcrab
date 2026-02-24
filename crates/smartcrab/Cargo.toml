@@ -1,0 +1,20 @@
+[package]
+name = "smartcrab"
+edition.workspace = true
+version.workspace = true
+
+[dependencies]
+async-trait = "0.1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "signal", "process", "time"] }
+tracing = "0.1"
+tracing-opentelemetry = "0.32"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+opentelemetry = { version = "0.31", default-features = false, features = ["trace"] }
+opentelemetry-otlp = { version = "0.31", features = ["trace", "grpc-tonic"] }
+opentelemetry_sdk = { version = "0.31", features = ["trace", "rt-tokio"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "test-util"] }

@@ -1,0 +1,18 @@
+use serde::{Deserialize, Serialize};
+
+/// A Discord message received from a channel.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DiscordMessage {
+    pub channel_id: String,
+    pub author: String,
+    pub content: String,
+    pub is_mention: bool,
+    pub is_dm: bool,
+}
+
+/// A notification to be sent to a Discord channel.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DiscordNotification {
+    pub channel_id: String,
+    pub content: String,
+}

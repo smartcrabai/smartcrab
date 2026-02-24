@@ -1,0 +1,23 @@
+mod dag;
+mod dto;
+mod layer;
+
+use smartcrab::prelude::*;
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    smartcrab::telemetry::init()?;
+
+    tracing::info!("starting {{name}}");
+
+    let discord_dag = dag::discord_pipeline::build()?;
+    let cron_dag = dag::cron_pipeline::build()?;
+    let http_dag = dag::http_pipeline::build()?;
+
+    Runtime::new()
+        .add_dag(discord_dag)
+        .add_dag(cron_dag)
+        .add_dag(http_dag)
+        .run()
+        .await
+}

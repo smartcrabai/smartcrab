@@ -1,0 +1,26 @@
+use smartcrab::prelude::*;
+
+use crate::dto::discord::DiscordNotification;
+
+/// Output layer that sends a notification to a Discord channel.
+pub struct DiscordOutput;
+
+impl Layer for DiscordOutput {
+    fn name(&self) -> &str {
+        "DiscordOutput"
+    }
+}
+
+#[async_trait]
+impl OutputLayer for DiscordOutput {
+    type Input = DiscordNotification;
+
+    async fn run(&self, input: DiscordNotification) -> Result<()> {
+        tracing::info!(
+            channel_id = %input.channel_id,
+            content_len = input.content.len(),
+            "sending Discord notification"
+        );
+        todo!("Implement Discord message send via REST API")
+    }
+}

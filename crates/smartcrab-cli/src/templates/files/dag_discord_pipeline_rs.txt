@@ -1,0 +1,17 @@
+use smartcrab::prelude::*;
+
+use crate::layer::hidden::claude_code_layer::ClaudeCodeLayer;
+use crate::layer::input::discord_input::DiscordInput;
+use crate::layer::output::discord_output::DiscordOutput;
+
+/// Build the Discord pipeline DAG:
+///   DiscordInput -> ClaudeCodeLayer -> DiscordOutput
+pub fn build() -> std::result::Result<Dag, DagError> {
+    DagBuilder::new("discord_pipeline")
+        .add_input(DiscordInput)
+        .add_hidden(ClaudeCodeLayer::new())
+        .add_output(DiscordOutput)
+        .add_edge("DiscordInput", "ClaudeCodeLayer")
+        .add_edge("ClaudeCodeLayer", "DiscordOutput")
+        .build()
+}

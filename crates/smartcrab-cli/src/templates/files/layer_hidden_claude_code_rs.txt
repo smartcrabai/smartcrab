@@ -1,0 +1,47 @@
+use smartcrab::agent::claudecode::ClaudeCode;
+use smartcrab::prelude::*;
+
+use crate::dto::discord::{DiscordMessage, DiscordNotification};
+
+/// Hidden layer that processes a Discord message through Claude Code
+/// and produces a Discord notification with the response.
+pub struct ClaudeCodeLayer {
+    agent: ClaudeCode,
+}
+
+impl ClaudeCodeLayer {
+    pub fn new() -> Self {
+        Self {
+            agent: ClaudeCode::new()
+                .with_system_prompt("You are a helpful assistant in a Discord bot.")
+                .with_max_turns(10),
+        }
+    }
+}
+
+impl Default for ClaudeCodeLayer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Layer for ClaudeCodeLayer {
+    fn name(&self) -> &str {
+        "ClaudeCodeLayer"
+    }
+}
+
+#[async_trait]
+impl HiddenLayer for ClaudeCodeLayer {
+    type Input = DiscordMessage;
+    type Output = DiscordNotification;
+
+    async fn run(&self, input: DiscordMessage) -> Result<DiscordNotification> {
+        let response = self.agent.execute(&input.content).await?;
+
+        Ok(DiscordNotification {
+            channel_id: input.channel_id,
+            content: response,
+        })
+    }
+}

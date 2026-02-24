@@ -1,0 +1,17 @@
+use smartcrab::prelude::*;
+
+use crate::layer::input::cron_input::CronInput;
+use crate::layer::output::discord_output::DiscordOutput;
+
+/// Build the Cron pipeline DAG:
+///   CronInput -> DiscordOutput
+pub fn build() -> std::result::Result<Dag, DagError> {
+    DagBuilder::new("cron_pipeline")
+        .add_input(CronInput {
+            target_channel_id: std::env::var("CRON_CHANNEL_ID")
+                .unwrap_or_else(|_| "000000000000000000".to_owned()),
+        })
+        .add_output(DiscordOutput)
+        .add_edge("CronInput", "DiscordOutput")
+        .build()
+}

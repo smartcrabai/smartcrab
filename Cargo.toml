@@ -1,16 +1,10 @@
-[package]
-name = "smartcrab"
-version = "0.1.0"
-edition = "2024"
+[workspace]
+resolver = "3"
+members = ["crates/smartcrab", "crates/smartcrab-cli"]
 
-[dependencies]
-opentelemetry = { version = "0.31.0", default-features = false, features = ["trace"] }
-opentelemetry-otlp = { version = "0.31.0", features = ["trace", "grpc-tonic"] }
-opentelemetry_sdk = { version = "0.31.0", features = ["trace", "rt-tokio"] }
-tokio = { version = "1.49.0", features = ["rt", "macros"] }
-tracing = "0.1.44"
-tracing-opentelemetry = "0.32.1"
-tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
+[workspace.package]
+edition = "2024"
+version = "0.1.0"
 
 [profile.release]
 codegen-units = 1

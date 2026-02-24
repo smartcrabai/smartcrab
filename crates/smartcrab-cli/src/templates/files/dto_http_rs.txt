@@ -1,0 +1,8 @@
+use serde::{Deserialize, Serialize};
+
+/// An incoming HTTP request.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HttpRequest {
+    pub path: String,
+    pub body: String,
+}

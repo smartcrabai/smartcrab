@@ -1,0 +1,195 @@
+use smartcrab::prelude::*;
+
+// ---------------------------------------------------------------------------
+// Mock DTOs (re-declare locally to avoid depending on the binary crate)
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct DiscordMessage {
+    channel_id: String,
+    author: String,
+    content: String,
+    is_mention: bool,
+    is_dm: bool,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct DiscordNotification {
+    channel_id: String,
+    content: String,
+}
+
+// ---------------------------------------------------------------------------
+// Mock layers
+// ---------------------------------------------------------------------------
+
+struct MockDiscordInput;
+
+impl Layer for MockDiscordInput {
+    fn name(&self) -> &str {
+        "DiscordInput"
+    }
+}
+
+#[async_trait]
+impl InputLayer for MockDiscordInput {
+    type Output = DiscordMessage;
+
+    async fn run(&self) -> Result<DiscordMessage> {
+        Ok(DiscordMessage {
+            channel_id: "test-channel".into(),
+            author: "test-user".into(),
+            content: "hello bot".into(),
+            is_mention: true,
+            is_dm: false,
+        })
+    }
+}
+
+struct MockClaudeCodeLayer;
+
+impl Layer for MockClaudeCodeLayer {
+    fn name(&self) -> &str {
+        "ClaudeCodeLayer"
+    }
+}
+
+#[async_trait]
+impl HiddenLayer for MockClaudeCodeLayer {
+    type Input = DiscordMessage;
+    type Output = DiscordNotification;
+
+    async fn run(&self, input: DiscordMessage) -> Result<DiscordNotification> {
+        Ok(DiscordNotification {
+            channel_id: input.channel_id,
+            content: format!("Response to: {}", input.content),
+        })
+    }
+}
+
+struct MockDiscordOutput;
+
+impl Layer for MockDiscordOutput {
+    fn name(&self) -> &str {
+        "DiscordOutput"
+    }
+}
+
+#[async_trait]
+impl OutputLayer for MockDiscordOutput {
+    type Input = DiscordNotification;
+
+    async fn run(&self, input: DiscordNotification) -> Result<()> {
+        assert!(!input.channel_id.is_empty());
+        assert!(!input.content.is_empty());
+        Ok(())
+    }
+}
+
+struct MockCronInput;
+
+impl Layer for MockCronInput {
+    fn name(&self) -> &str {
+        "CronInput"
+    }
+}
+
+#[async_trait]
+impl InputLayer for MockCronInput {
+    type Output = DiscordNotification;
+
+    async fn run(&self) -> Result<DiscordNotification> {
+        Ok(DiscordNotification {
+            channel_id: "cron-channel".into(),
+            content: "scheduled ping".into(),
+        })
+    }
+}
+
+struct MockHttpInput;
+
+impl Layer for MockHttpInput {
+    fn name(&self) -> &str {
+        "HttpInput"
+    }
+}
+
+#[async_trait]
+impl InputLayer for MockHttpInput {
+    type Output = DiscordNotification;
+
+    async fn run(&self) -> Result<DiscordNotification> {
+        Ok(DiscordNotification {
+            channel_id: "http-channel".into(),
+            content: "webhook payload received".into(),
+        })
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+#[tokio::test]
+async fn test_discord_pipeline_dag() {
+    let dag = DagBuilder::new("discord_pipeline")
+        .add_input(MockDiscordInput)
+        .add_hidden(MockClaudeCodeLayer)
+        .add_output(MockDiscordOutput)
+        .add_edge("DiscordInput", "ClaudeCodeLayer")
+        .add_edge("ClaudeCodeLayer", "DiscordOutput")
+        .build()
+        .expect("DAG should build successfully");
+
+    dag.run().await.expect("DAG should run successfully");
+}
+
+#[tokio::test]
+async fn test_cron_pipeline_dag() {
+    let dag = DagBuilder::new("cron_pipeline")
+        .add_input(MockCronInput)
+        .add_output(MockDiscordOutput)
+        .add_edge("CronInput", "DiscordOutput")
+        .build()
+        .expect("DAG should build successfully");
+
+    dag.run().await.expect("DAG should run successfully");
+}
+
+#[tokio::test]
+async fn test_http_pipeline_dag() {
+    let dag = DagBuilder::new("http_pipeline")
+        .add_input(MockHttpInput)
+        .add_output(MockDiscordOutput)
+        .add_edge("HttpInput", "DiscordOutput")
+        .build()
+        .expect("DAG should build successfully");
+
+    dag.run().await.expect("DAG should run successfully");
+}
+
+#[test]
+fn test_discord_pipeline_type_safety() {
+    // Verify that the DAG builder rejects type mismatches
+    struct WrongOutput;
+    impl Layer for WrongOutput {
+        fn name(&self) -> &str {
+            "WrongOutput"
+        }
+    }
+    #[async_trait]
+    impl OutputLayer for WrongOutput {
+        type Input = DiscordMessage; // Wrong type - expects DiscordMessage but gets DiscordNotification
+        async fn run(&self, _input: DiscordMessage) -> Result<()> {
+            Ok(())
+        }
+    }
+
+    let result = DagBuilder::new("bad_pipeline")
+        .add_input(MockCronInput) // outputs DiscordNotification
+        .add_output(WrongOutput) // expects DiscordMessage
+        .add_edge("CronInput", "WrongOutput")
+        .build();
+
+    assert!(result.is_err(), "Should reject type-mismatched DAG");
+}

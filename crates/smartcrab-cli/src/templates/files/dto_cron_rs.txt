@@ -1,0 +1,7 @@
+use serde::{Deserialize, Serialize};
+
+/// A cron tick event.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CronTick {
+    pub triggered_at: String,
+}

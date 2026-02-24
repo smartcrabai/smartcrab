@@ -1,0 +1,26 @@
+[project]
+name = "{{name}}"
+version = "0.1.0"
+
+[telemetry]
+service_name = "{{name}}"
+otlp_endpoint = "http://localhost:4317"
+
+[input.discord]
+enabled = true
+trigger = ["mention", "dm"]
+
+[input.cron]
+enabled = true
+schedule = "every 1 minute"
+
+[input.http]
+enabled = true
+listen = "0.0.0.0:8080"
+
+[hidden.claude_code]
+timeout_secs = 300
+max_turns = 10
+
+[output.discord]
+enabled = true

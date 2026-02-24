@@ -1,0 +1,17 @@
+use smartcrab::prelude::*;
+
+use crate::layer::input::http_input::HttpInput;
+use crate::layer::output::discord_output::DiscordOutput;
+
+/// Build the HTTP pipeline DAG:
+///   HttpInput -> DiscordOutput
+pub fn build() -> std::result::Result<Dag, DagError> {
+    DagBuilder::new("http_pipeline")
+        .add_input(HttpInput {
+            target_channel_id: std::env::var("HTTP_CHANNEL_ID")
+                .unwrap_or_else(|_| "000000000000000000".to_owned()),
+        })
+        .add_output(DiscordOutput)
+        .add_edge("HttpInput", "DiscordOutput")
+        .build()
+}
