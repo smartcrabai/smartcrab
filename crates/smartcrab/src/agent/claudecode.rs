@@ -77,10 +77,10 @@ impl ClaudeCode {
             }
         })?;
 
-        // Write prompt to stdin
+        // Write prompt to stdin and shutdown to signal EOF
         if let Some(mut stdin) = child.stdin.take() {
             stdin.write_all(prompt.as_bytes()).await?;
-            // Drop stdin to signal EOF
+            stdin.shutdown().await?;
         }
 
         let result = tokio::time::timeout(self.timeout, child.wait_with_output()).await;

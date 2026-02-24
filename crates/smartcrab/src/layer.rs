@@ -89,10 +89,14 @@ impl<T: HiddenLayer> HiddenLayerDyn for T {
     }
 
     async fn run_dyn(&self, input: &dyn DtoObject) -> Result<Box<dyn DtoObject>> {
-        let concrete = input
-            .as_any()
-            .downcast_ref::<T::Input>()
-            .expect("type mismatch: input DTO downcast failed");
+        let concrete = input.as_any().downcast_ref::<T::Input>().ok_or_else(|| {
+            crate::error::SmartCrabError::Dag(crate::error::DagError::TypeMismatch {
+                from: "runtime".to_owned(),
+                to: self.name().to_owned(),
+                output_type: input.dto_type_name().to_owned(),
+                input_type: std::any::type_name::<T::Input>().to_owned(),
+            })
+        })?;
         let output = self.run(concrete.clone()).await?;
         Ok(Box::new(output))
     }
@@ -117,10 +121,14 @@ impl<T: OutputLayer> OutputLayerDyn for T {
     }
 
     async fn run_dyn(&self, input: &dyn DtoObject) -> Result<()> {
-        let concrete = input
-            .as_any()
-            .downcast_ref::<T::Input>()
-            .expect("type mismatch: input DTO downcast failed");
+        let concrete = input.as_any().downcast_ref::<T::Input>().ok_or_else(|| {
+            crate::error::SmartCrabError::Dag(crate::error::DagError::TypeMismatch {
+                from: "runtime".to_owned(),
+                to: self.name().to_owned(),
+                output_type: input.dto_type_name().to_owned(),
+                input_type: std::any::type_name::<T::Input>().to_owned(),
+            })
+        })?;
         self.run(concrete.clone()).await
     }
 }

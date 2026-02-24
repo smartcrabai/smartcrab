@@ -21,6 +21,7 @@ pub fn init() -> Result<()> {
         .with_batch_exporter(otlp_exporter)
         .build();
     let tracer = provider.tracer("smartcrab");
+    opentelemetry::global::set_tracer_provider(provider);
 
     let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);
     let fmt_layer = tracing_subscriber::fmt::layer()

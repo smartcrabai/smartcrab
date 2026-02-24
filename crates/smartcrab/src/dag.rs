@@ -219,8 +219,17 @@ impl DagBuilder {
         for edge in &self.edges {
             match edge {
                 Edge::Unconditional { from, to } => {
-                    if !self.nodes.contains_key(from) || !self.nodes.contains_key(to) {
-                        // This is caught by unreachable check below, but let's be explicit
+                    if !self.nodes.contains_key(from) {
+                        return Err(DagError::MissingBranch {
+                            from: from.clone(),
+                            target: from.clone(),
+                        });
+                    }
+                    if !self.nodes.contains_key(to) {
+                        return Err(DagError::MissingBranch {
+                            from: from.clone(),
+                            target: to.clone(),
+                        });
                     }
                 }
                 Edge::Conditional { from, branches, .. } => {
