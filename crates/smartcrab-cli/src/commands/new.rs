@@ -63,6 +63,9 @@ pub fn validate_name(name: &str) -> Result<(), String> {
     if name.starts_with('-') || name.starts_with('_') {
         return Err("Project name cannot start with a hyphen or underscore".into());
     }
+    if name.starts_with(|c: char| c.is_ascii_digit()) {
+        return Err("Project name cannot start with a digit".into());
+    }
     Ok(())
 }
 
@@ -83,5 +86,6 @@ mod tests {
         assert!(validate_name("-bad").is_err());
         assert!(validate_name("_bad").is_err());
         assert!(validate_name("has space").is_err());
+        assert!(validate_name("123project").is_err());
     }
 }
