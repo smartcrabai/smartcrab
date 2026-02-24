@@ -53,6 +53,8 @@ impl ClaudeCode {
     #[instrument(skip(self, prompt), fields(timeout = ?self.timeout))]
     pub async fn prompt(&self, prompt: &str) -> Result<String> {
         let mut cmd = Command::new("claude");
+        // Allow spawning claude from within an existing Claude Code session.
+        cmd.env_remove("CLAUDECODE");
         cmd.arg("--print").arg("--output-format").arg("text");
 
         if let Some(ref sp) = self.system_prompt {

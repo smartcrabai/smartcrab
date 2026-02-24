@@ -15,6 +15,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 opentelemetry = { version = "0.31", default-features = false, features = ["trace"] }
 opentelemetry-otlp = { version = "0.31", features = ["trace", "grpc-tonic"] }
 opentelemetry_sdk = { version = "0.31", features = ["trace", "rt-tokio"] }
+reqwest = { version = "0.13.2", features = ["json"] }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "test-util"] }
