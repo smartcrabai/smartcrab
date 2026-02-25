@@ -1,7 +1,15 @@
 [package]
-name = "smartcrab-cli"
+description = "CLI binary for SmartCrab workflow orchestration engine"
 edition.workspace = true
+homepage = "https://github.com/takumi3488/smartcrab"
+license.workspace = true
+name = "smartcrab-cli"
+publish = false
+repository.workspace = true
 version.workspace = true
+
+[package.metadata.dist]
+dist = true
 
 [[bin]]
 name = "crab"
