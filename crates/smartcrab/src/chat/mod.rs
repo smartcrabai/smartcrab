@@ -18,11 +18,17 @@ pub struct MockChatClient {
     messages: Arc<Mutex<Vec<(String, String)>>>,
 }
 
-impl MockChatClient {
-    pub fn new() -> Self {
+impl Default for MockChatClient {
+    fn default() -> Self {
         Self {
             messages: Arc::new(Mutex::new(Vec::new())),
         }
+    }
+}
+
+impl MockChatClient {
+    pub fn new() -> Self {
+        Self::default()
     }
 
     /// Returns a list of all messages sent via this client as (channel, content) pairs.
