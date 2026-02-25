@@ -8,8 +8,8 @@
 //!   DISCORD_BOT_TOKEN=xxx DISCORD_TEST_CHANNEL_ID=yyy \
 //!     cargo test -p smartcrab --test integration_discord -- --ignored
 
-use smartcrab::chat::ChatClient;
 use smartcrab::chat::discord::{DiscordClient, DiscordNotification};
+use smartcrab::chat::{ChatClient, MockChatClient};
 
 fn require_env(name: &str) -> String {
     std::env::var(name).unwrap_or_else(|_| panic!("env var {name} is required for this test"))
@@ -76,4 +76,37 @@ async fn test_send_message_invalid_channel() {
         .await;
 
     assert!(result.is_err(), "Expected error with invalid channel ID");
+}
+
+#[tokio::test]
+async fn test_mock_send_message_records_messages() {
+    let client = MockChatClient::new();
+
+    client
+        .send_message("channel-1", "hello")
+        .await
+        .expect("mock send_message should succeed");
+    client
+        .send_message("channel-2", "world")
+        .await
+        .expect("mock send_message should succeed");
+
+    let msgs = client.sent_messages();
+    assert_eq!(msgs.len(), 2);
+    assert_eq!(msgs[0], ("channel-1".to_string(), "hello".to_string()));
+    assert_eq!(msgs[1], ("channel-2".to_string(), "world".to_string()));
+}
+
+#[tokio::test]
+async fn test_mock_send_message_returns_ok() {
+    let client = MockChatClient::new();
+    let result = client.send_message("any-channel", "any content").await;
+    assert!(result.is_ok());
+}
+
+#[tokio::test]
+async fn test_mock_chat_client_via_trait_object() {
+    let client: Box<dyn ChatClient> = Box::new(MockChatClient::new());
+    let result = client.send_message("ch", "msg").await;
+    assert!(result.is_ok());
 }

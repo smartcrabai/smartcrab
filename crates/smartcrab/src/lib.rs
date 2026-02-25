@@ -12,6 +12,7 @@ pub mod prelude {
     pub use async_trait::async_trait;
 
     pub use crate::agent::AgentExecutor;
+    pub use crate::chat::{ChatClient, MockChatClient};
     pub use crate::dag::{Dag, DagBuilder};
     pub use crate::dto::{Dto, DtoObject};
     pub use crate::error::{DagError, Result, SmartCrabError};
