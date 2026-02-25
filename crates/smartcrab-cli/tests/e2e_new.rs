@@ -4,7 +4,7 @@ use predicates::prelude::*;
 use tempfile::TempDir;
 
 fn smartcrab_cmd() -> assert_cmd::Command {
-    assert_cmd::cargo_bin_cmd!("smartcrab")
+    assert_cmd::cargo_bin_cmd!("crab")
 }
 
 /// Resolve the absolute path to the `crates/smartcrab` directory.

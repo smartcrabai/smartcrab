@@ -4,14 +4,14 @@
 
 SmartCrab CLI はプロジェクトの生成・コード生成・実行を行うコマンドラインツールである。
 
-## `smartcrab new`
+## `crab new`
 
 新規 SmartCrab プロジェクトを生成する。
 
 ### 構文
 
 ```
-smartcrab new <project-name> [OPTIONS]
+crab new <project-name> [OPTIONS]
 ```
 
 ### 引数
@@ -65,7 +65,7 @@ smartcrab new <project-name> [OPTIONS]
 ### 実行例
 
 ```bash
-$ smartcrab new my_app
+$ crab new my_app
 Creating project: my_app
   Created: my_app/Cargo.toml
   Created: my_app/SmartCrab.toml
@@ -86,17 +86,17 @@ Project 'my_app' created successfully!
 Next steps:
   cd my_app
   docker compose up -d    # Start Jaeger
-  smartcrab run            # Run the application
+  crab run            # Run the application
 ```
 
-## `smartcrab generate layer`
+## `crab generate layer`
 
-Layer のボイラープレートコードを生成する。エイリアス: `smartcrab g layer`
+Layer のボイラープレートコードを生成する。エイリアス: `crab g layer`
 
 ### 構文
 
 ```
-smartcrab generate layer <name> --type <layer-type> [OPTIONS]
+crab generate layer <name> --type <layer-type> [OPTIONS]
 ```
 
 ### 引数
@@ -138,33 +138,33 @@ smartcrab generate layer <name> --type <layer-type> [OPTIONS]
 ### 実行例
 
 ```bash
-$ smartcrab generate layer data_analyzer --type hidden
+$ crab generate layer data_analyzer --type hidden
   Created: src/layer/hidden/data_analyzer.rs
   Updated: src/layer/hidden/mod.rs
   Created: src/dto/data_analyzer.rs
   Updated: src/dto/mod.rs
 
-$ smartcrab generate layer webhook --type input --input-type http
+$ crab generate layer webhook --type input --input-type http
   Created: src/layer/input/webhook.rs
   Updated: src/layer/input/mod.rs
   Created: src/dto/webhook.rs
   Updated: src/dto/mod.rs
 
-$ smartcrab generate layer discord_notifier --type output --output-type discord
+$ crab generate layer discord_notifier --type output --output-type discord
   Created: src/layer/output/discord_notifier.rs
   Updated: src/layer/output/mod.rs
   Created: src/dto/discord_notifier.rs
   Updated: src/dto/mod.rs
 ```
 
-## `smartcrab generate dto`
+## `crab generate dto`
 
-DTO 構造体のボイラープレートコードを生成する。エイリアス: `smartcrab g dto`
+DTO 構造体のボイラープレートコードを生成する。エイリアス: `crab g dto`
 
 ### 構文
 
 ```
-smartcrab generate dto <name> [OPTIONS]
+crab generate dto <name> [OPTIONS]
 ```
 
 ### 引数
@@ -203,23 +203,23 @@ smartcrab generate dto <name> [OPTIONS]
 ### 実行例
 
 ```bash
-$ smartcrab generate dto analysis_result --fields "severity:String,score:f64,tags:Vec<String>"
+$ crab generate dto analysis_result --fields "severity:String,score:f64,tags:Vec<String>"
   Created: src/dto/analysis_result.rs
   Updated: src/dto/mod.rs
 
-$ smartcrab generate dto empty_marker
+$ crab generate dto empty_marker
   Created: src/dto/empty_marker.rs
   Updated: src/dto/mod.rs
 ```
 
-## `smartcrab generate dag`
+## `crab generate dag`
 
-DAG 定義関数のボイラープレートコードを生成する。エイリアス: `smartcrab g dag`
+DAG 定義関数のボイラープレートコードを生成する。エイリアス: `crab g dag`
 
 ### 構文
 
 ```
-smartcrab generate dag <name>
+crab generate dag <name>
 ```
 
 ### 引数
@@ -251,19 +251,19 @@ smartcrab generate dag <name>
 ### 実行例
 
 ```bash
-$ smartcrab generate dag api_pipeline
+$ crab generate dag api_pipeline
   Created: src/dag/api_pipeline.rs
   Updated: src/dag/mod.rs
 ```
 
-## `smartcrab run`
+## `crab run`
 
 SmartCrab アプリケーションを実行する。内部的には `cargo run` を呼び出す。
 
 ### 構文
 
 ```
-smartcrab run [OPTIONS]
+crab run [OPTIONS]
 ```
 
 ### オプション
@@ -283,7 +283,7 @@ smartcrab run [OPTIONS]
 ### 実行例
 
 ```bash
-$ smartcrab run
+$ crab run
   Compiling my_app v0.1.0
    Finished dev [unoptimized + debuginfo] target(s)
     Running `target/debug/my_app`

@@ -4,7 +4,7 @@ edition.workspace = true
 version.workspace = true
 
 [[bin]]
-name = "smartcrab"
+name = "crab"
 path = "src/main.rs"
 
 [dependencies]

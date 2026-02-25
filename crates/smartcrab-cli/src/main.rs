@@ -6,11 +6,7 @@ use clap::{Parser, Subcommand, ValueEnum};
 use commands::viz::VizFormat;
 
 #[derive(Parser)]
-#[command(
-    name = "smartcrab",
-    version,
-    about = "SmartCrab project scaffolding tool"
-)]
+#[command(name = "crab", version, about = "SmartCrab project scaffolding tool")]
 struct Cli {
     #[command(subcommand)]
     command: Commands,

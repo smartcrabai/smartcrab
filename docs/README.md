@@ -32,7 +32,7 @@ SmartCrab は「ツール → AI」パラダイムを実現する Rust フレー
 | [layer.md](spec/layer.md) | Layer 仕様 — Input/Hidden/Output 各 Layer のトレイト定義とコード例 |
 | [dto.md](spec/dto.md) | DTO 仕様 — Dto トレイト、命名規約、変換、コード例 |
 | [dag.md](spec/dag.md) | DAG 仕様 — DagBuilder API、実行セマンティクス、バリデーション |
-| [cli.md](spec/cli.md) | CLI コマンド仕様 — `smartcrab new` / `generate` / `run` の詳細 |
+| [cli.md](spec/cli.md) | CLI コマンド仕様 — `crab new` / `generate` / `run` の詳細 |
 
 ## 用語集
 
