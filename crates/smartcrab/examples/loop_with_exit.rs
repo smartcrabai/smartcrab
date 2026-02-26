@@ -1,0 +1,117 @@
+//! # Loop with Exit Condition
+//!
+//! A graph with a self-loop that keeps executing until an exit condition is met.
+//!
+//! ```text
+//! [Seed] → [Accumulator] ──(loop)──→ [Accumulator]
+//!                │
+//!             (exit when sum ≥ 10)
+//! ```
+//!
+//! Run: `cargo run -p smartcrab --example loop_with_exit`
+
+use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::Arc;
+
+use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
+use smartcrab::prelude::*;
+
+// ---------------------------------------------------------------------------
+// DTO
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct Counter {
+    value: u32,
+}
+
+// ---------------------------------------------------------------------------
+// Layers
+// ---------------------------------------------------------------------------
+
+struct Seed;
+
+impl Layer for Seed {
+    fn name(&self) -> &str {
+        "Seed"
+    }
+}
+
+#[async_trait]
+impl InputLayer for Seed {
+    type Output = Counter;
+    async fn run(&self) -> Result<Counter> {
+        println!("🌱 Seeding with value=1");
+        Ok(Counter { value: 1 })
+    }
+}
+
+struct Accumulator {
+    iteration: Arc<AtomicU32>,
+}
+
+impl Layer for Accumulator {
+    fn name(&self) -> &str {
+        "Accumulator"
+    }
+}
+
+#[async_trait]
+impl HiddenLayer for Accumulator {
+    type Input = Counter;
+    type Output = Counter;
+    async fn run(&self, input: Counter) -> Result<Counter> {
+        let iter = self.iteration.fetch_add(1, Ordering::SeqCst) + 1;
+        let new_value = input.value + iter;
+        println!("🔄 Iteration {iter}: {} + {iter} = {new_value}", input.value);
+        Ok(Counter { value: new_value })
+    }
+}
+
+struct ResultPrinter;
+
+impl Layer for ResultPrinter {
+    fn name(&self) -> &str {
+        "ResultPrinter"
+    }
+}
+
+#[async_trait]
+impl OutputLayer for ResultPrinter {
+    type Input = Counter;
+    async fn run(&self, input: Counter) -> Result<()> {
+        println!("✅ Final value: {}", input.value);
+        Ok(())
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+
+#[tokio::main]
+async fn main() {
+    let graph = DirectedGraphBuilder::new("loop_with_exit")
+        .description("Accumulates values in a loop until threshold is reached")
+        .add_input(Seed)
+        .add_hidden(Accumulator {
+            iteration: Arc::new(AtomicU32::new(0)),
+        })
+        .add_output(ResultPrinter)
+        .add_edge("Seed", "Accumulator")
+        .add_edge("Accumulator", "Accumulator")
+        .add_edge("Accumulator", "ResultPrinter")
+        .add_exit_condition("Accumulator", |dto| {
+            if let Some(counter) = dto.as_any().downcast_ref::<Counter>() {
+                if counter.value >= 10 {
+                    return None; // exit
+                }
+            }
+            Some("continue".into()) // keep looping
+        })
+        .build()
+        .expect("failed to build graph");
+
+    graph.run().await.expect("graph execution failed");
+}
