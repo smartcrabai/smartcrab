@@ -18,6 +18,9 @@ impl InputLayer for HttpInput {
     type Output = DiscordNotification;
 
     async fn run(&self) -> Result<DiscordNotification> {
-        todo!("Implement HTTP server (axum/actix-web) to accept webhook payloads")
+        todo!(
+            "Implement HTTP server (axum/actix-web) to accept webhook payloads for channel {}",
+            self.target_channel_id
+        )
     }
 }
