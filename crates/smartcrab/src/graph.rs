@@ -171,11 +171,15 @@ impl DirectedGraph {
         for edge in &self.edges {
             match edge {
                 Edge::Unconditional { from, to } if to == node_name => {
-                    if !outputs.contains_key(from) {
+                    // Self-loops must not block the first execution
+                    if from != node_name && !outputs.contains_key(from) {
                         return false;
                     }
                 }
                 Edge::Conditional { from, condition, branches } => {
+                    if !branches.values().any(|t| t == node_name) {
+                        continue;
+                    }
                     if let Some(output) = outputs.get(from) {
                         if let Some(branch_key) = condition(output.as_ref()) {
                             if branches.get(&branch_key) == Some(&node_name.to_string()) {
@@ -603,7 +607,9 @@ mod tests {
             }
         }
 
-        struct LoopLayer;
+        struct LoopLayer {
+            executed: std::sync::Arc<std::sync::atomic::AtomicBool>,
+        }
         impl Layer for LoopLayer {
             fn name(&self) -> &str {
                 "Loop"
@@ -614,6 +620,7 @@ mod tests {
             type Input = MsgA;
             type Output = MsgA;
             async fn run(&self, input: MsgA) -> Result<MsgA> {
+                self.executed.store(true, std::sync::atomic::Ordering::SeqCst);
                 Ok(MsgA {
                     text: format!("looped: {}", input.text),
                 })
@@ -635,9 +642,11 @@ mod tests {
             }
         }
 
+        let loop_executed = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+
         let graph = DirectedGraphBuilder::new("cycle_test")
             .add_input(CycleSource)
-            .add_hidden(LoopLayer)
+            .add_hidden(LoopLayer { executed: loop_executed.clone() })
             .add_output(ExitLayer)
             .add_edge("Source", "Loop")
             .add_edge("Loop", "Loop")
@@ -647,6 +656,7 @@ mod tests {
             .unwrap();
         let result = graph.run().await;
         assert!(result.is_ok());
+        assert!(loop_executed.load(std::sync::atomic::Ordering::SeqCst), "Loop layer must execute");
     }
 
     #[tokio::test]
