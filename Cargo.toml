@@ -12,7 +12,7 @@ version = "0.1.0"
 cargo-dist-version = "0.31.0"
 ci = "github"
 installers = ["shell", "homebrew"]
-publish-jobs = ["homebrew", "./publish-crates"]
+publish-jobs = ["homebrew"]
 tap = "takumi3488/homebrew-tap"
 targets = [
   "aarch64-apple-darwin",
