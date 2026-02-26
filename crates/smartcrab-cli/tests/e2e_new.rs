@@ -198,6 +198,7 @@ fn generated_project_passes_cargo_clippy() {
 
     let output = std::process::Command::new("cargo")
         .args(["clippy", "--", "-D", "clippy::correctness"])
+        .env("RUSTFLAGS", "-D warnings")
         .current_dir(&project)
         .output()
         .expect("failed to run cargo clippy");
@@ -210,11 +211,30 @@ fn generated_project_passes_cargo_clippy() {
 }
 
 #[test]
+fn generated_project_passes_cargo_build() {
+    let (_tmp, project) = generate_project("build-check");
+
+    let output = std::process::Command::new("cargo")
+        .args(["build"])
+        .env("RUSTFLAGS", "-D warnings")
+        .current_dir(&project)
+        .output()
+        .expect("failed to run cargo build");
+
+    assert!(
+        output.status.success(),
+        "cargo build failed:\n{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+#[test]
 fn generated_project_passes_cargo_test() {
     let (_tmp, project) = generate_project("test-check");
 
     let output = std::process::Command::new("cargo")
         .args(["test"])
+        .env("RUSTFLAGS", "-D warnings")
         .current_dir(&project)
         .output()
         .expect("failed to run cargo test");
@@ -233,6 +253,7 @@ fn generated_project_passes_cargo_check() {
 
     let output = std::process::Command::new("cargo")
         .args(["check"])
+        .env("RUSTFLAGS", "-D warnings")
         .current_dir(&project)
         .output()
         .expect("failed to run cargo check");
