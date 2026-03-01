@@ -97,8 +97,9 @@ fn rebuild_graph_ref(graph: &DirectedGraph) -> DirectedGraph {
     }
     #[async_trait::async_trait]
     impl InputLayer for StubInput {
+        type TriggerData = ();
         type Output = StubDto;
-        async fn run(&self) -> Result<StubDto> {
+        async fn run(&self, _: ()) -> Result<StubDto> {
             Ok(StubDto)
         }
     }
@@ -260,8 +261,9 @@ mod tests {
     }
     #[async_trait]
     impl InputLayer for TestInput {
+        type TriggerData = ();
         type Output = TestMsg;
-        async fn run(&self) -> Result<TestMsg> {
+        async fn run(&self, _: ()) -> Result<TestMsg> {
             Ok(TestMsg {
                 text: "hello".into(),
             })
@@ -301,8 +303,9 @@ mod tests {
     }
     #[async_trait]
     impl InputLayer for TestInput2 {
+        type TriggerData = ();
         type Output = TestMsg;
-        async fn run(&self) -> Result<TestMsg> {
+        async fn run(&self, _: ()) -> Result<TestMsg> {
             Ok(TestMsg {
                 text: "hello2".into(),
             })

@@ -12,12 +12,10 @@ async fn main() -> Result<()> {
 
     let discord_graph = dag::discord_pipeline::build()?;
     let cron_graph = dag::cron_pipeline::build()?;
-    let http_graph = dag::http_pipeline::build()?;
 
     Runtime::new()
         .add_graph(discord_graph)
         .add_graph(cron_graph)
-        .add_graph(http_graph)
         .run()
         .await
 }

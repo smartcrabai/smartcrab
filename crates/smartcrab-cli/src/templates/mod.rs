@@ -43,7 +43,6 @@ pub fn render_all(ctx: &TemplateContext) -> BTreeMap<String, String> {
             include_str!("files/dto_discord_rs.txt"),
         ),
         ("src/dto/cron.rs", include_str!("files/dto_cron_rs.txt")),
-        ("src/dto/http.rs", include_str!("files/dto_http_rs.txt")),
         ("src/layer/mod.rs", include_str!("files/layer_mod_rs.txt")),
         (
             "src/layer/input/mod.rs",
@@ -56,10 +55,6 @@ pub fn render_all(ctx: &TemplateContext) -> BTreeMap<String, String> {
         (
             "src/layer/input/cron_input.rs",
             include_str!("files/layer_input_cron_rs.txt"),
-        ),
-        (
-            "src/layer/input/http_input.rs",
-            include_str!("files/layer_input_http_rs.txt"),
         ),
         (
             "src/layer/hidden/mod.rs",
@@ -85,10 +80,6 @@ pub fn render_all(ctx: &TemplateContext) -> BTreeMap<String, String> {
         (
             "src/dag/cron_pipeline.rs",
             include_str!("files/dag_cron_pipeline_rs.txt"),
-        ),
-        (
-            "src/dag/http_pipeline.rs",
-            include_str!("files/dag_http_pipeline_rs.txt"),
         ),
         ("tests/dag_test.rs", include_str!("files/dag_test_rs.txt")),
     ];

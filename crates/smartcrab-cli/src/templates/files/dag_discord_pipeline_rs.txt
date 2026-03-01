@@ -8,6 +8,10 @@ use crate::layer::output::discord_output::DiscordOutput;
 ///   DiscordInput -> ClaudeCodeLayer -> DiscordOutput
 pub fn build() -> std::result::Result<DirectedGraph, GraphError> {
     DirectedGraphBuilder::new("discord_pipeline")
+        .trigger(TriggerKind::discord(
+            vec!["mention".into(), "dm".into()],
+            None,
+        ))
         .add_input(DiscordInput)
         .add_hidden(ClaudeCodeLayer::new())
         .add_output(DiscordOutput)

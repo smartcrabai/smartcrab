@@ -29,6 +29,25 @@ pub enum SmartCrabError {
 
     #[error("{0}")]
     Other(String),
+
+    #[error("Cron schedule error: {0}")]
+    CronSchedule(String),
+
+    #[error("Chat error ({platform}): {message}")]
+    Chat { platform: String, message: String },
+
+    #[error("MCP error: {0}")]
+    Mcp(#[from] McpError),
+}
+
+/// MCP-specific errors raised during server construction.
+#[derive(Debug, thiserror::Error)]
+pub enum McpError {
+    #[error("No tools registered")]
+    NoTools,
+
+    #[error("Duplicate tool name: {name}")]
+    DuplicateToolName { name: String },
 }
 
 /// Graph-specific errors raised during build or execution.
@@ -55,6 +74,9 @@ pub enum GraphError {
 
     #[error("Missing branch target node: {target} (from condition on {from})")]
     MissingBranch { from: String, target: String },
+
+    #[error("Invalid trigger configuration: {message}")]
+    InvalidTriggerConfig { message: String },
 
     #[error("Layer `{name}` failed: {source}")]
     LayerFailed {

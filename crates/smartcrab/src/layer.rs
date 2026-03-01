@@ -13,8 +13,9 @@ pub trait Layer: Send + Sync + 'static {
 /// A layer that produces data from an external source.
 #[async_trait]
 pub trait InputLayer: Layer {
+    type TriggerData: Dto;
     type Output: Dto;
-    async fn run(&self) -> Result<Self::Output>;
+    async fn run(&self, trigger: Self::TriggerData) -> Result<Self::Output>;
 }
 
 /// A layer that transforms data.
@@ -39,13 +40,23 @@ pub trait OutputLayer: Layer {
 /// Object-safe wrapper for `InputLayer`.
 #[async_trait]
 pub trait InputLayerDyn: Layer {
+    fn trigger_data_type_id(&self) -> TypeId;
+    fn trigger_data_type_name(&self) -> &'static str;
     fn output_type_id(&self) -> TypeId;
     fn output_type_name(&self) -> &'static str;
-    async fn run_dyn(&self) -> Result<Box<dyn DtoObject>>;
+    async fn run_dyn(&self, trigger: &dyn DtoObject) -> Result<Box<dyn DtoObject>>;
 }
 
 #[async_trait]
 impl<T: InputLayer> InputLayerDyn for T {
+    fn trigger_data_type_id(&self) -> TypeId {
+        TypeId::of::<T::TriggerData>()
+    }
+
+    fn trigger_data_type_name(&self) -> &'static str {
+        std::any::type_name::<T::TriggerData>()
+    }
+
     fn output_type_id(&self) -> TypeId {
         TypeId::of::<T::Output>()
     }
@@ -54,8 +65,19 @@ impl<T: InputLayer> InputLayerDyn for T {
         std::any::type_name::<T::Output>()
     }
 
-    async fn run_dyn(&self) -> Result<Box<dyn DtoObject>> {
-        let output = self.run().await?;
+    async fn run_dyn(&self, trigger: &dyn DtoObject) -> Result<Box<dyn DtoObject>> {
+        let concrete = trigger
+            .as_any()
+            .downcast_ref::<T::TriggerData>()
+            .ok_or_else(|| {
+                crate::error::SmartCrabError::Graph(crate::error::GraphError::TypeMismatch {
+                    from: "trigger".to_owned(),
+                    to: self.name().to_owned(),
+                    output_type: trigger.dto_type_name().to_owned(),
+                    input_type: std::any::type_name::<T::TriggerData>().to_owned(),
+                })
+            })?;
+        let output = self.run(concrete.clone()).await?;
         Ok(Box::new(output))
     }
 }
@@ -149,6 +171,22 @@ impl AnyLayer {
         }
     }
 
+    /// Returns the `TypeId` of the trigger data (if Input layer).
+    pub fn trigger_data_type_id(&self) -> Option<TypeId> {
+        match self {
+            AnyLayer::Input(l) => Some(l.trigger_data_type_id()),
+            _ => None,
+        }
+    }
+
+    /// Returns the trigger data type name (if Input layer).
+    pub fn trigger_data_type_name(&self) -> Option<&'static str> {
+        match self {
+            AnyLayer::Input(l) => Some(l.trigger_data_type_name()),
+            _ => None,
+        }
+    }
+
     /// Returns the `TypeId` of the output DTO (if any).
     pub fn output_type_id(&self) -> Option<TypeId> {
         match self {
@@ -212,8 +250,9 @@ mod tests {
 
     #[async_trait]
     impl InputLayer for MockInputLayer {
+        type TriggerData = ();
         type Output = MockOutput;
-        async fn run(&self) -> Result<MockOutput> {
+        async fn run(&self, _: ()) -> Result<MockOutput> {
             Ok(MockOutput {
                 result: "from input".into(),
             })
@@ -258,7 +297,8 @@ mod tests {
     #[tokio::test]
     async fn test_input_layer_dyn() {
         let layer = MockInputLayer;
-        let output = layer.run_dyn().await.unwrap();
+        let trigger: Box<dyn DtoObject> = Box::new(());
+        let output = layer.run_dyn(trigger.as_ref()).await.unwrap();
         let concrete = output.as_any().downcast_ref::<MockOutput>().unwrap();
         assert_eq!(concrete.result, "from input");
     }
@@ -291,15 +331,18 @@ mod tests {
         assert_eq!(input_layer.name(), "MockInputLayer");
         assert!(input_layer.output_type_id().is_some());
         assert!(input_layer.input_type_id().is_none());
+        assert!(input_layer.trigger_data_type_id().is_some());
 
         let hidden_layer = AnyLayer::Hidden(Box::new(MockHiddenLayer));
         assert_eq!(hidden_layer.name(), "MockHiddenLayer");
         assert!(hidden_layer.output_type_id().is_some());
         assert!(hidden_layer.input_type_id().is_some());
+        assert!(hidden_layer.trigger_data_type_id().is_none());
 
         let output_layer = AnyLayer::Output(Box::new(MockOutputLayer));
         assert_eq!(output_layer.name(), "MockOutputLayer");
         assert!(output_layer.output_type_id().is_none());
         assert!(output_layer.input_type_id().is_some());
+        assert!(output_layer.trigger_data_type_id().is_none());
     }
 }

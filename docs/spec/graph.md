@@ -58,7 +58,7 @@ pub fn add_conditional_edge<F, I>(
     branches: I,
 ) -> Self
 where
-    F: Fn(&dyn Dto) -> Option<String> + Send + Sync + 'static,
+    F: Fn(&dyn DtoObject) -> Option<String> + Send + Sync + 'static,
     I: IntoIterator<Item = (String, String)>,
 ```
 
@@ -170,7 +170,7 @@ let graph = DirectedGraphBuilder::new("ai_routing")
                 Some("template".to_owned())
             }
         },
-        vec![("ai".to_owned(), "AiResponder"), ("template".to_owned(), "TemplateResponder")],
+        vec![("ai".to_owned(), "AiResponder".to_owned()), ("template".to_owned(), "TemplateResponder".to_owned())],
     )
     .add_edge("AiResponder", "DiscordOutput")
     .add_edge("TemplateResponder", "DiscordOutput")
@@ -192,7 +192,7 @@ let graph = DirectedGraphBuilder::new("feedback_loop")
     .add_edge("Feedback", "Feedback")  // 自己ループ
     .add_edge("Feedback", "Exit")
     .add_exit_condition("Feedback", |output| {
-        if output.downcast_ref::<FeedbackOutput>()?.should_continue {
+        if output.downcast_ref::<FeedbackOutput>().unwrap().should_continue {
             Some("continue".to_owned())
         } else {
             None  // 終了
@@ -211,19 +211,19 @@ use smartcrab::runtime::Runtime;
 async fn main() -> Result<()> {
     // Graph 1: HTTP API
     let api_graph = DirectedGraphBuilder::new("api")
-        .add_node(HttpInput::new("0.0.0.0:3000"))
-        .add_node(RequestHandler::new())
-        .add_node(JsonResponder::new())
+        .add_input(HttpInput::new("0.0.0.0:3000"))
+        .add_hidden(RequestHandler::new())
+        .add_output(JsonResponder::new())
         .add_edge("HttpInput", "RequestHandler")
         .add_edge("RequestHandler", "JsonResponder")
         .build()?;
 
     // Graph 2: 定期バッチ
     let batch_graph = DirectedGraphBuilder::new("batch")
-        .add_node(CronInput::new("0 */6 * * *"))
-        .add_node(DataCollector::new())
-        .add_node(AiSummarizer::new())
-        .add_node(SlackNotifier::new(webhook))
+        .add_input(CronInput::new("0 */6 * * * * *"))
+        .add_hidden(DataCollector::new())
+        .add_hidden(AiSummarizer::new())
+        .add_output(SlackNotifier::new(webhook))
         .add_edge("CronInput", "DataCollector")
         .add_edge("DataCollector", "AiSummarizer")
         .add_edge("AiSummarizer", "SlackNotifier")

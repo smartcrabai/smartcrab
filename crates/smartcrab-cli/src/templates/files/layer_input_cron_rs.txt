@@ -15,9 +15,10 @@ impl Layer for CronInput {
 
 #[async_trait]
 impl InputLayer for CronInput {
+    type TriggerData = ();
     type Output = DiscordNotification;
 
-    async fn run(&self) -> Result<DiscordNotification> {
+    async fn run(&self, _: ()) -> Result<DiscordNotification> {
         // Wait for the next tick (every 60 seconds)
         tokio::time::sleep(std::time::Duration::from_secs(60)).await;
 

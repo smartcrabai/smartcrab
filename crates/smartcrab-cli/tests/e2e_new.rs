@@ -66,13 +66,11 @@ fn generated_project_has_expected_src_structure() {
         "src/dto/mod.rs",
         "src/dto/discord.rs",
         "src/dto/cron.rs",
-        "src/dto/http.rs",
         // layer
         "src/layer/mod.rs",
         "src/layer/input/mod.rs",
         "src/layer/input/discord_input.rs",
         "src/layer/input/cron_input.rs",
-        "src/layer/input/http_input.rs",
         "src/layer/hidden/mod.rs",
         "src/layer/hidden/claude_code_layer.rs",
         "src/layer/output/mod.rs",
@@ -81,7 +79,6 @@ fn generated_project_has_expected_src_structure() {
         "src/dag/mod.rs",
         "src/dag/discord_pipeline.rs",
         "src/dag/cron_pipeline.rs",
-        "src/dag/http_pipeline.rs",
         // tests
         "tests/dag_test.rs",
     ];

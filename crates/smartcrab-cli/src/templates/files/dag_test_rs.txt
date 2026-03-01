@@ -33,9 +33,10 @@ impl Layer for MockDiscordInput {
 
 #[async_trait]
 impl InputLayer for MockDiscordInput {
+    type TriggerData = ();
     type Output = DiscordMessage;
 
-    async fn run(&self) -> Result<DiscordMessage> {
+    async fn run(&self, _: ()) -> Result<DiscordMessage> {
         Ok(DiscordMessage {
             channel_id: "test-channel".into(),
             author: "test-user".into(),
@@ -96,32 +97,13 @@ impl Layer for MockCronInput {
 
 #[async_trait]
 impl InputLayer for MockCronInput {
+    type TriggerData = ();
     type Output = DiscordNotification;
 
-    async fn run(&self) -> Result<DiscordNotification> {
+    async fn run(&self, _: ()) -> Result<DiscordNotification> {
         Ok(DiscordNotification {
             channel_id: "cron-channel".into(),
             content: "scheduled ping".into(),
-        })
-    }
-}
-
-struct MockHttpInput;
-
-impl Layer for MockHttpInput {
-    fn name(&self) -> &str {
-        "HttpInput"
-    }
-}
-
-#[async_trait]
-impl InputLayer for MockHttpInput {
-    type Output = DiscordNotification;
-
-    async fn run(&self) -> Result<DiscordNotification> {
-        Ok(DiscordNotification {
-            channel_id: "http-channel".into(),
-            content: "webhook payload received".into(),
         })
     }
 }
@@ -150,18 +132,6 @@ async fn test_cron_pipeline_graph() {
         .add_input(MockCronInput)
         .add_output(MockDiscordOutput)
         .add_edge("CronInput", "DiscordOutput")
-        .build()
-        .expect("graph should build successfully");
-
-    graph.run().await.expect("graph should run successfully");
-}
-
-#[tokio::test]
-async fn test_http_pipeline_graph() {
-    let graph = DirectedGraphBuilder::new("http_pipeline")
-        .add_input(MockHttpInput)
-        .add_output(MockDiscordOutput)
-        .add_edge("HttpInput", "DiscordOutput")
         .build()
         .expect("graph should build successfully");
 

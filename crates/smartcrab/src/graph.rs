@@ -8,8 +8,54 @@ use crate::layer::{AnyLayer, HiddenLayer, InputLayer, OutputLayer};
 
 type ConditionFn = Box<dyn Fn(&dyn DtoObject) -> Option<String> + Send + Sync>;
 
+/// Specifies when and how a DirectedGraph is triggered.
+#[derive(Debug, Clone)]
+pub enum TriggerKind {
+    /// Triggered once at application startup.
+    Startup,
+    /// Triggered by a chat event (e.g. Discord mention or DM).
+    ///
+    /// `platform` routes the graph to the correct `ChatGateway`.
+    /// If `None`, defaults to the first registered gateway.
+    ///
+    /// `token` is the platform bot token. If `None`, falls back to the
+    /// Runtime-level token or the `DISCORD_TOKEN` environment variable.
+    Chat {
+        /// Platform identifier for routing to the correct ChatGateway.
+        /// `None` defaults to the first registered gateway.
+        platform: Option<String>,
+        triggers: Vec<String>,
+        token: Option<String>,
+    },
+    /// Triggered on a cron schedule.
+    Cron { schedule: String },
+}
+
+impl TriggerKind {
+    /// Create a Chat trigger. Routes to the first registered gateway by default.
+    pub fn chat(triggers: Vec<String>, token: Option<String>) -> Self {
+        TriggerKind::Chat {
+            platform: None,
+            triggers,
+            token,
+        }
+    }
+
+    /// Create a Discord-specific Chat trigger.
+    pub fn discord(triggers: Vec<String>, token: Option<String>) -> Self {
+        TriggerKind::Chat {
+            platform: Some("discord".into()),
+            triggers,
+            token,
+        }
+    }
+}
+
 enum Edge {
-    Unconditional { from: String, to: String },
+    Unconditional {
+        from: String,
+        to: String,
+    },
     Conditional {
         from: String,
         condition: ConditionFn,
@@ -27,6 +73,7 @@ pub struct DirectedGraph {
     nodes: HashMap<String, AnyLayer>,
     edges: Vec<Edge>,
     execution_order: Vec<String>,
+    trigger_kind: Option<TriggerKind>,
 }
 
 pub struct EdgeInfo {
@@ -50,6 +97,10 @@ impl DirectedGraph {
 
     pub fn execution_order(&self) -> &[String] {
         &self.execution_order
+    }
+
+    pub fn trigger_kind(&self) -> Option<&TriggerKind> {
+        self.trigger_kind.as_ref()
     }
 
     pub fn edge_infos(&self) -> Vec<EdgeInfo> {
@@ -78,14 +129,21 @@ impl DirectedGraph {
         infos
     }
 
+    /// Run the graph with a unit trigger (backward-compatible shortcut).
     #[instrument(skip(self), fields(graph = %self.name))]
     pub async fn run(&self) -> Result<()> {
+        self.run_with_trigger(Box::new(())).await
+    }
+
+    /// Run the graph, passing `trigger_data` to the InputLayer.
+    #[instrument(skip(self, trigger_data), fields(graph = %self.name))]
+    pub async fn run_with_trigger(&self, trigger_data: Box<dyn DtoObject>) -> Result<()> {
         let mut outputs: HashMap<String, Box<dyn DtoObject>> = HashMap::new();
         let mut completed: HashSet<String> = HashSet::new();
 
         loop {
             let executables = self.find_executable_nodes(&outputs, &completed);
-            
+
             if executables.is_empty() {
                 info!(graph = %self.name, "all nodes completed");
                 break;
@@ -98,7 +156,7 @@ impl DirectedGraph {
 
                 match node {
                     AnyLayer::Input(layer) => {
-                        let output = layer.run_dyn().await.map_err(|e| {
+                        let output = layer.run_dyn(trigger_data.as_ref()).await.map_err(|e| {
                             SmartCrabError::Graph(GraphError::LayerFailed {
                                 name: node_name.clone(),
                                 source: Box::new(e),
@@ -130,11 +188,11 @@ impl DirectedGraph {
                     }
                 }
 
-                if let Some(exit_branch) = self.check_exit_conditions(node_name, &outputs) {
-                    if exit_branch.is_none() {
-                        info!(graph = %self.name, "exit condition triggered, terminating");
-                        return Ok(());
-                    }
+                if let Some(exit_branch) = self.check_exit_conditions(node_name, &outputs)
+                    && exit_branch.is_none()
+                {
+                    info!(graph = %self.name, "exit condition triggered, terminating");
+                    return Ok(());
                 }
             }
         }
@@ -163,11 +221,7 @@ impl DirectedGraph {
         executables
     }
 
-    fn can_execute(
-        &self,
-        node_name: &str,
-        outputs: &HashMap<String, Box<dyn DtoObject>>,
-    ) -> bool {
+    fn can_execute(&self, node_name: &str, outputs: &HashMap<String, Box<dyn DtoObject>>) -> bool {
         for edge in &self.edges {
             match edge {
                 Edge::Unconditional { from, to } if to == node_name => {
@@ -176,16 +230,19 @@ impl DirectedGraph {
                         return false;
                     }
                 }
-                Edge::Conditional { from, condition, branches } => {
+                Edge::Conditional {
+                    from,
+                    condition,
+                    branches,
+                } => {
                     if !branches.values().any(|t| t == node_name) {
                         continue;
                     }
-                    if let Some(output) = outputs.get(from) {
-                        if let Some(branch_key) = condition(output.as_ref()) {
-                            if branches.get(&branch_key) == Some(&node_name.to_string()) {
-                                return true;
-                            }
-                        }
+                    if let Some(output) = outputs.get(from)
+                        && let Some(branch_key) = condition(output.as_ref())
+                        && branches.get(&branch_key).is_some_and(|s| s == node_name)
+                    {
+                        return true;
                     }
                     if !outputs.contains_key(from) {
                         return false;
@@ -198,14 +255,24 @@ impl DirectedGraph {
             }
         }
 
-        let has_dependency = self.edges.iter().any(|edge| match edge {
-            Edge::Unconditional { to, .. } => to == node_name,
+        let has_unconditional_dep = self
+            .edges
+            .iter()
+            .any(|edge| matches!(edge, Edge::Unconditional { to, .. } if to == node_name));
+        let has_conditional_dep = self.edges.iter().any(|edge| match edge {
             Edge::Conditional { branches, .. } => branches.values().any(|t| t == node_name),
-            Edge::Exit { .. } => false,
+            _ => false,
         });
 
-        if !has_dependency {
+        if !has_unconditional_dep && !has_conditional_dep {
             return matches!(self.nodes.get(node_name), Some(AnyLayer::Input(_)));
+        }
+
+        // If this node is only reachable via conditional edges and none of them selected
+        // it (we would have returned `true` above), all sources have resolved to other
+        // branches — this node will never be activated.
+        if has_conditional_dep && !has_unconditional_dep {
+            return false;
         }
 
         true
@@ -217,12 +284,11 @@ impl DirectedGraph {
         outputs: &HashMap<String, Box<dyn DtoObject>>,
     ) -> Option<Option<String>> {
         for edge in &self.edges {
-            if let Edge::Exit { from, condition } = edge {
-                if from == node_name {
-                    if let Some(output) = outputs.get(from) {
-                        return Some(condition(output.as_ref()));
-                    }
-                }
+            if let Edge::Exit { from, condition } = edge
+                && from == node_name
+                && let Some(output) = outputs.get(from)
+            {
+                return Some(condition(output.as_ref()));
             }
         }
         None
@@ -245,14 +311,12 @@ impl DirectedGraph {
                     condition,
                     branches,
                 } => {
-                    if let Some(output) = outputs.get(from) {
-                        if let Some(branch_key) = condition(output.as_ref()) {
-                            if let Some(target) = branches.get(&branch_key)
-                                && target == node_name
-                            {
-                                return Ok(output.clone_box());
-                            }
-                        }
+                    if let Some(output) = outputs.get(from)
+                        && let Some(branch_key) = condition(output.as_ref())
+                        && let Some(target) = branches.get(&branch_key)
+                        && target == node_name
+                    {
+                        return Ok(output.clone_box());
                     }
                 }
                 _ => {}
@@ -271,6 +335,7 @@ pub struct DirectedGraphBuilder {
     nodes: HashMap<String, AnyLayer>,
     edges: Vec<Edge>,
     insertion_order: Vec<String>,
+    trigger_kind: Option<TriggerKind>,
 }
 
 impl DirectedGraphBuilder {
@@ -281,11 +346,17 @@ impl DirectedGraphBuilder {
             nodes: HashMap::new(),
             edges: Vec::new(),
             insertion_order: Vec::new(),
+            trigger_kind: None,
         }
     }
 
     pub fn description(mut self, desc: impl Into<String>) -> Self {
         self.description = Some(desc.into());
+        self
+    }
+
+    pub fn trigger(mut self, kind: TriggerKind) -> Self {
+        self.trigger_kind = Some(kind);
         self
     }
 
@@ -351,6 +422,7 @@ impl DirectedGraphBuilder {
             nodes: self.nodes,
             edges: self.edges,
             execution_order: self.insertion_order,
+            trigger_kind: self.trigger_kind,
         })
     }
 
@@ -367,6 +439,22 @@ impl DirectedGraphBuilder {
         let has_input = self.nodes.values().any(|n| matches!(n, AnyLayer::Input(_)));
         if !has_input {
             return Err(GraphError::NoInputNode);
+        }
+
+        if let Some(kind) = &self.trigger_kind {
+            match kind {
+                TriggerKind::Chat { triggers, .. } if triggers.is_empty() => {
+                    return Err(GraphError::InvalidTriggerConfig {
+                        message: "Chat trigger requires at least one trigger pattern".to_owned(),
+                    });
+                }
+                TriggerKind::Cron { schedule } if schedule.is_empty() => {
+                    return Err(GraphError::InvalidTriggerConfig {
+                        message: "Cron trigger requires a non-empty schedule".to_owned(),
+                    });
+                }
+                _ => {}
+            }
         }
 
         for edge in &self.edges {
@@ -466,8 +554,9 @@ mod tests {
     }
     #[async_trait]
     impl InputLayer for SourceLayer {
+        type TriggerData = ();
         type Output = MsgA;
-        async fn run(&self) -> Result<MsgA> {
+        async fn run(&self, _: ()) -> Result<MsgA> {
             Ok(MsgA {
                 text: "hello".into(),
             })
@@ -575,6 +664,55 @@ mod tests {
         assert!(matches!(result, Err(GraphError::DuplicateNodeName { .. })));
     }
 
+    #[test]
+    fn test_trigger_kind_startup() {
+        let graph = DirectedGraphBuilder::new("test")
+            .add_input(SourceLayer)
+            .trigger(TriggerKind::Startup)
+            .build()
+            .unwrap();
+        assert!(matches!(graph.trigger_kind(), Some(TriggerKind::Startup)));
+    }
+
+    #[test]
+    fn test_trigger_kind_default_none() {
+        let graph = DirectedGraphBuilder::new("test")
+            .add_input(SourceLayer)
+            .build()
+            .unwrap();
+        assert!(graph.trigger_kind().is_none());
+    }
+
+    #[test]
+    fn test_trigger_kind_empty_schedule_error() {
+        let result = DirectedGraphBuilder::new("test")
+            .add_input(SourceLayer)
+            .trigger(TriggerKind::Cron {
+                schedule: String::new(),
+            })
+            .build();
+        assert!(matches!(
+            result,
+            Err(GraphError::InvalidTriggerConfig { .. })
+        ));
+    }
+
+    #[test]
+    fn test_trigger_kind_empty_triggers_error() {
+        let result = DirectedGraphBuilder::new("test")
+            .add_input(SourceLayer)
+            .trigger(TriggerKind::Chat {
+                platform: None,
+                triggers: Vec::new(),
+                token: None,
+            })
+            .build();
+        assert!(matches!(
+            result,
+            Err(GraphError::InvalidTriggerConfig { .. })
+        ));
+    }
+
     #[tokio::test]
     async fn test_graph_execution() {
         let graph = DirectedGraphBuilder::new("exec_test")
@@ -590,6 +728,18 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_run_with_trigger() {
+        let graph = DirectedGraphBuilder::new("trigger_test")
+            .add_input(SourceLayer)
+            .add_output(SinkLayer)
+            .add_edge("Source", "Sink")
+            .build()
+            .unwrap();
+        let result = graph.run_with_trigger(Box::new(())).await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
     async fn test_cycle_graph_execution() {
         struct CycleSource;
         impl Layer for CycleSource {
@@ -599,8 +749,9 @@ mod tests {
         }
         #[async_trait]
         impl InputLayer for CycleSource {
+            type TriggerData = ();
             type Output = MsgA;
-            async fn run(&self) -> Result<MsgA> {
+            async fn run(&self, _: ()) -> Result<MsgA> {
                 Ok(MsgA {
                     text: "start".into(),
                 })
@@ -620,7 +771,8 @@ mod tests {
             type Input = MsgA;
             type Output = MsgA;
             async fn run(&self, input: MsgA) -> Result<MsgA> {
-                self.executed.store(true, std::sync::atomic::Ordering::SeqCst);
+                self.executed
+                    .store(true, std::sync::atomic::Ordering::SeqCst);
                 Ok(MsgA {
                     text: format!("looped: {}", input.text),
                 })
@@ -646,7 +798,9 @@ mod tests {
 
         let graph = DirectedGraphBuilder::new("cycle_test")
             .add_input(CycleSource)
-            .add_hidden(LoopLayer { executed: loop_executed.clone() })
+            .add_hidden(LoopLayer {
+                executed: loop_executed.clone(),
+            })
             .add_output(ExitLayer)
             .add_edge("Source", "Loop")
             .add_edge("Loop", "Loop")
@@ -656,7 +810,10 @@ mod tests {
             .unwrap();
         let result = graph.run().await;
         assert!(result.is_ok());
-        assert!(loop_executed.load(std::sync::atomic::Ordering::SeqCst), "Loop layer must execute");
+        assert!(
+            loop_executed.load(std::sync::atomic::Ordering::SeqCst),
+            "Loop layer must execute"
+        );
     }
 
     #[tokio::test]
@@ -669,8 +826,9 @@ mod tests {
         }
         #[async_trait]
         impl InputLayer for CountSource {
+            type TriggerData = ();
             type Output = MsgA;
-            async fn run(&self) -> Result<MsgA> {
+            async fn run(&self, _: ()) -> Result<MsgA> {
                 Ok(MsgA {
                     text: "start".into(),
                 })
@@ -688,9 +846,96 @@ mod tests {
             })
             .build()
             .unwrap();
-        
+
         let result = graph.run().await;
         assert!(result.is_ok());
         assert!(exit_triggered.load(std::sync::atomic::Ordering::SeqCst));
+    }
+
+    /// Conditional branch: the bypassed branch must never execute, and the graph
+    /// must complete without an "Unreachable node" error.
+    #[tokio::test]
+    async fn test_conditional_branch_skips_inactive_node() {
+        #[derive(Debug, Clone, Serialize, Deserialize)]
+        struct Flag {
+            value: bool,
+        }
+
+        struct FlagSource;
+        impl Layer for FlagSource {
+            fn name(&self) -> &str {
+                "FlagSource"
+            }
+        }
+        #[async_trait]
+        impl InputLayer for FlagSource {
+            type TriggerData = ();
+            type Output = Flag;
+            async fn run(&self, _: ()) -> Result<Flag> {
+                Ok(Flag { value: false })
+            }
+        }
+
+        let true_executed = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let false_executed = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+
+        struct TrueSink(std::sync::Arc<std::sync::atomic::AtomicBool>);
+        impl Layer for TrueSink {
+            fn name(&self) -> &str {
+                "TrueSink"
+            }
+        }
+        #[async_trait]
+        impl OutputLayer for TrueSink {
+            type Input = Flag;
+            async fn run(&self, _: Flag) -> Result<()> {
+                self.0.store(true, std::sync::atomic::Ordering::SeqCst);
+                Ok(())
+            }
+        }
+
+        struct FalseSink(std::sync::Arc<std::sync::atomic::AtomicBool>);
+        impl Layer for FalseSink {
+            fn name(&self) -> &str {
+                "FalseSink"
+            }
+        }
+        #[async_trait]
+        impl OutputLayer for FalseSink {
+            type Input = Flag;
+            async fn run(&self, _: Flag) -> Result<()> {
+                self.0.store(true, std::sync::atomic::Ordering::SeqCst);
+                Ok(())
+            }
+        }
+
+        let graph = DirectedGraphBuilder::new("cond_test")
+            .add_input(FlagSource)
+            .add_output(TrueSink(true_executed.clone()))
+            .add_output(FalseSink(false_executed.clone()))
+            .add_conditional_edge(
+                "FlagSource",
+                |dto| {
+                    let f: &Flag = dto.as_any().downcast_ref()?;
+                    Some(if f.value { "true" } else { "false" }.to_owned())
+                },
+                vec![
+                    ("true".to_owned(), "TrueSink".to_owned()),
+                    ("false".to_owned(), "FalseSink".to_owned()),
+                ],
+            )
+            .build()
+            .unwrap();
+
+        let result = graph.run().await;
+        assert!(result.is_ok(), "graph should complete without error");
+        assert!(
+            !true_executed.load(std::sync::atomic::Ordering::SeqCst),
+            "TrueSink must NOT execute when condition is false"
+        );
+        assert!(
+            false_executed.load(std::sync::atomic::Ordering::SeqCst),
+            "FalseSink must execute when condition is false"
+        );
     }
 }

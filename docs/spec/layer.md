@@ -24,49 +24,60 @@ pub trait Layer: Send + Sync + 'static {
 ```rust
 #[async_trait]
 pub trait InputLayer: Layer {
+    /// トリガーデータの型（通常は `()` を使用）。
+    type TriggerData: Dto;
     type Output: Dto;
 
-    async fn run(&self) -> Result<Self::Output>;
+    async fn run(&self, trigger: Self::TriggerData) -> Result<Self::Output>;
+}
+```
+
+### TriggerKind
+
+`DirectedGraphBuilder::trigger()` で発火タイミングを明示する。
+
+```rust
+pub enum TriggerKind {
+    /// アプリ起動時に一度だけ実行。
+    Startup,
+    /// チャットイベント（Discord メンション・DM 等）で実行。
+    Chat { triggers: Vec<String> },
+    /// cron スケジュールで実行。
+    Cron { schedule: String },
 }
 ```
 
 ### サブタイプ
 
-Input Layer には 3 つのサブタイプがある。これらはトレイトではなく実装パターンとして区別される。
+Input Layer には 2 つのサブタイプがある。これらはトレイトではなく実装パターンとして区別される。
 
-| サブタイプ | トリガー | 用途例 |
-|-----------|---------|--------|
-| **chat** | Discord DM / メンション等 | チャットボット |
-| **cron** | 時刻ベースのスケジュール | 定期バッチ処理 |
-| **http** | HTTP リクエスト受信 | Web API |
+| サブタイプ | TriggerKind | 用途例 |
+|-----------|------------|--------|
+| **startup** | `Startup` | サービス起動時の初期化処理 |
+| **chat** | `Chat { triggers: vec!["mention", "dm"] }` | Discord チャットボット |
+| **cron** | `Cron { schedule: "0 * * * * * *" }` | 定期バッチ処理 |
 
 ### コード例
 
 ```rust
 use smartcrab::prelude::*;
 
-pub struct HttpInput {
-    addr: SocketAddr,
-}
+pub struct DiscordInput;
 
-impl Layer for HttpInput {
+impl Layer for DiscordInput {
     fn name(&self) -> &str {
-        "HttpInput"
+        "DiscordInput"
     }
 }
 
 #[async_trait]
-impl InputLayer for HttpInput {
-    type Output = HttpRequestDto;
+impl InputLayer for DiscordInput {
+    type TriggerData = ();
+    type Output = DiscordMessage;
 
-    async fn run(&self) -> Result<Self::Output> {
-        // HTTPサーバーを起動し、リクエストを待ち受ける
-        let request = self.accept_request().await?;
-        Ok(HttpRequestDto {
-            method: request.method().to_string(),
-            path: request.uri().path().to_string(),
-            body: request.body_string().await?,
-        })
+    async fn run(&self, _: ()) -> Result<Self::Output> {
+        // Discord ゲートウェイからメッセージを受信する
+        todo!("Implement Discord message listener")
     }
 }
 ```

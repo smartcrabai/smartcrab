@@ -512,10 +512,10 @@ use smartcrab::prelude::*;
 
 pub fn build() -> std::result::Result<DirectedGraph, GraphError> {
     DirectedGraphBuilder::new("my_pipeline")
-        .add_input(HttpInput)
+        .add_input(DiscordInput)
         .add_hidden(DataProcessor)
         .add_output(JsonResponder)
-        .add_edge("HttpInput", "DataProcessor")
+        .add_edge("DiscordInput", "DataProcessor")
         .add_edge("DataProcessor", "JsonResponder")
         .build()
 }
@@ -530,7 +530,7 @@ pub fn build() -> std::result::Result<DirectedGraph, GraphError> {
     fn test_extract_nodes() {
         let nodes = extract_nodes(SAMPLE_DAG);
         assert_eq!(nodes.len(), 3);
-        assert_eq!(nodes[0].name, "HttpInput");
+        assert_eq!(nodes[0].name, "DiscordInput");
         assert_eq!(nodes[0].kind, NodeKind::Input);
         assert_eq!(nodes[1].name, "DataProcessor");
         assert_eq!(nodes[1].kind, NodeKind::Hidden);
@@ -542,7 +542,7 @@ pub fn build() -> std::result::Result<DirectedGraph, GraphError> {
     fn test_extract_edges() {
         let edges = extract_edges(SAMPLE_DAG);
         assert_eq!(edges.len(), 2);
-        assert_eq!(edges[0].from, "HttpInput");
+        assert_eq!(edges[0].from, "DiscordInput");
         assert_eq!(edges[0].to, "DataProcessor");
         assert!(edges[0].label.is_none());
         assert_eq!(edges[1].from, "DataProcessor");
@@ -578,10 +578,10 @@ DirectedGraphBuilder::new("test")
         let dag = parse_dag_source(SAMPLE_DAG).unwrap();
         let output = render_mermaid(&dag, false, false);
         assert!(output.starts_with("flowchart TD\n"));
-        assert!(output.contains("HttpInput"));
+        assert!(output.contains("DiscordInput"));
         assert!(output.contains("DataProcessor"));
         assert!(output.contains("JsonResponder"));
-        assert!(output.contains("HttpInput --> DataProcessor"));
+        assert!(output.contains("DiscordInput --> DataProcessor"));
         assert!(output.contains("DataProcessor --> JsonResponder"));
     }
 
@@ -590,7 +590,7 @@ DirectedGraphBuilder::new("test")
         let dag = parse_dag_source(SAMPLE_DAG).unwrap();
         let output = render_dot(&dag, false, false);
         assert!(output.starts_with("digraph \"my_pipeline\""));
-        assert!(output.contains("HttpInput"));
+        assert!(output.contains("DiscordInput"));
         assert!(output.contains("shape=box, style=rounded")); // Input
         assert!(output.contains("shape=hexagon")); // Output
     }
@@ -599,7 +599,7 @@ DirectedGraphBuilder::new("test")
     fn test_render_ascii() {
         let dag = parse_dag_source(SAMPLE_DAG).unwrap();
         let output = render_ascii(&dag, false, false);
-        assert!(output.contains("HttpInput"));
+        assert!(output.contains("DiscordInput"));
         assert!(output.contains("DataProcessor"));
         assert!(output.contains("JsonResponder"));
         assert!(output.contains("\u{2502}")); // │
