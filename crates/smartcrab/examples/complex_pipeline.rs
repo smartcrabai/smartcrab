@@ -112,7 +112,7 @@ impl OutputLayer for IndexOutput {
             "📦 Indexed document #{}: score={}, body={}...",
             input.id,
             input.score,
-            &input.body[..input.body.len().min(40)]
+            &input.body.chars().take(40).collect::<String>()
         );
         Ok(())
     }

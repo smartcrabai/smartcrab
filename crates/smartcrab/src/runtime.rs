@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use tokio::signal;
-use tracing::{error, info, instrument};
+use tracing::{error, info, instrument, warn};
 
 use crate::chat::ChatGateway;
 use crate::discord::DiscordGateway;
@@ -108,11 +108,13 @@ impl Runtime {
                 None
             };
             let idx = match platform {
-                Some(p) => self
-                    .chat_gateways
-                    .iter()
-                    .position(|gw| gw.platform() == p)
-                    .unwrap_or(0),
+                Some(p) => match self.chat_gateways.iter().position(|gw| gw.platform() == p) {
+                    Some(i) => i,
+                    None => {
+                        warn!(platform = %p, "no gateway found for platform, falling back to gateway 0");
+                        0
+                    }
+                },
                 None => 0,
             };
             gateway_graphs

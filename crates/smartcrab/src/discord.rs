@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use poise::serenity_prelude::{self as serenity, FullEvent, GatewayIntents};
-use tracing::{error, info};
+use tracing::{debug, error, info};
 
 use crate::chat::ChatGateway;
 use crate::chat::discord::DiscordMessage;
@@ -158,8 +158,11 @@ async fn event_handler(
             is_dm,
             mentions_count     = new_message.mentions.len(),
             mention_roles      = ?new_message.mention_roles,
-            content_head       = %new_message.content.chars().take(60).collect::<String>(),
             "message received"
+        );
+        debug!(
+            content_head = %new_message.content.chars().take(60).collect::<String>(),
+            "message content"
         );
 
         for (triggers, graph) in &data.graphs {

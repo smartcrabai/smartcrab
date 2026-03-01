@@ -72,7 +72,7 @@ where
 ```rust
 pub fn add_exit_condition<F>(self, from: &str, condition: F) -> Self
 where
-    F: Fn(&dyn Dto) -> Option<String> + Send + Sync + 'static,
+    F: Fn(&dyn DtoObject) -> Option<String> + Send + Sync + 'static,
 ```
 
 終了条件を追加する。`from` ノードの実行後に条件クロージャが評価され、`None` を返した場合はグラフ全体の実行を終了する。

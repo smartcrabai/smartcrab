@@ -80,9 +80,9 @@ impl GraphToMcpTool for DirectedGraph {
 }
 
 /// Rebuild a minimal placeholder DirectedGraph to store inside McpTool.
-/// Since `DirectedGraph` cannot be cloned (contains closures), we store a reference-like
-/// copy that preserves name and description only for metadata purposes.
-/// The actual execution should reference the original `DirectedGraph`.
+/// Since `DirectedGraph` cannot be cloned (contains closures), the original graph is moved
+/// into `to_mcp_tool`/`add_graph_tool` and dropped. This stub preserves only the name and
+/// description for metadata purposes and is not intended for execution.
 fn rebuild_graph_ref(graph: &DirectedGraph) -> DirectedGraph {
     // We need to build a minimal valid graph. Since we can't clone layers/edges,
     // we create a stub that preserves name/description.
