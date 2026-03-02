@@ -3,8 +3,8 @@ use std::time::Duration;
 /// Top-level error type for SmartCrab.
 #[derive(Debug, thiserror::Error)]
 pub enum SmartCrabError {
-    #[error("DAG error: {0}")]
-    Dag(#[from] DagError),
+    #[error("Graph error: {0}")]
+    Graph(#[from] GraphError),
 
     #[error("`claude` command not found. Is Claude Code CLI installed?")]
     ClaudeCodeNotFound,
@@ -29,21 +29,37 @@ pub enum SmartCrabError {
 
     #[error("{0}")]
     Other(String),
+
+    #[error("Cron schedule error: {0}")]
+    CronSchedule(String),
+
+    #[error("Chat error ({platform}): {message}")]
+    Chat { platform: String, message: String },
+
+    #[error("MCP error: {0}")]
+    Mcp(#[from] McpError),
 }
 
-/// DAG-specific errors raised during build or execution.
+/// MCP-specific errors raised during server construction.
 #[derive(Debug, thiserror::Error)]
-pub enum DagError {
-    #[error("Cycle detected in DAG")]
-    CycleDetected,
+pub enum McpError {
+    #[error("No tools registered")]
+    NoTools,
 
+    #[error("Duplicate tool name: {name}")]
+    DuplicateToolName { name: String },
+}
+
+/// Graph-specific errors raised during build or execution.
+#[derive(Debug, thiserror::Error)]
+pub enum GraphError {
     #[error("Duplicate node name: {name}")]
     DuplicateNodeName { name: String },
 
     #[error("Unreachable node: {name}")]
     UnreachableNode { name: String },
 
-    #[error("No input node found in DAG")]
+    #[error("No input node found in graph")]
     NoInputNode,
 
     #[error(
@@ -58,6 +74,9 @@ pub enum DagError {
 
     #[error("Missing branch target node: {target} (from condition on {from})")]
     MissingBranch { from: String, target: String },
+
+    #[error("Invalid trigger configuration: {message}")]
+    InvalidTriggerConfig { message: String },
 
     #[error("Layer `{name}` failed: {source}")]
     LayerFailed {

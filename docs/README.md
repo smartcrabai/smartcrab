@@ -31,21 +31,21 @@ SmartCrab は「ツール → AI」パラダイムを実現する Rust フレー
 |-------------|------|
 | [layer.md](spec/layer.md) | Layer 仕様 — Input/Hidden/Output 各 Layer のトレイト定義とコード例 |
 | [dto.md](spec/dto.md) | DTO 仕様 — Dto トレイト、命名規約、変換、コード例 |
-| [dag.md](spec/dag.md) | DAG 仕様 — DagBuilder API、実行セマンティクス、バリデーション |
+| [graph.md](spec/graph.md) | DirectedGraph 仕様 — DirectedGraphBuilder API、実行セマンティクス、バリデーション |
 | [cli.md](spec/cli.md) | CLI コマンド仕様 — `crab new` / `generate` / `run` の詳細 |
 
 ## 用語集
 
 | 用語 | 説明 |
 |------|------|
-| **Layer** | DAG 内の処理単位（ノード）。Input / Hidden / Output の 3 種がある |
+| **Layer** | グラフ内の処理単位（ノード）。Input / Hidden / Output の 3 種がある |
 | **Input Layer** | 外部からのイベントを受けて DTO を生成する Layer。chat / cron / http のサブタイプを持つ |
 | **Hidden Layer** | DTO を受け取り、変換・加工して DTO を返す中間処理 Layer。Claude Code 呼び出し可能 |
 | **Output Layer** | DTO を受け取り、最終的な副作用（通知、保存等）を実行する Layer。Claude Code 呼び出し可能 |
 | **DTO** | Data Transfer Object。Layer 間のデータ受け渡しに使う型安全な Rust 構造体 |
-| **DAG** | Directed Acyclic Graph（有向非巡回グラフ）。Layer の実行順序と条件分岐を定義する |
-| **Node** | DAG 内のノード。1 つの Layer に対応する |
-| **Edge** | DAG 内のエッジ。Node 間の遷移を表す。条件付きエッジはクロージャで分岐判定を行う |
-| **DagBuilder** | DAG をビルダーパターンで構築するための API |
+| **DirectedGraph** | 有向グラフ。Layer の実行順序と条件分岐を定義する。サイクルもサポート |
+| **Node** | グラフ内のノード。1 つの Layer に対応する |
+| **Edge** | グラフ内のエッジ。Node 間の遷移を表す。条件付きエッジはクロージャで分岐判定を行う |
+| **DirectedGraphBuilder** | DirectedGraph をビルダーパターンで構築するための API |
 | **Claude Code** | Anthropic の AI コーディングツール。Hidden/Output Layer から子プロセスとして実行可能 |
 | **SmartCrab.toml** | プロジェクトの設定ファイル |
