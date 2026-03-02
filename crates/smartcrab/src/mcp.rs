@@ -3,8 +3,8 @@ use std::collections::HashSet;
 use serde_json::json;
 use tracing::info;
 
-use crate::dag::Dag;
 use crate::error::{McpError, Result, SmartCrabError};
+use crate::graph::DirectedGraph;
 
 /// Transport protocol for the MCP server.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -15,12 +15,12 @@ pub enum TransportType {
     Sse { host: String, port: u16 },
 }
 
-/// A single MCP tool backed by a DAG.
+/// A single MCP tool backed by a DirectedGraph.
 pub struct McpTool {
     name: String,
     description: String,
     input_schema: serde_json::Value,
-    dag: Dag,
+    graph: DirectedGraph,
 }
 
 impl std::fmt::Debug for McpTool {
@@ -46,8 +46,8 @@ impl McpTool {
         &self.input_schema
     }
 
-    pub fn dag(&self) -> &Dag {
-        &self.dag
+    pub fn graph(&self) -> &DirectedGraph {
+        &self.graph
     }
 
     /// Serialize this tool as a JSON value for the MCP `tools/list` response.
@@ -60,12 +60,12 @@ impl McpTool {
     }
 }
 
-/// Trait for converting a `Dag` into an `McpTool`.
-pub trait DagToMcpTool {
+/// Trait for converting a `DirectedGraph` into an `McpTool`.
+pub trait GraphToMcpTool {
     fn to_mcp_tool(&self) -> McpTool;
 }
 
-impl DagToMcpTool for Dag {
+impl GraphToMcpTool for DirectedGraph {
     fn to_mcp_tool(&self) -> McpTool {
         McpTool {
             name: self.name().to_string(),
@@ -74,19 +74,19 @@ impl DagToMcpTool for Dag {
                 "type": "object",
                 "properties": {},
             }),
-            dag: rebuild_dag_ref(self),
+            graph: rebuild_graph_ref(self),
         }
     }
 }
 
-/// Rebuild a minimal placeholder DAG to store inside McpTool.
-/// Since `Dag` cannot be cloned (contains closures), we store a reference-like
-/// copy that preserves name and description only for metadata purposes.
-/// The actual execution should reference the original `Dag`.
-fn rebuild_dag_ref(dag: &Dag) -> Dag {
-    // We need to build a minimal valid DAG. Since we can't clone layers/edges,
+/// Rebuild a minimal placeholder DirectedGraph to store inside McpTool.
+/// Since `DirectedGraph` cannot be cloned (contains closures), the original graph is moved
+/// into `to_mcp_tool`/`add_graph_tool` and dropped. This stub preserves only the name and
+/// description for metadata purposes and is not intended for execution.
+fn rebuild_graph_ref(graph: &DirectedGraph) -> DirectedGraph {
+    // We need to build a minimal valid graph. Since we can't clone layers/edges,
     // we create a stub that preserves name/description.
-    use crate::dag::DagBuilder;
+    use crate::graph::DirectedGraphBuilder;
     use crate::layer::{InputLayer, Layer};
 
     struct StubInput;
@@ -97,8 +97,9 @@ fn rebuild_dag_ref(dag: &Dag) -> Dag {
     }
     #[async_trait::async_trait]
     impl InputLayer for StubInput {
+        type TriggerData = ();
         type Output = StubDto;
-        async fn run(&self) -> Result<StubDto> {
+        async fn run(&self, _: ()) -> Result<StubDto> {
             Ok(StubDto)
         }
     }
@@ -106,11 +107,11 @@ fn rebuild_dag_ref(dag: &Dag) -> Dag {
     #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
     struct StubDto;
 
-    let mut builder = DagBuilder::new(dag.name());
-    if let Some(desc) = dag.description() {
+    let mut builder = DirectedGraphBuilder::new(graph.name());
+    if let Some(desc) = graph.description() {
         builder = builder.description(desc);
     }
-    builder.add_input(StubInput).build().expect("failed to build stub DAG")
+    builder.add_input(StubInput).build().expect("failed to build stub graph")
 }
 
 /// MCP server that exposes DAGs as tools.
@@ -205,9 +206,9 @@ impl McpServerBuilder {
         self
     }
 
-    /// Add a DAG as an MCP tool (auto-converts via `DagToMcpTool`).
-    pub fn add_dag_tool(mut self, dag: Dag) -> Self {
-        let tool = dag.to_mcp_tool();
+    /// Add a DirectedGraph as an MCP tool (auto-converts via `GraphToMcpTool`).
+    pub fn add_graph_tool(mut self, graph: DirectedGraph) -> Self {
+        let tool = graph.to_mcp_tool();
         self.tools.push(tool);
         self
     }
@@ -243,8 +244,8 @@ mod tests {
     use serde::{Deserialize, Serialize};
 
     use super::*;
-    use crate::dag::DagBuilder;
     use crate::error::McpError;
+    use crate::graph::DirectedGraphBuilder;
     use crate::layer::{InputLayer, Layer, OutputLayer};
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -260,8 +261,9 @@ mod tests {
     }
     #[async_trait]
     impl InputLayer for TestInput {
+        type TriggerData = ();
         type Output = TestMsg;
-        async fn run(&self) -> Result<TestMsg> {
+        async fn run(&self, _: ()) -> Result<TestMsg> {
             Ok(TestMsg {
                 text: "hello".into(),
             })
@@ -282,8 +284,8 @@ mod tests {
         }
     }
 
-    fn build_test_dag(name: &str) -> Dag {
-        DagBuilder::new(name)
+    fn build_test_graph(name: &str) -> DirectedGraph {
+        DirectedGraphBuilder::new(name)
             .description(format!("{name} description"))
             .add_input(TestInput)
             .add_output(TestOutput)
@@ -301,8 +303,9 @@ mod tests {
     }
     #[async_trait]
     impl InputLayer for TestInput2 {
+        type TriggerData = ();
         type Output = TestMsg;
-        async fn run(&self) -> Result<TestMsg> {
+        async fn run(&self, _: ()) -> Result<TestMsg> {
             Ok(TestMsg {
                 text: "hello2".into(),
             })
@@ -323,8 +326,8 @@ mod tests {
         }
     }
 
-    fn build_test_dag_2(name: &str) -> Dag {
-        DagBuilder::new(name)
+    fn build_test_graph_2(name: &str) -> DirectedGraph {
+        DirectedGraphBuilder::new(name)
             .add_input(TestInput2)
             .add_output(TestOutput2)
             .add_edge("TestInput2", "TestOutput2")
@@ -332,38 +335,38 @@ mod tests {
             .unwrap()
     }
 
-    // --- DagToMcpTool tests ---
+    // --- GraphToMcpTool tests ---
 
     #[test]
-    fn test_dag_to_mcp_tool_name() {
-        let dag = build_test_dag("analyze_code");
-        let tool = dag.to_mcp_tool();
+    fn test_graph_to_mcp_tool_name() {
+        let graph = build_test_graph("analyze_code");
+        let tool = graph.to_mcp_tool();
         assert_eq!(tool.name(), "analyze_code");
     }
 
     #[test]
-    fn test_dag_to_mcp_tool_description() {
-        let dag = build_test_dag("analyze_code");
-        let tool = dag.to_mcp_tool();
+    fn test_graph_to_mcp_tool_description() {
+        let graph = build_test_graph("analyze_code");
+        let tool = graph.to_mcp_tool();
         assert_eq!(tool.description(), "analyze_code description");
     }
 
     #[test]
-    fn test_dag_to_mcp_tool_no_description() {
-        let dag = DagBuilder::new("simple")
+    fn test_graph_to_mcp_tool_no_description() {
+        let graph = DirectedGraphBuilder::new("simple")
             .add_input(TestInput)
             .add_output(TestOutput)
             .add_edge("TestInput", "TestOutput")
             .build()
             .unwrap();
-        let tool = dag.to_mcp_tool();
+        let tool = graph.to_mcp_tool();
         assert_eq!(tool.description(), "");
     }
 
     #[test]
-    fn test_dag_to_mcp_tool_input_schema() {
-        let dag = build_test_dag("test");
-        let tool = dag.to_mcp_tool();
+    fn test_graph_to_mcp_tool_input_schema() {
+        let graph = build_test_graph("test");
+        let tool = graph.to_mcp_tool();
         let schema = tool.input_schema();
         assert_eq!(schema["type"], "object");
         assert!(schema["properties"].is_object());
@@ -371,8 +374,8 @@ mod tests {
 
     #[test]
     fn test_mcp_tool_to_json() {
-        let dag = build_test_dag("my_tool");
-        let tool = dag.to_mcp_tool();
+        let graph = build_test_graph("my_tool");
+        let tool = graph.to_mcp_tool();
         let json = tool.to_json();
         assert_eq!(json["name"], "my_tool");
         assert_eq!(json["description"], "my_tool description");
@@ -383,9 +386,9 @@ mod tests {
 
     #[test]
     fn test_builder_basic() {
-        let dag = build_test_dag("tool1");
+        let graph = build_test_graph("tool1");
         let server = McpServerBuilder::new("test-server")
-            .add_dag_tool(dag)
+            .add_graph_tool(graph)
             .build()
             .unwrap();
 
@@ -399,7 +402,7 @@ mod tests {
 
     #[test]
     fn test_builder_with_all_options() {
-        let dag = build_test_dag("tool1");
+        let graph = build_test_graph("tool1");
         let server = McpServerBuilder::new("my-server")
             .version("2.0.0")
             .description("My MCP Server")
@@ -407,7 +410,7 @@ mod tests {
                 host: "0.0.0.0".into(),
                 port: 9090,
             })
-            .add_dag_tool(dag)
+            .add_graph_tool(graph)
             .build()
             .unwrap();
 
@@ -425,11 +428,11 @@ mod tests {
 
     #[test]
     fn test_builder_multiple_tools() {
-        let dag1 = build_test_dag("tool1");
-        let dag2 = build_test_dag_2("tool2");
+        let graph1 = build_test_graph("tool1");
+        let graph2 = build_test_graph_2("tool2");
         let server = McpServerBuilder::new("multi")
-            .add_dag_tool(dag1)
-            .add_dag_tool(dag2)
+            .add_graph_tool(graph1)
+            .add_graph_tool(graph2)
             .build()
             .unwrap();
 
@@ -446,11 +449,11 @@ mod tests {
 
     #[test]
     fn test_builder_duplicate_tool_name_error() {
-        let dag1 = build_test_dag("same_name");
-        let dag2 = build_test_dag_2("same_name");
+        let graph1 = build_test_graph("same_name");
+        let graph2 = build_test_graph_2("same_name");
         let result = McpServerBuilder::new("dup")
-            .add_dag_tool(dag1)
-            .add_dag_tool(dag2)
+            .add_graph_tool(graph1)
+            .add_graph_tool(graph2)
             .build();
 
         assert!(result.is_err());
@@ -466,8 +469,8 @@ mod tests {
     #[test]
     fn test_transport_type_stdio_default() {
         let builder = McpServerBuilder::new("test");
-        let dag = build_test_dag("t");
-        let server = builder.add_dag_tool(dag).build().unwrap();
+        let graph = build_test_graph("t");
+        let server = builder.add_graph_tool(graph).build().unwrap();
         assert_eq!(server.transport(), &TransportType::Stdio);
     }
 
@@ -505,9 +508,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_server_run() {
-        let dag = build_test_dag("run_test");
+        let graph = build_test_graph("run_test");
         let server = McpServerBuilder::new("test-server")
-            .add_dag_tool(dag)
+            .add_graph_tool(graph)
             .build()
             .unwrap();
 
@@ -515,30 +518,30 @@ mod tests {
         assert!(result.is_ok());
     }
 
-    // --- Dag description tests ---
+    // --- DirectedGraph description tests ---
 
     #[test]
-    fn test_dag_description() {
-        let dag = DagBuilder::new("described")
-            .description("A test DAG")
+    fn test_graph_description() {
+        let graph = DirectedGraphBuilder::new("described")
+            .description("A test graph")
             .add_input(TestInput)
             .add_output(TestOutput)
             .add_edge("TestInput", "TestOutput")
             .build()
             .unwrap();
 
-        assert_eq!(dag.description(), Some("A test DAG"));
+        assert_eq!(graph.description(), Some("A test graph"));
     }
 
     #[test]
-    fn test_dag_no_description() {
-        let dag = DagBuilder::new("plain")
+    fn test_graph_no_description() {
+        let graph = DirectedGraphBuilder::new("plain")
             .add_input(TestInput)
             .add_output(TestOutput)
             .add_edge("TestInput", "TestOutput")
             .build()
             .unwrap();
 
-        assert_eq!(dag.description(), None);
+        assert_eq!(graph.description(), None);
     }
 }

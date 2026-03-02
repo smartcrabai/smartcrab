@@ -23,9 +23,16 @@ pub struct DiscordNotification {
 
 impl DiscordMessage {
     /// Extract the actual message content, stripping the bot mention prefix.
+    ///
+    /// Handles both `<@BOT_ID>` and `<@!BOT_ID>` (nickname mention) formats.
     pub fn stripped_content(&self, bot_id: &str) -> String {
-        let mention_pattern = format!("<@{bot_id}>");
-        self.content.replace(&mention_pattern, "").trim().to_owned()
+        let mention = format!("<@{bot_id}>");
+        let mention_nick = format!("<@!{bot_id}>");
+        self.content
+            .replace(&mention, "")
+            .replace(&mention_nick, "")
+            .trim()
+            .to_owned()
     }
 }
 
@@ -66,7 +73,10 @@ impl ChatClient for DiscordClient {
             .json(&body)
             .send()
             .await
-            .map_err(|e| SmartCrabError::Other(format!("Discord request failed: {e}")))?;
+            .map_err(|e| SmartCrabError::Chat {
+                platform: "discord".into(),
+                message: format!("request failed: {e}"),
+            })?;
 
         if !resp.status().is_success() {
             let status = resp.status();
@@ -74,9 +84,10 @@ impl ChatClient for DiscordClient {
                 .text()
                 .await
                 .unwrap_or_else(|_| "<failed to read body>".into());
-            return Err(SmartCrabError::Other(format!(
-                "Discord API error ({status}): {text}"
-            )));
+            return Err(SmartCrabError::Chat {
+                platform: "discord".into(),
+                message: format!("API error ({status}): {text}"),
+            });
         }
 
         Ok(())
@@ -93,6 +104,18 @@ mod tests {
             channel_id: "123".into(),
             author: "user".into(),
             content: "<@BOT123> hello world".into(),
+            is_mention: true,
+            is_dm: false,
+        };
+        assert_eq!(msg.stripped_content("BOT123"), "hello world");
+    }
+
+    #[test]
+    fn test_stripped_content_nickname_mention() {
+        let msg = DiscordMessage {
+            channel_id: "123".into(),
+            author: "user".into(),
+            content: "<@!BOT123> hello world".into(),
             is_mention: true,
             is_dm: false,
         };
