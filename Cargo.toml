@@ -9,9 +9,9 @@ repository = "https://github.com/takumi3488/smartcrab"
 version = "0.1.3"
 
 [workspace.metadata.dist]
+allow-dirty = ["ci"]
 cargo-dist-version = "0.31.0"
 ci = "github"
-allow-dirty = ["ci"]
 installers = ["shell", "homebrew"]
 publish-jobs = ["homebrew"]
 tap = "takumi3488/homebrew-tap"
