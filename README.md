@@ -9,13 +9,13 @@
 ### Homebrew (macOS / Linux)
 
 ```sh
-brew install takumi3488/tap/smartcrab-cli
+brew install smartcrabai/tap/smartcrab-cli
 ```
 
 ### Shell script installer
 
 ```sh
-curl --proto '=https' --tlsv1.2 -LsSf https://github.com/takumi3488/smartcrab/releases/latest/download/smartcrab-cli-installer.sh | sh
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/smartcrabai/smartcrab/releases/latest/download/smartcrab-cli-installer.sh | sh
 ```
 
 ## Development

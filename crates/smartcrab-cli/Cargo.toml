@@ -1,7 +1,7 @@
 [package]
 description = "CLI binary for SmartCrab workflow orchestration engine"
 edition.workspace = true
-homepage = "https://github.com/takumi3488/smartcrab"
+homepage = "https://github.com/smartcrabai/smartcrab"
 license.workspace = true
 name = "smartcrab-cli"
 publish = false
