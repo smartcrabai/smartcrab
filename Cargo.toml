@@ -6,7 +6,7 @@ resolver = "3"
 edition = "2024"
 license = "Apache-2.0"
 repository = "https://github.com/smartcrabai/smartcrab"
-version = "0.1.3"
+version = "0.1.4"
 
 [workspace.metadata.dist]
 allow-dirty = ["ci"]
