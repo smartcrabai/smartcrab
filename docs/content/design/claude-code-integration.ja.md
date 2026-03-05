@@ -18,7 +18,7 @@ Claude Code は以下の場面で使用される:
 
 ### 基本パターン
 
-```mermaid
+{% mermaid() %}
 sequenceDiagram
     participant L as Layer
     participant CC as ClaudeCode Helper
@@ -29,7 +29,7 @@ sequenceDiagram
     CC->>P: stdin に prompt を書き込み
     P-->>CC: stdout からレスポンスを読み取り
     CC-->>L: Result<String>
-```
+{% end %}
 
 ### Hidden Layer での使用
 
@@ -205,7 +205,7 @@ fn parse_response<T: Dto>(response: &str) -> Result<T> {
 | 非ゼロ終了 | Claude Code がエラー終了 | `SmartCrabError::ClaudeCodeFailed { exit_code, stderr }` |
 | パースエラー | レスポンスが期待する形式でない | `SmartCrabError::ResponseParseError { response, source }` |
 
-```mermaid
+{% mermaid() %}
 flowchart TD
     Start([claude コマンド実行]) --> Spawn{spawn 成功?}
     Spawn -->|No| NotFound[ClaudeCodeNotFound]
@@ -217,7 +217,7 @@ flowchart TD
     Exit -->|0| Parse{パース成功?}
     Parse -->|No| ParseErr[ResponseParseError]
     Parse -->|Yes| Ok([Result::Ok])
-```
+{% end %}
 
 ## テスト戦略
 

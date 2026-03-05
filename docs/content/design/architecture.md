@@ -33,7 +33,7 @@ Benefits of this approach:
 
 ## System Overview
 
-```mermaid
+{% mermaid() %}
 C4Context
     title SmartCrab System Context
 
@@ -51,13 +51,13 @@ C4Context
     Rel(discord, smartcrab, "DM / mention")
     Rel(http_client, smartcrab, "HTTP request")
     Rel(smartcrab, jaeger, "OpenTelemetry traces")
-```
+{% end %}
 
 ## The Three Core Elements
 
 A SmartCrab application is composed of three elements: **Layer**, **DTO**, and **DAG**.
 
-```mermaid
+{% mermaid() %}
 classDiagram
     class Layer {
         <<trait>>
@@ -98,7 +98,7 @@ classDiagram
     DagBuilder --> Dag : builds
     Dag --> Layer : executes
     Dag --> Dto : transfers
-```
+{% end %}
 
 - **Layer**: The minimal processing unit. Three kinds: Input, Hidden, and Output
 - **DTO**: A type-safe struct for passing data between Layers
@@ -108,7 +108,7 @@ classDiagram
 
 SmartCrab runs multiple DAGs simultaneously in a single process. Each DAG operates as an independent async task on the tokio runtime.
 
-```mermaid
+{% mermaid() %}
 flowchart TB
     subgraph Process["SmartCrab Process"]
         subgraph Runtime["tokio Runtime"]
@@ -126,7 +126,7 @@ flowchart TB
             end
         end
     end
-```
+{% end %}
 
 - Each DAG runs as an independent task via `tokio::spawn`
 - Layers within a DAG are executed sequentially in the order defined by the DAG (parallel edges run in parallel)

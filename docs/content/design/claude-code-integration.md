@@ -18,7 +18,7 @@ Claude Code is used in the following scenarios:
 
 ### Basic Pattern
 
-```mermaid
+{% mermaid() %}
 sequenceDiagram
     participant L as Layer
     participant CC as ClaudeCode Helper
@@ -29,7 +29,7 @@ sequenceDiagram
     CC->>P: Write prompt to stdin
     P-->>CC: Read response from stdout
     CC-->>L: Result<String>
-```
+{% end %}
 
 ### Usage in a Hidden Layer
 
@@ -205,7 +205,7 @@ Fallback when parsing fails:
 | Non-zero exit | Claude Code exits with an error | `SmartCrabError::ClaudeCodeFailed { exit_code, stderr }` |
 | Parse error | Response is not in the expected format | `SmartCrabError::ResponseParseError { response, source }` |
 
-```mermaid
+{% mermaid() %}
 flowchart TD
     Start([Execute claude command]) --> Spawn{spawn successful?}
     Spawn -->|No| NotFound[ClaudeCodeNotFound]
@@ -217,7 +217,7 @@ flowchart TD
     Exit -->|0| Parse{Parse successful?}
     Parse -->|No| ParseErr[ResponseParseError]
     Parse -->|Yes| Ok([Result::Ok])
-```
+{% end %}
 
 ## Test Strategy
 

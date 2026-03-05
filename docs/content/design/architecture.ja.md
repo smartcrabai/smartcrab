@@ -33,7 +33,7 @@ SmartCrab: ツール → AI
 
 ## システム全体像
 
-```mermaid
+{% mermaid() %}
 C4Context
     title SmartCrab System Context
 
@@ -51,13 +51,13 @@ C4Context
     Rel(discord, smartcrab, "DM / メンション")
     Rel(http_client, smartcrab, "HTTP リクエスト")
     Rel(smartcrab, jaeger, "OpenTelemetry トレース")
-```
+{% end %}
 
 ## 3 要素の関係
 
 SmartCrab アプリケーションは **Layer**、**DTO**、**DAG** の 3 要素で構成される。
 
-```mermaid
+{% mermaid() %}
 classDiagram
     class Layer {
         <<trait>>
@@ -98,7 +98,7 @@ classDiagram
     DagBuilder --> Dag : builds
     Dag --> Layer : executes
     Dag --> Dto : transfers
-```
+{% end %}
 
 - **Layer**: 処理の最小単位。Input / Hidden / Output の 3 種
 - **DTO**: Layer 間のデータ受け渡しに使う型安全な構造体
@@ -108,7 +108,7 @@ classDiagram
 
 SmartCrab は 1 プロセスで複数の DAG を同時実行する。tokio ランタイム上で各 DAG が独立した非同期タスクとして動作する。
 
-```mermaid
+{% mermaid() %}
 flowchart TB
     subgraph Process["SmartCrab Process"]
         subgraph Runtime["tokio Runtime"]
@@ -126,7 +126,7 @@ flowchart TB
             end
         end
     end
-```
+{% end %}
 
 - 各 DAG は `tokio::spawn` で独立したタスクとして実行される
 - DAG 内の Layer は DAG が定義する順序で逐次実行される（並列エッジがある場合は並列実行）

@@ -11,7 +11,7 @@ SmartCrab's DAG (Directed Acyclic Graph) is a graph structure that defines the e
 - **Node**: Corresponds to one Layer. Calls the Layer's `run` method at execution time
 - **Edge**: Represents a transition between Nodes. There are two kinds: unconditional edges and conditional edges
 
-```mermaid
+{% mermaid() %}
 flowchart LR
     subgraph DAG
         A["Node A<br/>(Input Layer)"]
@@ -24,7 +24,7 @@ flowchart LR
         B -->|"Conditional edge<br/>needs_ai = false"| D
         C -->|"Unconditional edge"| D
     end
-```
+{% end %}
 
 ## Builder Pattern API Design
 
@@ -65,7 +65,7 @@ let dag = DagBuilder::new("my_pipeline")
 
 At `build()` time, the DAG's nodes are topologically sorted to determine the execution order.
 
-```mermaid
+{% mermaid() %}
 flowchart TD
     subgraph "Topological Sort Result"
         direction TB
@@ -75,11 +75,11 @@ flowchart TD
         Step4["Step 4: SlackNotifier"]
     end
     Step1 --> Step2 --> Step3 --> Step4
-```
+{% end %}
 
 ### Execution Flow
 
-```mermaid
+{% mermaid() %}
 flowchart TD
     Start([DAG execution start]) --> ExecNode[Execute current Node]
     ExecNode --> CheckResult{Result?}
@@ -91,19 +91,19 @@ flowchart TD
     EvalCond --> SelectBranch[Select branch Node]
     SelectBranch --> NextNode
     NextNode --> ExecNode
-```
+{% end %}
 
 ### Parallel Execution
 
 When multiple unconditional edges originate from the same Node, the successor Nodes can be executed in parallel.
 
-```mermaid
+{% mermaid() %}
 flowchart TD
     A[Node A] --> B[Node B]
     A --> C[Node C]
     B --> D[Node D]
     C --> D
-```
+{% end %}
 
 In the above case, Node B and Node C are executed in parallel via `tokio::join!`. Node D executes only after both B and C have completed.
 
@@ -113,7 +113,7 @@ In the above case, Node B and Node C are executed in parallel via `tokio::join!`
 
 The core function of SmartCrab is "deciding whether to invoke AI based on conditions." A typical pattern:
 
-```mermaid
+{% mermaid() %}
 flowchart TD
     Input[Input Layer<br/>Receive event] --> Analyze[Hidden Layer<br/>Rule-based analysis]
     Analyze --> Cond{"Condition check<br/>Is AI needed?"}
@@ -121,7 +121,7 @@ flowchart TD
     Cond -->|"simple"| Simple[Hidden Layer<br/>Template response]
     AI --> Output[Output Layer]
     Simple --> Output
-```
+{% end %}
 
 Examples of condition decisions:
 
@@ -185,7 +185,7 @@ For two Nodes connected by an edge, the `Output` type of the preceding Node and 
 
 ## DAG Lifecycle
 
-```mermaid
+{% mermaid() %}
 stateDiagram-v2
     [*] --> Building: DagBuilder::new()
     Building --> Building: add_node / add_edge
@@ -199,7 +199,7 @@ stateDiagram-v2
     ShuttingDown --> Failed: Stop after current Layer completes
     Completed --> [*]
     Failed --> [*]
-```
+{% end %}
 
 ### Graceful Shutdown
 
