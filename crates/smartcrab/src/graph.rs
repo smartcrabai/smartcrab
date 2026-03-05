@@ -1,10 +1,12 @@
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 
 use tracing::{info, instrument};
 
 use crate::dto::DtoObject;
 use crate::error::{GraphError, Result, SmartCrabError};
 use crate::layer::{AnyLayer, HiddenLayer, InputLayer, OutputLayer};
+use crate::storage::Storage;
 
 type ConditionFn = Box<dyn Fn(&dyn DtoObject) -> Option<String> + Send + Sync>;
 
@@ -74,6 +76,7 @@ pub struct DirectedGraph {
     edges: Vec<Edge>,
     execution_order: Vec<String>,
     trigger_kind: Option<TriggerKind>,
+    storage: Option<Arc<dyn Storage>>,
 }
 
 pub struct EdgeInfo {
@@ -101,6 +104,10 @@ impl DirectedGraph {
 
     pub fn trigger_kind(&self) -> Option<&TriggerKind> {
         self.trigger_kind.as_ref()
+    }
+
+    pub fn storage(&self) -> Option<&Arc<dyn Storage>> {
+        self.storage.as_ref()
     }
 
     pub fn edge_infos(&self) -> Vec<EdgeInfo> {
@@ -336,6 +343,7 @@ pub struct DirectedGraphBuilder {
     edges: Vec<Edge>,
     insertion_order: Vec<String>,
     trigger_kind: Option<TriggerKind>,
+    storage: Option<Arc<dyn Storage>>,
 }
 
 impl DirectedGraphBuilder {
@@ -347,6 +355,7 @@ impl DirectedGraphBuilder {
             edges: Vec::new(),
             insertion_order: Vec::new(),
             trigger_kind: None,
+            storage: None,
         }
     }
 
@@ -357,6 +366,11 @@ impl DirectedGraphBuilder {
 
     pub fn trigger(mut self, kind: TriggerKind) -> Self {
         self.trigger_kind = Some(kind);
+        self
+    }
+
+    pub fn storage(mut self, storage: Arc<dyn Storage>) -> Self {
+        self.storage = Some(storage);
         self
     }
 
@@ -423,6 +437,7 @@ impl DirectedGraphBuilder {
             edges: self.edges,
             execution_order: self.insertion_order,
             trigger_kind: self.trigger_kind,
+            storage: self.storage,
         })
     }
 
@@ -536,6 +551,7 @@ mod tests {
 
     use super::*;
     use crate::layer::{HiddenLayer, InputLayer, Layer, OutputLayer};
+    use crate::storage::{InMemoryStorage, StorageExt};
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     struct MsgA {
@@ -850,6 +866,64 @@ mod tests {
         let result = graph.run().await;
         assert!(result.is_ok());
         assert!(exit_triggered.load(std::sync::atomic::Ordering::SeqCst));
+    }
+
+    #[tokio::test]
+    async fn test_graph_storage_attach_and_access() {
+        let storage: Arc<dyn Storage> = Arc::new(InMemoryStorage::new());
+
+        struct WriteLayer {
+            storage: Arc<dyn Storage>,
+        }
+        impl Layer for WriteLayer {
+            fn name(&self) -> &str {
+                "Write"
+            }
+        }
+        #[async_trait]
+        impl InputLayer for WriteLayer {
+            type TriggerData = ();
+            type Output = MsgA;
+            async fn run(&self, _: ()) -> Result<MsgA> {
+                self.storage
+                    .set("result", "stored_value".to_owned())
+                    .await
+                    .unwrap();
+                Ok(MsgA {
+                    text: "written".into(),
+                })
+            }
+        }
+
+        let graph = DirectedGraphBuilder::new("storage_test")
+            .storage(storage.clone())
+            .add_input(WriteLayer {
+                storage: storage.clone(),
+            })
+            .build()
+            .unwrap();
+
+        graph.run().await.unwrap();
+
+        assert!(graph.storage().is_some());
+        assert_eq!(
+            storage.get("result").await.unwrap(),
+            Some("stored_value".to_owned())
+        );
+
+        // Typed access via Arc<dyn Storage>
+        storage.set_typed("typed_key", &42u32).await.unwrap();
+        let v: Option<u32> = storage.get_typed("typed_key").await.unwrap();
+        assert_eq!(v, Some(42u32));
+    }
+
+    #[test]
+    fn test_graph_no_storage_by_default() {
+        let graph = DirectedGraphBuilder::new("test")
+            .add_input(SourceLayer)
+            .build()
+            .unwrap();
+        assert!(graph.storage().is_none());
     }
 
     /// Conditional branch: the bypassed branch must never execute, and the graph

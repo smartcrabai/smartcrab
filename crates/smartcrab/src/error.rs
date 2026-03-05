@@ -1,10 +1,39 @@
+use std::path::PathBuf;
 use std::time::Duration;
+
+/// Errors raised by storage operations.
+#[derive(Debug, thiserror::Error)]
+pub enum StorageError {
+    #[error("Storage I/O error: {0}")]
+    Io(#[from] std::io::Error),
+
+    #[error("Failed to serialize value for key `{key}`: {source}")]
+    Serialization {
+        key: String,
+        source: serde_json::Error,
+    },
+
+    #[error("Failed to deserialize value for key `{key}`: {source}")]
+    Deserialization {
+        key: String,
+        source: serde_json::Error,
+    },
+
+    #[error("Storage file corrupted at {path}: {source}")]
+    FileCorrupted {
+        path: PathBuf,
+        source: serde_json::Error,
+    },
+}
 
 /// Top-level error type for SmartCrab.
 #[derive(Debug, thiserror::Error)]
 pub enum SmartCrabError {
     #[error("Graph error: {0}")]
     Graph(#[from] GraphError),
+
+    #[error("Storage error: {0}")]
+    Storage(#[from] StorageError),
 
     #[error("`claude` command not found. Is Claude Code CLI installed?")]
     ClaudeCodeNotFound,
