@@ -124,18 +124,15 @@ impl FileStorage {
     /// Open (or create) the storage file at `path`.
     pub async fn open(path: impl AsRef<Path>) -> Result<Self> {
         let path = path.as_ref().to_owned();
-        let data = if path.exists() {
-            let raw = tokio::fs::read_to_string(&path)
-                .await
-                .map_err(|e| SmartCrabError::Storage(StorageError::Io(e)))?;
-            serde_json::from_str::<HashMap<String, String>>(&raw).map_err(|e| {
+        let data = match tokio::fs::read_to_string(&path).await {
+            Ok(raw) => serde_json::from_str::<HashMap<String, String>>(&raw).map_err(|e| {
                 SmartCrabError::Storage(StorageError::FileCorrupted {
                     path: path.clone(),
                     source: e,
                 })
-            })?
-        } else {
-            HashMap::new()
+            })?,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => HashMap::new(),
+            Err(e) => return Err(SmartCrabError::Storage(StorageError::Io(e))),
         };
         Ok(Self {
             path,
