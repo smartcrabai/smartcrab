@@ -119,7 +119,6 @@ version = "0.1.0"
 [telemetry]
 enabled = true
 exporter = "otlp"
-endpoint = "http://localhost:4317"
 
 [claude_code]
 timeout_secs = 300
