@@ -1,5 +1,5 @@
-mod dag;
 mod dto;
+mod graph;
 mod layer;
 
 use smartcrab::prelude::*;
@@ -10,8 +10,8 @@ async fn main() -> Result<()> {
 
     tracing::info!("starting {{name}}");
 
-    let discord_graph = dag::discord_pipeline::build()?;
-    let cron_graph = dag::cron_pipeline::build()?;
+    let discord_graph = graph::discord_pipeline::build()?;
+    let cron_graph = graph::cron_pipeline::build()?;
 
     Runtime::new()
         .add_graph(discord_graph)
