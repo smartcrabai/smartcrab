@@ -8,7 +8,7 @@ weight = 2
 
 SmartCrab のデータフローは Input → DTO → Hidden → DTO → Output の流れで構成される。各 Layer 間のデータ受け渡しは型安全な DTO を介して行われる。
 
-```mermaid
+{% mermaid() %}
 flowchart LR
     subgraph Input["Input Layer"]
         I[chat / cron / http]
@@ -31,7 +31,7 @@ flowchart LR
     H -->|"Result&lt;DTO&gt;"| D2
     D2 -->|"DTO"| O
     O -->|"Result&lt;()&gt;"| Done["完了"]
-```
+{% end %}
 
 ## Layer のシグネチャ設計
 
@@ -65,14 +65,14 @@ pub trait OutputLayer: Send + Sync {
 
 条件付きエッジでは、先行 Layer の出力 DTO を参照して分岐先を決定する。クロージャはDTO の参照を受け取り、分岐先の識別子を返す。
 
-```mermaid
+{% mermaid() %}
 flowchart TD
     A[Hidden Layer A] -->|"AnalysisOutput"| Cond{"条件判定クロージャ<br/>Fn(&AnalysisOutput) → &str"}
     Cond -->|"needs_ai"| B[Hidden Layer B<br/>Claude Code 呼び出し]
     Cond -->|"simple"| C[Hidden Layer C<br/>通常処理]
     B --> D[Output Layer]
     C --> D
-```
+{% end %}
 
 ### 条件クロージャのシグネチャ
 
@@ -108,13 +108,13 @@ async fn run(&self, input: Self::Input) -> Result<Self::Output> {
 
 Layer が `Err` を返した場合、DAG エンジンは実行を停止し、エラーを呼び出し元に伝播する。
 
-```mermaid
+{% mermaid() %}
 flowchart TD
     A[Layer A] -->|Ok| B[Layer B]
     B -->|Err| Stop["DAG 実行停止<br/>エラーをトレースに記録"]
     B -->|Ok| C[Layer C]
     C -->|Ok| Done["完了"]
-```
+{% end %}
 
 - エラー発生時、該当 Layer の span にエラー情報が記録される
 - DAG は即座に実行を停止する（後続の Layer は実行されない）

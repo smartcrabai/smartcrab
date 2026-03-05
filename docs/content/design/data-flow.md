@@ -8,7 +8,7 @@ weight = 2
 
 The data flow in SmartCrab follows the pattern: Input → DTO → Hidden → DTO → Output. Data transfer between each Layer is mediated by type-safe DTOs.
 
-```mermaid
+{% mermaid() %}
 flowchart LR
     subgraph Input["Input Layer"]
         I[chat / cron / http]
@@ -31,7 +31,7 @@ flowchart LR
     H -->|"Result&lt;DTO&gt;"| D2
     D2 -->|"DTO"| O
     O -->|"Result&lt;()&gt;"| Done["Done"]
-```
+{% end %}
 
 ## Layer Signature Design
 
@@ -65,14 +65,14 @@ pub trait OutputLayer: Send + Sync {
 
 In conditional edges, the output DTO of the preceding Layer is inspected to determine the branch target. The closure receives a reference to the DTO and returns the identifier of the branch target.
 
-```mermaid
+{% mermaid() %}
 flowchart TD
     A[Hidden Layer A] -->|"AnalysisOutput"| Cond{"Condition closure<br/>Fn(&AnalysisOutput) → &str"}
     Cond -->|"needs_ai"| B[Hidden Layer B<br/>Claude Code invocation]
     Cond -->|"simple"| C[Hidden Layer C<br/>Normal processing]
     B --> D[Output Layer]
     C --> D
-```
+{% end %}
 
 ### Condition Closure Signature
 
@@ -108,13 +108,13 @@ async fn run(&self, input: Self::Input) -> Result<Self::Output> {
 
 If a Layer returns `Err`, the DAG engine stops execution and propagates the error to the caller.
 
-```mermaid
+{% mermaid() %}
 flowchart TD
     A[Layer A] -->|Ok| B[Layer B]
     B -->|Err| Stop["DAG execution stopped<br/>Error recorded in trace"]
     B -->|Ok| C[Layer C]
     C -->|Ok| Done["Done"]
-```
+{% end %}
 
 - On error, the error information is recorded in the relevant Layer's span
 - The DAG stops execution immediately (subsequent Layers are not executed)
