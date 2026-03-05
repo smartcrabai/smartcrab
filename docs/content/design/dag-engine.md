@@ -1,15 +1,15 @@
 +++
 title = "DAG Engine"
-description = "DAG エンジン設計 — 実行エンジン、条件分岐、検証、ライフサイクル"
+description = "DAG engine design — execution engine, conditional branching, validation, lifecycle"
 weight = 3
 +++
 
-## 概念モデル
+## Conceptual Model
 
-SmartCrab の DAG（Directed Acyclic Graph）は、Layer の実行順序と条件分岐を定義するグラフ構造である。
+SmartCrab's DAG (Directed Acyclic Graph) is a graph structure that defines the execution order and conditional branching of Layers.
 
-- **Node**: 1 つの Layer に対応する。実行時に Layer の `run` メソッドを呼び出す
-- **Edge**: Node 間の遷移を表す。無条件エッジと条件付きエッジの 2 種がある
+- **Node**: Corresponds to one Layer. Calls the Layer's `run` method at execution time
+- **Edge**: Represents a transition between Nodes. There are two kinds: unconditional edges and conditional edges
 
 ```mermaid
 flowchart LR
@@ -19,16 +19,16 @@ flowchart LR
         C["Node C<br/>(Hidden Layer)"]
         D["Node D<br/>(Output Layer)"]
 
-        A -->|"無条件エッジ"| B
-        B -->|"条件付きエッジ<br/>needs_ai = true"| C
-        B -->|"条件付きエッジ<br/>needs_ai = false"| D
-        C -->|"無条件エッジ"| D
+        A -->|"Unconditional edge"| B
+        B -->|"Conditional edge<br/>needs_ai = true"| C
+        B -->|"Conditional edge<br/>needs_ai = false"| D
+        C -->|"Unconditional edge"| D
     end
 ```
 
-## ビルダーパターン API 設計
+## Builder Pattern API Design
 
-DAG はビルダーパターンで構築する。メソッドチェーンにより宣言的に定義でき、最後に `build()` で検証済みの DAG を生成する。
+DAGs are constructed using the builder pattern. Method chaining allows declarative definition, and `build()` at the end produces a validated DAG.
 
 ```rust
 let dag = DagBuilder::new("my_pipeline")
@@ -53,49 +53,49 @@ let dag = DagBuilder::new("my_pipeline")
     .build()?;
 ```
 
-### 設計方針
+### Design Principles
 
-- **型消去**: `add_node` は `impl Layer` を受け取り、内部で `Box<dyn Layer>` として保持する。これにより異なる型の Layer を同一の DAG に混在できる
-- **名前ベースの参照**: エッジは Layer の `name()` で Node を参照する。型パラメータの爆発を避けるための設計判断
-- **遅延検証**: 型整合性やグラフ構造の検証は `build()` 時にまとめて実行する
+- **Type erasure**: `add_node` accepts `impl Layer` and stores it internally as `Box<dyn Layer>`. This allows Layers of different types to coexist in the same DAG
+- **Name-based references**: Edges reference Nodes by the Layer's `name()`. A design decision to avoid type parameter explosion
+- **Deferred validation**: Type consistency and graph structure validation are performed all at once during `build()`
 
-## 実行エンジン設計
+## Execution Engine Design
 
-### トポロジカルソート
+### Topological Sort
 
-`build()` 時に DAG のノードをトポロジカルソートし、実行順序を決定する。
+At `build()` time, the DAG's nodes are topologically sorted to determine the execution order.
 
 ```mermaid
 flowchart TD
-    subgraph "トポロジカルソート結果"
+    subgraph "Topological Sort Result"
         direction TB
         Step1["Step 1: HttpInput"]
         Step2["Step 2: DataAnalyzer"]
-        Step3["Step 3a: AiProcessor / Step 3b: SimpleProcessor<br/>(条件分岐)"]
+        Step3["Step 3a: AiProcessor / Step 3b: SimpleProcessor<br/>(conditional branch)"]
         Step4["Step 4: SlackNotifier"]
     end
     Step1 --> Step2 --> Step3 --> Step4
 ```
 
-### 実行フロー
+### Execution Flow
 
 ```mermaid
 flowchart TD
-    Start([DAG 実行開始]) --> ExecNode[現在の Node を実行]
-    ExecNode --> CheckResult{Result は?}
-    CheckResult -->|Ok| HasEdge{後続エッジは?}
-    CheckResult -->|Err| Error([エラー: DAG 停止])
-    HasEdge -->|無条件エッジ| NextNode[次の Node へ]
-    HasEdge -->|条件付きエッジ| EvalCond[条件クロージャを評価]
-    HasEdge -->|エッジなし| Done([DAG 完了])
-    EvalCond --> SelectBranch[分岐先 Node を選択]
+    Start([DAG execution start]) --> ExecNode[Execute current Node]
+    ExecNode --> CheckResult{Result?}
+    CheckResult -->|Ok| HasEdge{Outgoing edges?}
+    CheckResult -->|Err| Error([Error: DAG stops])
+    HasEdge -->|Unconditional edge| NextNode[Go to next Node]
+    HasEdge -->|Conditional edge| EvalCond[Evaluate condition closure]
+    HasEdge -->|No edges| Done([DAG complete])
+    EvalCond --> SelectBranch[Select branch Node]
     SelectBranch --> NextNode
     NextNode --> ExecNode
 ```
 
-### 並列実行
+### Parallel Execution
 
-同一 Node から複数の無条件エッジが出ている場合、後続 Node を並列実行できる。
+When multiple unconditional edges originate from the same Node, the successor Nodes can be executed in parallel.
 
 ```mermaid
 flowchart TD
@@ -105,38 +105,38 @@ flowchart TD
     C --> D
 ```
 
-上記の場合、Node B と Node C は `tokio::join!` で並列実行される。Node D は B と C の両方が完了してから実行される。
+In the above case, Node B and Node C are executed in parallel via `tokio::join!`. Node D executes only after both B and C have completed.
 
-## 条件分岐の実装設計
+## Conditional Branching Implementation Design
 
-### AI 起動判定パターン
+### AI Invocation Decision Pattern
 
-SmartCrab の中核機能は「条件に基づいて AI を起動するかどうかを判断する」ことである。典型的なパターン:
+The core function of SmartCrab is "deciding whether to invoke AI based on conditions." A typical pattern:
 
 ```mermaid
 flowchart TD
-    Input[Input Layer<br/>イベント受信] --> Analyze[Hidden Layer<br/>ルールベース分析]
-    Analyze --> Cond{"条件判定<br/>AIが必要か?"}
-    Cond -->|"needs_ai"| AI[Hidden Layer<br/>Claude Code 実行]
-    Cond -->|"simple"| Simple[Hidden Layer<br/>テンプレート応答]
+    Input[Input Layer<br/>Receive event] --> Analyze[Hidden Layer<br/>Rule-based analysis]
+    Analyze --> Cond{"Condition check<br/>Is AI needed?"}
+    Cond -->|"needs_ai"| AI[Hidden Layer<br/>Execute Claude Code]
+    Cond -->|"simple"| Simple[Hidden Layer<br/>Template response]
     AI --> Output[Output Layer]
     Simple --> Output
 ```
 
-条件判定の例:
+Examples of condition decisions:
 
 ```rust
-// 複雑度スコアに基づく AI 起動判定
+// AI invocation decision based on complexity score
 |output: &AnalysisOutput| {
     if output.complexity_score > 0.7 { "needs_ai" } else { "simple" }
 }
 
-// キーワードに基づく判定
+// Decision based on keywords
 |output: &AnalysisOutput| {
     if output.requires_reasoning { "needs_ai" } else { "simple" }
 }
 
-// 複数の分岐先
+// Multiple branch targets
 |output: &ClassificationOutput| {
     match output.category.as_str() {
         "bug_report" => "ai_triage",
@@ -147,67 +147,67 @@ flowchart TD
 }
 ```
 
-## DAG 検証
+## DAG Validation
 
-`build()` 時に以下の検証を実行する。いずれかの検証に失敗した場合は `Err` を返す。
+The following validations are performed at `build()` time. If any validation fails, `Err` is returned.
 
-### 循環検出
+### Cycle Detection
 
-DAG は非巡回グラフでなければならない。深さ優先探索（DFS）で循環を検出する。
+A DAG must be a directed acyclic graph. Cycles are detected using depth-first search (DFS).
 
 ```
-検出アルゴリズム: DFS + 訪問状態追跡
-  - White: 未訪問
-  - Gray: 探索中（祖先）
-  - Black: 探索完了
+Detection algorithm: DFS + visit state tracking
+  - White: unvisited
+  - Gray: in progress (ancestor)
+  - Black: exploration complete
 
-Gray → Gray のエッジが見つかった場合、循環が存在する
+If a Gray → Gray edge is found, a cycle exists
 ```
 
-### 到達不能ノード検出
+### Unreachable Node Detection
 
-入力ノード（入次数 0 のノード）から到達できないノードを検出する。
+Nodes that cannot be reached from input nodes (nodes with in-degree 0) are detected.
 
-### 型整合性チェック
+### Type Consistency Check
 
-エッジで接続された 2 つの Node について、前段の `Output` 型と後段の `Input` 型の一致を検証する。型消去されているため、`TypeId` による実行時チェックとなる。
+For two Nodes connected by an edge, the `Output` type of the preceding Node and the `Input` type of the succeeding Node are verified to match. Since types are erased, this is a runtime check using `TypeId`.
 
-### 検証エラーの種類
+### Validation Error Types
 
-| エラー | 説明 |
+| Error | Description |
 |--------|------|
-| `CycleDetected` | DAG に循環が存在する |
-| `UnreachableNode` | 入力ノードから到達不能なノードが存在する |
-| `TypeMismatch` | 隣接ノード間の DTO 型が不一致 |
-| `MissingBranch` | 条件付きエッジの分岐先ノードが存在しない |
-| `NoInputNode` | DAG に入力ノード（Input Layer）が存在しない |
-| `DuplicateNodeName` | 同一名のノードが複数登録されている |
+| `CycleDetected` | A cycle exists in the DAG |
+| `UnreachableNode` | A node unreachable from the input node exists |
+| `TypeMismatch` | DTO type mismatch between adjacent nodes |
+| `MissingBranch` | A branch target node for a conditional edge does not exist |
+| `NoInputNode` | No input node (Input Layer) exists in the DAG |
+| `DuplicateNodeName` | Multiple nodes with the same name are registered |
 
-## DAG ライフサイクル
+## DAG Lifecycle
 
 ```mermaid
 stateDiagram-v2
     [*] --> Building: DagBuilder::new()
     Building --> Building: add_node / add_edge
-    Building --> Ready: build() 成功
-    Building --> [*]: build() 失敗（検証エラー）
+    Building --> Ready: build() succeeds
+    Building --> [*]: build() fails (validation error)
     Ready --> Running: run()
-    Running --> Running: Layer 実行中
-    Running --> Completed: 全 Layer 完了
-    Running --> Failed: Layer がエラーを返した
-    Running --> ShuttingDown: シャットダウンシグナル受信
-    ShuttingDown --> Failed: 現在の Layer 完了後に停止
+    Running --> Running: Layer executing
+    Running --> Completed: All Layers complete
+    Running --> Failed: Layer returned an error
+    Running --> ShuttingDown: Shutdown signal received
+    ShuttingDown --> Failed: Stop after current Layer completes
     Completed --> [*]
     Failed --> [*]
 ```
 
-### グレースフルシャットダウン
+### Graceful Shutdown
 
-`tokio::signal` で SIGTERM / SIGINT を受信した場合:
+When SIGTERM / SIGINT is received via `tokio::signal`:
 
-1. 実行中の Layer の完了を待つ（途中で中断しない）
-2. 後続の Layer は実行しない
-3. OpenTelemetry の span をクローズし、トレースをフラッシュする
-4. 終了コード 0 で終了する
+1. Wait for the currently running Layer to complete (no mid-execution interruption)
+2. Do not execute subsequent Layers
+3. Close OpenTelemetry spans and flush traces
+4. Exit with exit code 0
 
-複数 DAG が同時実行されている場合、シャットダウンシグナルは全 DAG に伝播する。`tokio::sync::broadcast` チャネルでシグナルを配信する。
+When multiple DAGs are running concurrently, the shutdown signal propagates to all DAGs via a `tokio::sync::broadcast` channel.

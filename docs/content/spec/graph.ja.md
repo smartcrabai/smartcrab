@@ -1,14 +1,14 @@
 +++
 title = "DirectedGraph Specification"
-description = "DirectedGraph specification — DirectedGraphBuilder API, execution semantics, validation"
+description = "DirectedGraph 仕様 — DirectedGraphBuilder API、実行セマンティクス、バリデーション"
 weight = 3
 +++
 
-## Overview
+## 概要
 
-A DirectedGraph (directed graph) is a graph structure that defines the execution order and conditional branching of Layers. It is constructed using the builder pattern, and `build()` produces a validated, executable DirectedGraph.
+DirectedGraph（有向グラフ）は Layer の実行順序と条件分岐を定義するグラフ構造である。ビルダーパターンで構築し、`build()` で検証済みの実行可能な DirectedGraph を生成する。
 
-Unlike a DAG, graphs containing cycles (directed circuits) are also supported.
+DAG とは異なり、サイクル（有向閉路）を含むグラフもサポートする。
 
 ## DirectedGraphBuilder API
 
@@ -18,7 +18,7 @@ Unlike a DAG, graphs containing cycles (directed circuits) are also supported.
 pub fn new(name: impl Into<String>) -> Self
 ```
 
-Creates a new DirectedGraphBuilder. `name` is used as the span name in traces.
+新しい DirectedGraphBuilder を作成する。`name` はトレースの span 名に使用される。
 
 ### `add_input`
 
@@ -26,7 +26,7 @@ Creates a new DirectedGraphBuilder. `name` is used as the span name in traces.
 pub fn add_input<L: InputLayer>(self, layer: L) -> Self
 ```
 
-Adds an Input Layer.
+Input Layer を追加する。
 
 ### `add_hidden`
 
@@ -34,7 +34,7 @@ Adds an Input Layer.
 pub fn add_hidden<L: HiddenLayer>(self, layer: L) -> Self
 ```
 
-Adds a Hidden Layer.
+Hidden Layer を追加する。
 
 ### `add_output`
 
@@ -42,7 +42,7 @@ Adds a Hidden Layer.
 pub fn add_output<L: OutputLayer>(self, layer: L) -> Self
 ```
 
-Adds an Output Layer.
+Output Layer を追加する。
 
 ### `add_edge`
 
@@ -50,7 +50,7 @@ Adds an Output Layer.
 pub fn add_edge(self, from: &str, to: &str) -> Self
 ```
 
-Adds an unconditional edge. After the `from` node completes execution, the `to` node is executed.
+無条件エッジを追加する。`from` ノードの実行完了後、`to` ノードが実行される。
 
 ### `add_conditional_edge`
 
@@ -66,10 +66,10 @@ where
     I: IntoIterator<Item = (String, String)>,
 ```
 
-Adds a conditional edge. The output DTO of the `from` node is passed to the `condition` closure, and execution transitions to the branch node corresponding to the return value.
+条件付きエッジを追加する。`from` ノードの出力 DTO を `condition` クロージャに渡し、戻り値に対応する分岐先ノードに遷移する。
 
-- `Some(branch_key)` → Transition to the specified branch
-- `None` → End graph execution
+- `Some(branch_key)` → 指定されたブランチに遷移
+- `None` → グラフ実行を終了
 
 ### `add_exit_condition`
 
@@ -79,7 +79,7 @@ where
     F: Fn(&dyn DtoObject) -> Option<String> + Send + Sync + 'static,
 ```
 
-Adds an exit condition. After the `from` node executes, the condition closure is evaluated. If it returns `None`, the entire graph's execution ends.
+終了条件を追加する。`from` ノードの実行後に条件クロージャが評価され、`None` を返した場合はグラフ全体の実行を終了する。
 
 ### `build`
 
@@ -87,56 +87,56 @@ Adds an exit condition. After the `from` node executes, the condition closure is
 pub fn build(self) -> Result<DirectedGraph>
 ```
 
-Validates the graph and returns an executable `DirectedGraph` instance. Returns `Err` if validation fails.
+Graph を検証し、実行可能な `DirectedGraph` インスタンスを返す。検証に失敗した場合は `Err` を返す。
 
-Validation includes:
-- DTO type consistency check
-- Branch target existence check for conditional edges
-- Input Layer existence check
-- Node name uniqueness check
+検証内容:
+- DTO 型整合性チェック
+- 条件分岐の分岐先存在チェック
+- Input Layer の存在チェック
+- ノード名の一意性チェック
 
-Note: Unlike a DAG, cycle detection and unreachable node detection are not performed.
+※ DAG と異なり、循環検出と到達不能ノード検出は行わない。
 
-## Condition Closure Signature
+## 条件クロージャのシグネチャ
 
 ```rust
 Fn(&dyn DtoObject) -> Option<String> + Send + Sync + 'static
 ```
 
-- Input: A reference to the output DTO of the preceding Layer (`&dyn DtoObject`)
-- Output: The label of the branch target (corresponds to a key in `branches`), or `None` to terminate
-- `Send + Sync`: Safely shareable across async tasks
-- `'static`: Valid for the lifetime of the Graph
+- 入力: 前段 Layer の出力 DTO の参照（`&dyn DtoObject`）
+- 出力: 分岐先のラベル（`branches` のキーに対応）、または `None` で終了
+- `Send + Sync`: 非同期タスク間で安全に共有可能
+- `'static`: Graph のライフタイム中有効
 
-## Execution Semantics
+## 実行セマンティクス
 
-### Basic Behavior
+### 基本動作
 
-The graph executes in the following loop:
+Graph は以下のループで実行される:
 
-1. Find executable nodes (all input dependencies are complete)
-2. If no executable nodes → terminate
-3. Execute executable nodes in parallel
-4. Save each node's result
-5. Check exit condition (terminate if exit condition returns `None`)
-6. Return to step 1
+1. 実行可能なノードを探す（全ての入力依存が完了している）
+2. 実行可能なノードがない場合 → 終了
+3. 実行可能なノードを並列実行
+4. 各ノードの結果を保存
+5. 終了条件をチェック（終了条件が `None` を返したら終了）
+6. 1に戻る
 
-### Dependency Resolution
+### 依存関係の解決
 
-- Unconditional edge: The output of the `from` node is used as the input to the `to` node
-- Conditional edge: The branch target is determined based on the condition evaluation result
+- 無条件エッジ: `from` ノードの出力が `to` ノードの入力として使用される
+- 条件付きエッジ: 条件の評価結果に基づいて分岐先が決定される
 
-### Termination Conditions
+### 終了条件
 
-Graph execution terminates under any of the following conditions:
+以下のいずれかの条件でグラフの実行が終了する:
 
-1. No more executable nodes
-2. An exit condition (`add_exit_condition`) returns `None`
-3. Any node returns an error
+1. 実行可能なノードがなくなった場合
+2. 終了条件（`add_exit_condition`）が `None` を返した場合
+3. いずれかのノードがエラーを返した場合
 
-## Code Examples
+## コード例
 
-### Basic Graph
+### 基本的な Graph
 
 ```rust
 use smartcrab::prelude::*;
@@ -152,7 +152,7 @@ let graph = DirectedGraphBuilder::new("simple_pipeline")
 graph.run().await?;
 ```
 
-### Conditional Branching Graph
+### 条件分岐 Graph
 
 ```rust
 use smartcrab::prelude::*;
@@ -181,7 +181,7 @@ let graph = DirectedGraphBuilder::new("ai_routing")
     .build()?;
 ```
 
-### Graph With a Cycle
+### サイクルを含む Graph
 
 ```rust
 use smartcrab::prelude::*;
@@ -193,19 +193,19 @@ let graph = DirectedGraphBuilder::new("feedback_loop")
     .add_output(ExitLayer)
     .add_edge("Source", "Process")
     .add_edge("Process", "Feedback")
-    .add_edge("Feedback", "Feedback")  // self-loop
+    .add_edge("Feedback", "Feedback")  // 自己ループ
     .add_edge("Feedback", "Exit")
     .add_exit_condition("Feedback", |output| {
         if output.downcast_ref::<FeedbackOutput>().unwrap().should_continue {
             Some("continue".to_owned())
         } else {
-            None  // terminate
+            None  // 終了
         }
     })
     .build()?;
 ```
 
-### Running Multiple Graphs Concurrently
+### 複数 Graph 同時実行
 
 ```rust
 use smartcrab::prelude::*;
@@ -222,7 +222,7 @@ async fn main() -> Result<()> {
         .add_edge("RequestHandler", "JsonResponder")
         .build()?;
 
-    // Graph 2: Scheduled batch
+    // Graph 2: 定期バッチ
     let batch_graph = DirectedGraphBuilder::new("batch")
         .add_input(CronInput::new("0 */6 * * * * *"))
         .add_hidden(DataCollector::new())
@@ -233,7 +233,7 @@ async fn main() -> Result<()> {
         .add_edge("AiSummarizer", "SlackNotifier")
         .build()?;
 
-    // Run all graphs concurrently
+    // 全 Graph を並行実行
     Runtime::new()
         .add_graph(api_graph)
         .add_graph(batch_graph)

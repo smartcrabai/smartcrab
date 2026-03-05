@@ -1,22 +1,22 @@
 +++
 title = "Claude Code Integration"
-description = "Claude Code integration design — subprocess execution, data exchange, test strategy"
+description = "Claude Code 連携設計 — 子プロセス実行、データ交換、テスト戦略"
 weight = 4
 +++
 
-## Role of Claude Code
+## Claude Code の役割
 
-In SmartCrab, Claude Code is the AI processing engine conditionally invoked from Hidden Layers and Output Layers. It fulfills the "AI" part of the "Tool-to-AI" paradigm.
+SmartCrab における Claude Code は、Hidden Layer と Output Layer から条件付きで呼び出される AI 処理エンジンである。「ツール → AI」パラダイムの「AI」部分を担う。
 
-Claude Code is used in the following scenarios:
+Claude Code は以下の場面で使用される:
 
-- **Analysis & Reasoning**: Parsing unstructured data, understanding natural language
-- **Generation**: Text generation, code generation, report creation
-- **Decision-making**: Complex condition evaluation, classification, prioritization
+- **分析・推論**: 非構造化データの解析、自然言語の理解
+- **生成**: テキスト生成、コード生成、レポート作成
+- **判断**: 複雑な条件判定、分類、優先度付け
 
-## Invocation Patterns
+## 呼び出しパターン
 
-### Basic Pattern
+### 基本パターン
 
 ```mermaid
 sequenceDiagram
@@ -26,15 +26,15 @@ sequenceDiagram
 
     L->>CC: ClaudeCode::new().prompt(&prompt)
     CC->>P: tokio::process::Command::new("claude")
-    CC->>P: Write prompt to stdin
-    P-->>CC: Read response from stdout
+    CC->>P: stdin に prompt を書き込み
+    P-->>CC: stdout からレスポンスを読み取り
     CC-->>L: Result<String>
 ```
 
-### Usage in a Hidden Layer
+### Hidden Layer での使用
 
 ```rust
-// DTO → prompt → Claude Code → response → DTO
+// DTO → プロンプト → Claude Code → レスポンス → DTO
 async fn run(&self, input: Self::Input) -> Result<Self::Output> {
     let prompt = build_prompt(&input);
     let response = ClaudeCode::new()
@@ -44,10 +44,10 @@ async fn run(&self, input: Self::Input) -> Result<Self::Output> {
 }
 ```
 
-### Usage in an Output Layer
+### Output Layer での使用
 
 ```rust
-// DTO → prompt → Claude Code → side effect (file generation, etc.)
+// DTO → プロンプト → Claude Code → 副作用（ファイル生成等）
 async fn run(&self, input: Self::Input) -> Result<()> {
     let prompt = build_prompt(&input);
     ClaudeCode::new()
@@ -58,9 +58,9 @@ async fn run(&self, input: Self::Input) -> Result<()> {
 }
 ```
 
-## Execution Model via `tokio::process::Command`
+## `tokio::process::Command` による実行モデル
 
-### Argument Construction
+### 引数構築
 
 ```rust
 use tokio::process::Command;
@@ -124,23 +124,23 @@ impl ClaudeCode {
         cmd.stderr(std::process::Stdio::piped());
 
         let child = cmd.spawn()?;
-        // ... stdin/stdout handling (see below)
+        // ... stdin/stdout 処理（後述）
     }
 }
 ```
 
-### stdin / stdout Handling
+### stdin / stdout 処理
 
 ```rust
 let mut child = cmd.spawn()?;
 
-// Write prompt to stdin
+// stdin にプロンプトを書き込み
 if let Some(mut stdin) = child.stdin.take() {
     stdin.write_all(prompt.as_bytes()).await?;
-    drop(stdin); // Send EOF
+    drop(stdin); // EOF を送信
 }
 
-// Read stdout with timeout
+// タイムアウト付きで stdout を読み取り
 let output = tokio::time::timeout(
     self.timeout,
     child.wait_with_output(),
@@ -159,71 +159,71 @@ if !output.status.success() {
 Ok(String::from_utf8(output.stdout)?)
 ```
 
-## Data Exchange
+## データ交換
 
-### DTO → Prompt Conversion
+### DTO → プロンプト変換
 
-DTOs are converted into prompts to be passed to Claude Code. JSON serialization is the primary strategy.
+DTO を Claude Code に渡すプロンプトに変換する。JSON シリアライズが基本戦略。
 
 ```rust
 fn build_prompt(input: &impl Dto) -> String {
     let json = serde_json::to_string_pretty(input).unwrap();
     format!(
-        "Please process the following JSON data and return the result in JSON format.\n\n\
-         Input data:\n```json\n{json}\n```\n\n\
-         Output schema:\n```json\n{schema}\n```",
+        "以下のJSONデータを処理してください。結果はJSON形式で返してください。\n\n\
+         入力データ:\n```json\n{json}\n```\n\n\
+         出力スキーマ:\n```json\n{schema}\n```",
         json = json,
         schema = "{ ... }",
     )
 }
 ```
 
-### Response → DTO Parsing
+### レスポンス → DTO パース
 
-DTOs are restored from Claude Code responses. `--output-format json` forces a JSON response, which is then parsed with `serde_json::from_str`.
+Claude Code のレスポンスから DTO を復元する。`--output-format json` で JSON レスポンスを強制し、`serde_json::from_str` でパースする。
 
 ```rust
 fn parse_response<T: Dto>(response: &str) -> Result<T> {
-    // For JSON output format, get text from the result field
+    // JSON出力フォーマットの場合、result フィールドからテキストを取得
     let claude_output: ClaudeOutput = serde_json::from_str(response)?;
     let dto: T = serde_json::from_str(&claude_output.result)?;
     Ok(dto)
 }
 ```
 
-Fallback when parsing fails:
+パースに失敗した場合のフォールバック:
 
-1. Attempt to extract a JSON block (` ```json ... ``` `)
-2. If that also fails, return `SmartCrabError::ResponseParseError`
+1. JSON ブロック（` ```json ... ``` `）の抽出を試みる
+2. それでも失敗した場合は `SmartCrabError::ResponseParseError` を返す
 
-## Error Handling
+## エラーハンドリング
 
-| Error Type | Cause | Error Kind |
+| エラー種別 | 原因 | エラー型 |
 |-----------|------|---------|
-| Launch failure | `claude` command not found | `SmartCrabError::ClaudeCodeNotFound` |
-| Timeout | No response within the specified time | `SmartCrabError::ClaudeCodeTimeout { timeout }` |
-| Non-zero exit | Claude Code exits with an error | `SmartCrabError::ClaudeCodeFailed { exit_code, stderr }` |
-| Parse error | Response is not in the expected format | `SmartCrabError::ResponseParseError { response, source }` |
+| 起動失敗 | `claude` コマンドが見つからない | `SmartCrabError::ClaudeCodeNotFound` |
+| タイムアウト | 指定時間内に応答なし | `SmartCrabError::ClaudeCodeTimeout { timeout }` |
+| 非ゼロ終了 | Claude Code がエラー終了 | `SmartCrabError::ClaudeCodeFailed { exit_code, stderr }` |
+| パースエラー | レスポンスが期待する形式でない | `SmartCrabError::ResponseParseError { response, source }` |
 
 ```mermaid
 flowchart TD
-    Start([Execute claude command]) --> Spawn{spawn successful?}
+    Start([claude コマンド実行]) --> Spawn{spawn 成功?}
     Spawn -->|No| NotFound[ClaudeCodeNotFound]
-    Spawn -->|Yes| Wait[Waiting for response]
-    Wait --> Timeout{Timeout?}
+    Spawn -->|Yes| Wait[レスポンス待ち]
+    Wait --> Timeout{タイムアウト?}
     Timeout -->|Yes| TimeoutErr[ClaudeCodeTimeout]
-    Timeout -->|No| Exit{Exit code?}
-    Exit -->|Non-zero| Failed[ClaudeCodeFailed]
-    Exit -->|0| Parse{Parse successful?}
+    Timeout -->|No| Exit{終了コード?}
+    Exit -->|非ゼロ| Failed[ClaudeCodeFailed]
+    Exit -->|0| Parse{パース成功?}
     Parse -->|No| ParseErr[ResponseParseError]
     Parse -->|Yes| Ok([Result::Ok])
 ```
 
-## Test Strategy
+## テスト戦略
 
-### Mocking Approach
+### モック化方針
 
-Abstract the Claude Code invocation so it can be replaced with a mock during testing.
+Claude Code の呼び出しを抽象化し、テスト時にモックに差し替えられるようにする。
 
 ```rust
 #[async_trait]
@@ -231,17 +231,17 @@ pub trait ClaudeCodeExecutor: Send + Sync {
     async fn execute(&self, prompt: &str) -> Result<String>;
 }
 
-// Production implementation
+// 本番用
 pub struct RealClaudeCode { /* ... */ }
 
 #[async_trait]
 impl ClaudeCodeExecutor for RealClaudeCode {
     async fn execute(&self, prompt: &str) -> Result<String> {
-        // Actually execute claude via tokio::process::Command
+        // tokio::process::Command で実際に claude を実行
     }
 }
 
-// Test implementation
+// テスト用
 pub struct MockClaudeCode {
     responses: HashMap<String, String>,
 }
@@ -249,7 +249,7 @@ pub struct MockClaudeCode {
 #[async_trait]
 impl ClaudeCodeExecutor for MockClaudeCode {
     async fn execute(&self, prompt: &str) -> Result<String> {
-        // Return a pre-configured response
+        // 事前に設定したレスポンスを返す
         self.responses.get(prompt)
             .cloned()
             .ok_or(SmartCrabError::MockNotFound)
@@ -257,15 +257,15 @@ impl ClaudeCodeExecutor for MockClaudeCode {
 }
 ```
 
-### Test Levels
+### テストレベル
 
-| Level | Scope | Claude Code |
+| レベル | 対象 | Claude Code |
 |--------|------|-------------|
-| Unit test | Individual Layer | Mock |
-| Integration test | Full DAG | Mock |
-| E2E test | Full application | Real claude command |
+| ユニットテスト | 個別 Layer | モック |
+| 結合テスト | DAG 全体 | モック |
+| E2E テスト | アプリケーション全体 | 実際の claude コマンド |
 
-### Unit Test Example
+### ユニットテスト例
 
 ```rust
 #[tokio::test]

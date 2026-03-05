@@ -1,12 +1,12 @@
 +++
 title = "Data Flow"
-description = "データフロー設計 — Layer 間のデータの流れ、型安全性、エラーハンドリング"
+description = "Data flow design — data flow between Layers, type safety, error handling"
 weight = 2
 +++
 
-## 全体フロー
+## Overall Flow
 
-SmartCrab のデータフローは Input → DTO → Hidden → DTO → Output の流れで構成される。各 Layer 間のデータ受け渡しは型安全な DTO を介して行われる。
+The data flow in SmartCrab follows the pattern: Input → DTO → Hidden → DTO → Output. Data transfer between each Layer is mediated by type-safe DTOs.
 
 ```mermaid
 flowchart LR
@@ -17,35 +17,35 @@ flowchart LR
         D1["InputOutput"]
     end
     subgraph Hidden["Hidden Layer"]
-        H[変換・加工・AI判定]
+        H[Transform / Process / AI decision]
     end
     subgraph DTO2["DTO"]
         D2["HiddenOutput"]
     end
     subgraph Output["Output Layer"]
-        O[通知・保存・応答]
+        O[Notify / Persist / Respond]
     end
 
     I -->|"Result&lt;DTO&gt;"| D1
     D1 -->|"DTO"| H
     H -->|"Result&lt;DTO&gt;"| D2
     D2 -->|"DTO"| O
-    O -->|"Result&lt;()&gt;"| Done["完了"]
+    O -->|"Result&lt;()&gt;"| Done["Done"]
 ```
 
-## Layer のシグネチャ設計
+## Layer Signature Design
 
-各 Layer はジェネリクスで入出力の DTO 型を指定する。
+Each Layer specifies its input and output DTO types via generics.
 
 ```rust
-// Input Layer: 入力なし → DTO を生成
+// Input Layer: no input → produces a DTO
 #[async_trait]
 pub trait InputLayer: Send + Sync {
     type Output: Dto;
     async fn run(&self) -> Result<Self::Output>;
 }
 
-// Hidden Layer: DTO を受け取り → DTO を返す
+// Hidden Layer: receives a DTO → returns a DTO
 #[async_trait]
 pub trait HiddenLayer: Send + Sync {
     type Input: Dto;
@@ -53,7 +53,7 @@ pub trait HiddenLayer: Send + Sync {
     async fn run(&self, input: Self::Input) -> Result<Self::Output>;
 }
 
-// Output Layer: DTO を受け取り → 副作用を実行
+// Output Layer: receives a DTO → performs side effects
 #[async_trait]
 pub trait OutputLayer: Send + Sync {
     type Input: Dto;
@@ -61,38 +61,38 @@ pub trait OutputLayer: Send + Sync {
 }
 ```
 
-## 条件分岐におけるデータフロー
+## Data Flow in Conditional Branching
 
-条件付きエッジでは、先行 Layer の出力 DTO を参照して分岐先を決定する。クロージャはDTO の参照を受け取り、分岐先の識別子を返す。
+In conditional edges, the output DTO of the preceding Layer is inspected to determine the branch target. The closure receives a reference to the DTO and returns the identifier of the branch target.
 
 ```mermaid
 flowchart TD
-    A[Hidden Layer A] -->|"AnalysisOutput"| Cond{"条件判定クロージャ<br/>Fn(&AnalysisOutput) → &str"}
-    Cond -->|"needs_ai"| B[Hidden Layer B<br/>Claude Code 呼び出し]
-    Cond -->|"simple"| C[Hidden Layer C<br/>通常処理]
+    A[Hidden Layer A] -->|"AnalysisOutput"| Cond{"Condition closure<br/>Fn(&AnalysisOutput) → &str"}
+    Cond -->|"needs_ai"| B[Hidden Layer B<br/>Claude Code invocation]
+    Cond -->|"simple"| C[Hidden Layer C<br/>Normal processing]
     B --> D[Output Layer]
     C --> D
 ```
 
-### 条件クロージャのシグネチャ
+### Condition Closure Signature
 
 ```rust
-// 条件クロージャは DTO の参照を受け取り、分岐先のエッジラベルを返す
+// The condition closure receives a reference to the DTO and returns the edge label of the branch target
 Fn(&dyn Dto) -> &str
 ```
 
-条件クロージャが返す文字列は `add_conditional_edge` で定義した分岐先マップのキーに対応する。
+The string returned by the condition closure corresponds to a key in the branch map defined by `add_conditional_edge`.
 
-## エラーハンドリング戦略
+## Error Handling Strategy
 
-エラーは 2 つのレベルで処理される。
+Errors are handled at two levels.
 
-### Layer 内エラー
+### Errors Within a Layer
 
-各 Layer の `run` メソッドは `Result` を返す。Layer 内で発生するエラーは Layer の責務で適切な `Error` 型に変換する。
+Each Layer's `run` method returns a `Result`. Errors occurring within a Layer are converted to the appropriate `Error` type as the Layer's responsibility.
 
 ```rust
-// Layer 内でのエラーハンドリング例
+// Example of error handling within a Layer
 async fn run(&self, input: Self::Input) -> Result<Self::Output> {
     let response = self.client.get(&input.url)
         .await
@@ -104,42 +104,42 @@ async fn run(&self, input: Self::Input) -> Result<Self::Output> {
 }
 ```
 
-### DAG レベルエラー
+### DAG-Level Errors
 
-Layer が `Err` を返した場合、DAG エンジンは実行を停止し、エラーを呼び出し元に伝播する。
+If a Layer returns `Err`, the DAG engine stops execution and propagates the error to the caller.
 
 ```mermaid
 flowchart TD
     A[Layer A] -->|Ok| B[Layer B]
-    B -->|Err| Stop["DAG 実行停止<br/>エラーをトレースに記録"]
+    B -->|Err| Stop["DAG execution stopped<br/>Error recorded in trace"]
     B -->|Ok| C[Layer C]
-    C -->|Ok| Done["完了"]
+    C -->|Ok| Done["Done"]
 ```
 
-- エラー発生時、該当 Layer の span にエラー情報が記録される
-- DAG は即座に実行を停止する（後続の Layer は実行されない）
-- 他の DAG の実行には影響しない（DAG 間は独立）
+- On error, the error information is recorded in the relevant Layer's span
+- The DAG stops execution immediately (subsequent Layers are not executed)
+- Other DAGs are not affected (DAGs are independent of each other)
 
-## 型安全性の保証範囲
+## Scope of Type Safety Guarantees
 
-### コンパイル時保証
+### Compile-Time Guarantees
 
-- 各 Layer の `Input` / `Output` 関連型による DTO 型の一致
-- `Dto` トレイトの derive 要件（`Serialize`, `Deserialize`, `Clone`, `Send`, `Sync`）
+- DTO type matching via each Layer's `Input` / `Output` associated types
+- `Dto` trait derive requirements (`Serialize`, `Deserialize`, `Clone`, `Send`, `Sync`)
 
-### 実行時検証
+### Runtime Validation
 
-- DAG ビルド時のエッジの型整合性チェック（隣接 Layer の Output 型と Input 型の一致）
-- 条件分岐の網羅性チェック（全分岐先が存在するか）
-- DAG の構造検証（循環検出、到達不能ノード検出）
+- Edge type consistency check at DAG build time (matching Output type of one Layer with Input type of the next)
+- Exhaustiveness check for conditional branches (all branch targets exist)
+- DAG structure validation (cycle detection, unreachable node detection)
 
 ```
-コンパイル時                     実行時（DAG ビルド時）
+Compile time                     Runtime (at DAG build time)
 ┌─────────────────────┐      ┌──────────────────────────┐
-│ Layer の型パラメータ  │      │ エッジの型整合性           │
-│ Dto の derive 要件    │      │ 条件分岐の網羅性           │
-│ Send + Sync 境界     │      │ DAG 構造検証（循環、到達性） │
+│ Layer type parameters│      │ Edge type consistency     │
+│ Dto derive bounds    │      │ Conditional branch coverage│
+│ Send + Sync bounds   │      │ DAG structure (cycles, reachability) │
 └─────────────────────┘      └──────────────────────────┘
 ```
 
-型パラメータによる静的チェックで可能な範囲の安全性をコンパイル時に保証し、DAG のグラフ構造に関する検証は `build()` 時に実行時チェックとして行う。
+Static checks via type parameters guarantee safety at compile time where possible. Validation related to the DAG's graph structure is performed as a runtime check at `build()` time.

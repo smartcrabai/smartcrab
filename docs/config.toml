@@ -1,8 +1,8 @@
 base_url = "https://smartcrabai.github.io/smartcrab/"
 title = "SmartCrab Documentation"
-description = "SmartCrab は「ツール → AI」パラダイムを実現する Rust フレームワーク"
+description = "SmartCrab is a Rust framework implementing the Tool-to-AI paradigm"
 theme = "goyo"
-default_language = "ja"
+default_language = "en"
 build_search_index = false
 generate_feeds = false
 generate_sitemap = true
@@ -15,6 +15,32 @@ bottom_footnotes = true
 theme = "github-dark"
 
 [translations]
+copy = "Copy"
+copied = "Copied!"
+failed_to_copy = "Failed to copy"
+next = "Next"
+back_to = "Back to"
+previous = "Previous"
+edit_page = "Edit this page"
+found_error_alert = "Found an error or something unclear?"
+open_issue = "Open an issue on GitHub"
+attribution = "Fixes are credited to contributors"
+found_typo_alert = "Found a typo?"
+fork_and_pr = "Fork and send a PR"
+copy_url_msg = "Copy URL"
+share_on_x = "Share on X"
+toc_title = "Table of Contents"
+sidebar_feeds = "Feeds"
+global_feed = "Global Feed"
+category_feeds = "Category Feeds"
+all_posts = "All Pages"
+errata_section = "Errata & Updates"
+
+[languages.ja]
+title = "SmartCrab ドキュメント"
+description = "SmartCrab は「ツール → AI」パラダイムを実現する Rust フレームワーク"
+
+[languages.ja.translations]
 copy = "コピー"
 copied = "コピー完了!"
 failed_to_copy = "コピー失敗"
@@ -36,16 +62,20 @@ category_feeds = "カテゴリフィード"
 all_posts = "全ページ"
 errata_section = "修正と更新"
 
+
 [extra]
 enable_custom_css = false
 footer_html = "Powered by <a href='https://www.getzola.org'>Zola</a> and <a href='https://github.com/hahwul/goyo'>Goyo</a>"
 edit_url = "https://github.com/smartcrabai/smartcrab/edit/main/docs/content"
 
 nav = [
-    { name = "設計ドキュメント", url = "/design", type = "url", icon = "book" },
-    { name = "仕様書", url = "/spec", type = "url", icon = "code" },
+    { name = "Design Docs", url = "/design", type = "url", icon = "book" },
+    { name = "Specification", url = "/spec", type = "url", icon = "code" },
     { name = "GitHub", url = "https://github.com/smartcrabai/smartcrab", type = "url", icon = "github" },
 ]
+
+[extra.lang]
+aliases = { en = "English", ja = "日本語" }
 
 [extra.logo]
 text = "SmartCrab"

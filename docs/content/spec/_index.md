@@ -1,8 +1,8 @@
 +++
-title = "仕様書"
-description = "What — 具体的なトレイト定義、API、コマンド仕様"
+title = "Specification"
+description = "What — concrete trait definitions, APIs, and command specifications"
 sort_by = "weight"
 weight = 2
 +++
 
-SmartCrab のトレイト定義・API・コマンド仕様を記載するドキュメント群です。実装・利用する方はここを参照してください。
+A collection of documents covering SmartCrab's trait definitions, APIs, and command specifications. Refer here when implementing or using the framework.

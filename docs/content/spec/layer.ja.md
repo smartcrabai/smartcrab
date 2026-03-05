@@ -1,34 +1,34 @@
 +++
 title = "Layer Specification"
-description = "Layer specification — trait definitions and code examples for Input/Hidden/Output Layers"
+description = "Layer 仕様 — Input/Hidden/Output 各 Layer のトレイト定義とコード例"
 weight = 1
 +++
 
-## Overview
+## 概要
 
-A Layer is a processing unit (node) in the DAG and the place where business logic is written in a SmartCrab application. There are three kinds — Input, Hidden, and Output — each with a different signature.
+Layer は DAG 内の処理単位（ノード）であり、SmartCrab アプリケーションのビジネスロジックを記述する場所である。Input / Hidden / Output の 3 種があり、それぞれ異なるシグネチャを持つ。
 
-## Common Layer Trait
+## 共通 Layer トレイト
 
-The base trait implemented by all Layers.
+全 Layer が実装するベーストレイト。
 
 ```rust
 pub trait Layer: Send + Sync + 'static {
-    /// The identifying name of the Layer (used as the span name in traces)
+    /// Layer の識別名（トレースの span 名に使用）
     fn name(&self) -> &str;
 }
 ```
 
 ## Input Layer
 
-Receives external events and produces a DTO. Serves as the entry point for the DAG.
+外部イベントを受けて DTO を生成する。DAG のエントリーポイントとなる。
 
-### Trait Definition
+### トレイト定義
 
 ```rust
 #[async_trait]
 pub trait InputLayer: Layer {
-    /// The type of trigger data (typically `()` is used).
+    /// トリガーデータの型（通常は `()` を使用）。
     type TriggerData: Dto;
     type Output: Dto;
 
@@ -38,30 +38,30 @@ pub trait InputLayer: Layer {
 
 ### TriggerKind
 
-Specifies when the Layer fires via `DirectedGraphBuilder::trigger()`.
+`DirectedGraphBuilder::trigger()` で発火タイミングを明示する。
 
 ```rust
 pub enum TriggerKind {
-    /// Executed once at application startup.
+    /// アプリ起動時に一度だけ実行。
     Startup,
-    /// Executed on chat events (Discord mentions, DMs, etc.).
+    /// チャットイベント（Discord メンション・DM 等）で実行。
     Chat { triggers: Vec<String> },
-    /// Executed on a cron schedule.
+    /// cron スケジュールで実行。
     Cron { schedule: String },
 }
 ```
 
-### Subtypes
+### サブタイプ
 
-Input Layers have three subtypes. These are distinguished as implementation patterns rather than traits.
+Input Layer には 3 つのサブタイプがある。これらはトレイトではなく実装パターンとして区別される。
 
-| Subtype | TriggerKind | Example Use Case |
+| サブタイプ | TriggerKind | 用途例 |
 |-----------|------------|--------|
-| **startup** | `Startup` | Initialization processing at service startup |
-| **chat** | `Chat { triggers: vec!["mention", "dm"] }` | Discord chatbot |
-| **cron** | `Cron { schedule: "0 * * * * * *" }` | Scheduled batch processing |
+| **startup** | `Startup` | サービス起動時の初期化処理 |
+| **chat** | `Chat { triggers: vec!["mention", "dm"] }` | Discord チャットボット |
+| **cron** | `Cron { schedule: "0 * * * * * *" }` | 定期バッチ処理 |
 
-### Code Example
+### コード例
 
 ```rust
 use smartcrab::prelude::*;
@@ -80,7 +80,7 @@ impl InputLayer for DiscordInput {
     type Output = DiscordMessage;
 
     async fn run(&self, _: ()) -> Result<Self::Output> {
-        // Receive a message from the Discord gateway
+        // Discord ゲートウェイからメッセージを受信する
         todo!("Implement Discord message listener")
     }
 }
@@ -88,9 +88,9 @@ impl InputLayer for DiscordInput {
 
 ## Hidden Layer
 
-An intermediate processing Layer that receives a DTO, transforms or processes it, and returns a DTO. Can invoke Claude Code as a subprocess.
+DTO を受け取り、変換・加工して DTO を返す中間処理 Layer。Claude Code を子プロセスとして呼び出すことができる。
 
-### Trait Definition
+### トレイト定義
 
 ```rust
 #[async_trait]
@@ -102,9 +102,9 @@ pub trait HiddenLayer: Layer {
 }
 ```
 
-### Claude Code Helper
+### Claude Code ヘルパー
 
-Provides helper functions for invoking Claude Code from a Hidden Layer.
+Hidden Layer から Claude Code を呼び出すためのヘルパー関数を提供する。
 
 ```rust
 use smartcrab::claude::ClaudeCode;
@@ -124,7 +124,7 @@ impl HiddenLayer for AiAnalysis {
 
     async fn run(&self, input: Self::Input) -> Result<Self::Output> {
         let prompt = format!(
-            "Analyze the following data and return the result in JSON format:\n{}",
+            "以下のデータを分析してJSON形式で結果を返してください:\n{}",
             serde_json::to_string_pretty(&input)?
         );
 
@@ -141,9 +141,9 @@ impl HiddenLayer for AiAnalysis {
 
 ## Output Layer
 
-Receives a DTO and performs final side effects (notifications, persistence, responses, etc.). Can invoke Claude Code as a subprocess.
+DTO を受け取り、最終的な副作用（通知、保存、応答等）を実行する。Claude Code を子プロセスとして呼び出すことができる。
 
-### Trait Definition
+### トレイト定義
 
 ```rust
 #[async_trait]
@@ -154,7 +154,7 @@ pub trait OutputLayer: Layer {
 }
 ```
 
-### Code Example
+### コード例
 
 ```rust
 use smartcrab::prelude::*;
@@ -174,7 +174,7 @@ impl OutputLayer for SlackNotifier {
     type Input = NotificationPayload;
 
     async fn run(&self, input: Self::Input) -> Result<()> {
-        // Send a message to Slack Webhook
+        // Slack Webhook にメッセージを送信
         reqwest::Client::new()
             .post(&self.webhook_url)
             .json(&serde_json::json!({
@@ -187,7 +187,7 @@ impl OutputLayer for SlackNotifier {
 }
 ```
 
-### Output Layer Using Claude Code
+### Claude Code を使った Output Layer
 
 ```rust
 pub struct AiReport;
@@ -204,7 +204,7 @@ impl OutputLayer for AiReport {
 
     async fn run(&self, input: Self::Input) -> Result<()> {
         let prompt = format!(
-            "Generate a report from the following data and write it to report.md:\n{}",
+            "以下のデータからレポートを生成し、report.md に書き出してください:\n{}",
             serde_json::to_string_pretty(&input)?
         );
 
@@ -218,15 +218,15 @@ impl OutputLayer for AiReport {
 }
 ```
 
-## Naming Conventions
+## 命名規約
 
-| Element | Convention | Example |
+| 要素 | 規約 | 例 |
 |------|------|-----|
-| Layer struct name | PascalCase, role-descriptive name | `HttpInput`, `DataAnalyzer`, `SlackNotifier` |
-| `name()` return value | Same as struct name | `"HttpInput"`, `"DataAnalyzer"` |
-| File name | snake_case | `http_input.rs`, `data_analyzer.rs` |
+| Layer 構造体名 | PascalCase、役割を表す名前 | `HttpInput`, `DataAnalyzer`, `SlackNotifier` |
+| `name()` 戻り値 | 構造体名と同一 | `"HttpInput"`, `"DataAnalyzer"` |
+| ファイル名 | snake_case | `http_input.rs`, `data_analyzer.rs` |
 
-## File Placement Conventions
+## ファイル配置規約
 
 ```
 src/

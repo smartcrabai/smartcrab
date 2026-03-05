@@ -4,52 +4,52 @@ sort_by = "weight"
 weight = 1
 +++
 
-SmartCrab は「ツール → AI」パラダイムを実現する Rust フレームワークです。非 AI 処理の結果に基づいて AI（Claude Code）を起動するかどうかを DAG の条件分岐で判断します。
+SmartCrab is a Rust framework implementing the "Tool-to-AI" paradigm. It uses conditional branching in a DAG to decide whether to invoke AI (Claude Code) based on the results of non-AI processing.
 
-## ドキュメントの読み方
+## How to Read This Documentation
 
-本ドキュメントは **設計（design/）** と **仕様（spec/）** の 2 カテゴリに分かれています。
+This documentation is divided into two categories: **Design (design/)** and **Specification (spec/)**.
 
-| カテゴリ | 内容 | 対象読者 |
-|---------|------|---------|
-| **design/** | Why & How — なぜその設計にしたか、どう実現するか | アーキテクチャを理解したい人 |
-| **spec/** | What — 具体的なトレイト定義、API、コマンド仕様 | 実装・利用する人 |
+| Category | Content | Audience |
+|---------|---------|---------|
+| **design/** | Why & How — rationale behind design decisions and how they are realized | Those who want to understand the architecture |
+| **spec/** | What — concrete trait definitions, APIs, and command specifications | Those who implement or use the framework |
 
-設計を先に読んでから仕様を読むと、背景を踏まえた理解ができます。
+Reading the design docs first, then the spec docs, gives you context-grounded understanding.
 
-## ドキュメント一覧
+## Document Index
 
-### 設計ドキュメント（design/）
+### Design Documents (design/)
 
-| ドキュメント | 概要 |
+| Document | Summary |
 |-------------|------|
-| [architecture](/design/architecture/) | アーキテクチャ全体設計 — 「ツール → AI」パラダイム、システム全体像、並行実行モデル |
-| [data-flow](/design/data-flow/) | データフロー設計 — Layer 間のデータの流れ、型安全性、エラーハンドリング |
-| [dag-engine](/design/dag-engine/) | DAG エンジン設計 — 実行エンジン、条件分岐、検証、ライフサイクル |
-| [claude-code-integration](/design/claude-code-integration/) | Claude Code 連携設計 — 子プロセス実行、データ交換、テスト戦略 |
-| [cli](/design/cli/) | CLI ツール設計 — Rails ライク開発体験、コマンド体系、テンプレート |
+| [architecture](/design/architecture/) | Overall architecture — the "Tool-to-AI" paradigm, system overview, concurrent execution model |
+| [data-flow](/design/data-flow/) | Data flow design — data flow between Layers, type safety, error handling |
+| [dag-engine](/design/dag-engine/) | DAG engine design — execution engine, conditional branching, validation, lifecycle |
+| [claude-code-integration](/design/claude-code-integration/) | Claude Code integration design — subprocess execution, data exchange, test strategy |
+| [cli](/design/cli/) | CLI tool design — Rails-like developer experience, command structure, templates |
 
-### 仕様書（spec/）
+### Specification Documents (spec/)
 
-| ドキュメント | 概要 |
+| Document | Summary |
 |-------------|------|
-| [layer](/spec/layer/) | Layer 仕様 — Input/Hidden/Output 各 Layer のトレイト定義とコード例 |
-| [dto](/spec/dto/) | DTO 仕様 — Dto トレイト、命名規約、変換、コード例 |
-| [graph](/spec/graph/) | DirectedGraph 仕様 — DirectedGraphBuilder API、実行セマンティクス、バリデーション |
-| [cli](/spec/cli/) | CLI コマンド仕様 — `crab new` / `generate` / `run` の詳細 |
+| [layer](/spec/layer/) | Layer specification — trait definitions and code examples for Input/Hidden/Output Layers |
+| [dto](/spec/dto/) | DTO specification — the Dto trait, naming conventions, conversions, and code examples |
+| [graph](/spec/graph/) | DirectedGraph specification — DirectedGraphBuilder API, execution semantics, validation |
+| [cli](/spec/cli/) | CLI command specification — details of `crab new` / `generate` / `run` |
 
-## 用語集
+## Glossary
 
-| 用語 | 説明 |
+| Term | Description |
 |------|------|
-| **Layer** | グラフ内の処理単位（ノード）。Input / Hidden / Output の 3 種がある |
-| **Input Layer** | 外部からのイベントを受けて DTO を生成する Layer。chat / cron / http のサブタイプを持つ |
-| **Hidden Layer** | DTO を受け取り、変換・加工して DTO を返す中間処理 Layer。Claude Code 呼び出し可能 |
-| **Output Layer** | DTO を受け取り、最終的な副作用（通知、保存等）を実行する Layer。Claude Code 呼び出し可能 |
-| **DTO** | Data Transfer Object。Layer 間のデータ受け渡しに使う型安全な Rust 構造体 |
-| **DirectedGraph** | 有向グラフ。Layer の実行順序と条件分岐を定義する。サイクルもサポート |
-| **Node** | グラフ内のノード。1 つの Layer に対応する |
-| **Edge** | グラフ内のエッジ。Node 間の遷移を表す。条件付きエッジはクロージャで分岐判定を行う |
-| **DirectedGraphBuilder** | DirectedGraph をビルダーパターンで構築するための API |
-| **Claude Code** | Anthropic の AI コーディングツール。Hidden/Output Layer から子プロセスとして実行可能 |
-| **SmartCrab.toml** | プロジェクトの設定ファイル |
+| **Layer** | A processing unit (node) in the graph. There are three kinds: Input, Hidden, and Output |
+| **Input Layer** | A Layer that receives external events and produces a DTO. Has subtypes: chat, cron, and http |
+| **Hidden Layer** | An intermediate processing Layer that receives a DTO, transforms it, and returns a DTO. Can invoke Claude Code |
+| **Output Layer** | A Layer that receives a DTO and performs final side effects (notifications, persistence, etc.). Can invoke Claude Code |
+| **DTO** | Data Transfer Object. A type-safe Rust struct used to pass data between Layers |
+| **DirectedGraph** | A directed graph that defines the execution order and conditional branching of Layers. Supports cycles |
+| **Node** | A node in the graph. Corresponds to one Layer |
+| **Edge** | An edge in the graph. Represents a transition between Nodes. Conditional edges use closures for branching logic |
+| **DirectedGraphBuilder** | API for constructing a DirectedGraph using the builder pattern |
+| **Claude Code** | Anthropic's AI coding tool. Can be invoked as a subprocess from Hidden/Output Layers |
+| **SmartCrab.toml** | Project configuration file |

@@ -1,48 +1,48 @@
 +++
 title = "CLI Command Specification"
-description = "CLI コマンド仕様 — crab new / generate / run の詳細"
+description = "CLI command specification — details of crab new / generate / run"
 weight = 4
 +++
 
-## 概要
+## Overview
 
-SmartCrab CLI はプロジェクトの生成・コード生成・実行を行うコマンドラインツールである。
+The SmartCrab CLI is a command-line tool for project generation, code generation, and execution.
 
 ## `crab new`
 
-新規 SmartCrab プロジェクトを生成する。
+Generates a new SmartCrab project.
 
-### 構文
+### Syntax
 
 ```
 crab new <project-name> [OPTIONS]
 ```
 
-### 引数
+### Arguments
 
-| 引数 | 必須 | 説明 |
+| Argument | Required | Description |
 |------|------|------|
-| `<project-name>` | Yes | プロジェクト名（ディレクトリ名にもなる） |
+| `<project-name>` | Yes | Project name (also becomes the directory name) |
 
-### オプション
+### Options
 
-| オプション | デフォルト | 説明 |
+| Option | Default | Description |
 |-----------|-----------|------|
-| `--path <dir>` | カレントディレクトリ | 生成先ディレクトリ |
+| `--path <dir>` | Current directory | Output directory |
 
-### 生成ファイル一覧
+### Generated File List
 
 ```
 <project-name>/
-├── Cargo.toml               # smartcrab 依存を含む
-├── SmartCrab.toml            # プロジェクト設定
-├── Dockerfile                # マルチステージビルド
-├── compose.yml               # Jaeger 開発環境
+├── Cargo.toml               # Includes smartcrab dependency
+├── SmartCrab.toml            # Project configuration
+├── Dockerfile                # Multi-stage build
+├── compose.yml               # Jaeger development environment
 ├── .gitignore
 ├── src/
-│   ├── main.rs               # Runtime 起動のエントリーポイント
+│   ├── main.rs               # Entry point for Runtime startup
 │   ├── dto/
-│   │   └── mod.rs            # 空の mod ファイル
+│   │   └── mod.rs            # Empty mod file
 │   ├── layer/
 │   │   ├── mod.rs
 │   │   ├── input/
@@ -58,15 +58,15 @@ crab new <project-name> [OPTIONS]
         └── mod.rs
 ```
 
-### 終了コード
+### Exit Codes
 
-| コード | 意味 |
+| Code | Meaning |
 |--------|------|
-| 0 | 成功 |
-| 1 | ディレクトリが既に存在する |
-| 2 | 書き込み権限がない |
+| 0 | Success |
+| 1 | Directory already exists |
+| 2 | No write permission |
 
-### 実行例
+### Example
 
 ```bash
 $ crab new my_app
@@ -95,51 +95,51 @@ Next steps:
 
 ## `crab generate layer`
 
-Layer のボイラープレートコードを生成する。エイリアス: `crab g layer`
+Generates Layer boilerplate code. Alias: `crab g layer`
 
-### 構文
+### Syntax
 
 ```
 crab generate layer <name> --type <layer-type> [OPTIONS]
 ```
 
-### 引数
+### Arguments
 
-| 引数 | 必須 | 説明 |
+| Argument | Required | Description |
 |------|------|------|
-| `<name>` | Yes | Layer 名（snake_case） |
+| `<name>` | Yes | Layer name (snake_case) |
 
-### オプション
+### Options
 
-| オプション | 必須 | デフォルト | 値 | 説明 |
+| Option | Required | Default | Values | Description |
 |-----------|------|-----------|-----|------|
-| `--type` | Yes | - | `input`, `hidden`, `output` | Layer の種類 |
-| `--input-type` | No | - | `chat`, `cron`, `http` | Input Layer のサブタイプ（`--type input` 時のみ有効） |
-| `--output-type` | No | - | `discord` | Output Layer のサブタイプ（`--type output` 時のみ有効） |
+| `--type` | Yes | - | `input`, `hidden`, `output` | Layer type |
+| `--input-type` | No | - | `chat`, `cron`, `http` | Input Layer subtype (valid only with `--type input`) |
+| `--output-type` | No | - | `discord` | Output Layer subtype (valid only with `--type output`) |
 
-### 生成ファイル
+### Generated Files
 
-| ファイル | 内容 |
+| File | Content |
 |---------|------|
-| `src/layer/<type>/<name>.rs` | Layer 構造体とトレイト実装 |
-| `src/dto/<name>.rs` | 対応する Input/Output DTO |
+| `src/layer/<type>/<name>.rs` | Layer struct and trait implementation |
+| `src/dto/<name>.rs` | Corresponding Input/Output DTOs |
 
-### 自動更新ファイル
+### Auto-Updated Files
 
-| ファイル | 変更内容 |
+| File | Change |
 |---------|---------|
-| `src/layer/<type>/mod.rs` | `pub mod <name>;` を追加 |
-| `src/dto/mod.rs` | `pub mod <name>;` を追加 |
+| `src/layer/<type>/mod.rs` | Adds `pub mod <name>;` |
+| `src/dto/mod.rs` | Adds `pub mod <name>;` |
 
-### 終了コード
+### Exit Codes
 
-| コード | 意味 |
+| Code | Meaning |
 |--------|------|
-| 0 | 成功 |
-| 1 | ファイルが既に存在する |
-| 2 | SmartCrab プロジェクトのルートディレクトリではない |
+| 0 | Success |
+| 1 | File already exists |
+| 2 | Not in a SmartCrab project root directory |
 
-### 実行例
+### Examples
 
 ```bash
 $ crab generate layer data_analyzer --type hidden
@@ -163,48 +163,48 @@ $ crab generate layer discord_notifier --type output --output-type discord
 
 ## `crab generate dto`
 
-DTO 構造体のボイラープレートコードを生成する。エイリアス: `crab g dto`
+Generates DTO struct boilerplate code. Alias: `crab g dto`
 
-### 構文
+### Syntax
 
 ```
 crab generate dto <name> [OPTIONS]
 ```
 
-### 引数
+### Arguments
 
-| 引数 | 必須 | 説明 |
+| Argument | Required | Description |
 |------|------|------|
-| `<name>` | Yes | DTO 名（snake_case） |
+| `<name>` | Yes | DTO name (snake_case) |
 
-### オプション
+### Options
 
-| オプション | 必須 | デフォルト | 説明 |
+| Option | Required | Default | Description |
 |-----------|------|-----------|------|
-| `--fields <fields>` | No | 空 | カンマ区切りの `name:type` ペア |
+| `--fields <fields>` | No | empty | Comma-separated `name:type` pairs |
 
-### 生成ファイル
+### Generated Files
 
-| ファイル | 内容 |
+| File | Content |
 |---------|------|
-| `src/dto/<name>.rs` | DTO 構造体（`#[derive(Dto)]`） |
+| `src/dto/<name>.rs` | DTO struct (with `#[derive(Dto)]`) |
 
-### 自動更新ファイル
+### Auto-Updated Files
 
-| ファイル | 変更内容 |
+| File | Change |
 |---------|---------|
-| `src/dto/mod.rs` | `pub mod <name>;` を追加 |
+| `src/dto/mod.rs` | Adds `pub mod <name>;` |
 
-### 終了コード
+### Exit Codes
 
-| コード | 意味 |
+| Code | Meaning |
 |--------|------|
-| 0 | 成功 |
-| 1 | ファイルが既に存在する |
-| 2 | SmartCrab プロジェクトのルートディレクトリではない |
-| 3 | `--fields` の構文エラー |
+| 0 | Success |
+| 1 | File already exists |
+| 2 | Not in a SmartCrab project root directory |
+| 3 | `--fields` syntax error |
 
-### 実行例
+### Examples
 
 ```bash
 $ crab generate dto analysis_result --fields "severity:String,score:f64,tags:Vec<String>"
@@ -218,41 +218,41 @@ $ crab generate dto empty_marker
 
 ## `crab generate dag`
 
-DAG 定義関数のボイラープレートコードを生成する。エイリアス: `crab g dag`
+Generates DAG definition function boilerplate code. Alias: `crab g dag`
 
-### 構文
+### Syntax
 
 ```
 crab generate dag <name>
 ```
 
-### 引数
+### Arguments
 
-| 引数 | 必須 | 説明 |
+| Argument | Required | Description |
 |------|------|------|
-| `<name>` | Yes | DAG 名（snake_case） |
+| `<name>` | Yes | DAG name (snake_case) |
 
-### 生成ファイル
+### Generated Files
 
-| ファイル | 内容 |
+| File | Content |
 |---------|------|
-| `src/dag/<name>.rs` | DAG 定義関数（`DagBuilder` 使用） |
+| `src/dag/<name>.rs` | DAG definition function (using `DagBuilder`) |
 
-### 自動更新ファイル
+### Auto-Updated Files
 
-| ファイル | 変更内容 |
+| File | Change |
 |---------|---------|
-| `src/dag/mod.rs` | `pub mod <name>;` を追加 |
+| `src/dag/mod.rs` | Adds `pub mod <name>;` |
 
-### 終了コード
+### Exit Codes
 
-| コード | 意味 |
+| Code | Meaning |
 |--------|------|
-| 0 | 成功 |
-| 1 | ファイルが既に存在する |
-| 2 | SmartCrab プロジェクトのルートディレクトリではない |
+| 0 | Success |
+| 1 | File already exists |
+| 2 | Not in a SmartCrab project root directory |
 
-### 実行例
+### Example
 
 ```bash
 $ crab generate dag api_pipeline
@@ -262,29 +262,29 @@ $ crab generate dag api_pipeline
 
 ## `crab run`
 
-SmartCrab アプリケーションを実行する。内部的には `cargo run` を呼び出す。
+Runs the SmartCrab application. Internally calls `cargo run`.
 
-### 構文
+### Syntax
 
 ```
 crab run [OPTIONS]
 ```
 
-### オプション
+### Options
 
-| オプション | デフォルト | 説明 |
+| Option | Default | Description |
 |-----------|-----------|------|
-| `--release` | false | リリースビルドで実行 |
+| `--release` | false | Run with a release build |
 
-### 終了コード
+### Exit Codes
 
-| コード | 意味 |
+| Code | Meaning |
 |--------|------|
-| 0 | 正常終了 |
-| 1 | ビルドエラー |
-| 2 | ランタイムエラー |
+| 0 | Normal exit |
+| 1 | Build error |
+| 2 | Runtime error |
 
-### 実行例
+### Example
 
 ```bash
 $ crab run
@@ -296,33 +296,33 @@ INFO smartcrab::dag::api: DAG 'api' started
 INFO smartcrab::dag::batch: DAG 'batch' started
 ```
 
-## 設定ファイル: SmartCrab.toml
+## Configuration File: SmartCrab.toml
 
-プロジェクトルートに配置する設定ファイル。CLI と Runtime の両方が参照する。
+A configuration file placed at the project root. Referenced by both the CLI and the Runtime.
 
 ```toml
 [project]
-name = "my_app"        # プロジェクト名
-version = "0.1.0"      # バージョン
+name = "my_app"        # Project name
+version = "0.1.0"      # Version
 
 [telemetry]
-enabled = true                         # テレメトリの有効/無効
-exporter = "otlp"                      # エクスポータ種別（"otlp" | "stdout"）
-endpoint = "http://localhost:4317"     # OTLP エンドポイント
+enabled = true                         # Enable/disable telemetry
+exporter = "otlp"                      # Exporter type ("otlp" | "stdout")
+endpoint = "http://localhost:4317"     # OTLP endpoint
 
 [claude_code]
-timeout_secs = 300     # Claude Code のデフォルトタイムアウト（秒）
+timeout_secs = 300     # Default timeout for Claude Code (seconds)
 ```
 
-### 設定の優先順位
+### Configuration Priority
 
-1. 環境変数（`SMARTCRAB_` プレフィックス）
+1. Environment variables (`SMARTCRAB_` prefix)
 2. `SmartCrab.toml`
-3. デフォルト値
+3. Default values
 
-環境変数の命名規則:
+Environment variable naming:
 
-| 設定 | 環境変数 |
+| Setting | Environment Variable |
 |------|---------|
 | `telemetry.enabled` | `SMARTCRAB_TELEMETRY_ENABLED` |
 | `telemetry.endpoint` | `SMARTCRAB_TELEMETRY_ENDPOINT` |

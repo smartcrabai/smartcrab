@@ -1,61 +1,61 @@
 +++
 title = "Architecture"
-description = "アーキテクチャ全体設計 — 「ツール → AI」パラダイム、システム全体像、並行実行モデル"
+description = "Overall architecture — the \"Tool-to-AI\" paradigm, system overview, concurrent execution model"
 weight = 1
 +++
 
-## 「ツール → AI」パラダイム
+## The "Tool-to-AI" Paradigm
 
-従来の AI エージェントフレームワーク（OpenClaw 等）は「AI → ツール」パラダイムに基づいている。AI が主導し、必要に応じてツールを呼び出す。
+Traditional AI agent frameworks (such as OpenClaw) are based on the "AI-to-Tool" paradigm: AI takes the lead and calls tools as needed.
 
-SmartCrab はこれを逆転させた「ツール → AI」パラダイムを採用する。通常の処理（HTTP リクエスト処理、Cron ジョブ、チャットメッセージ受信等）を先に実行し、その結果に基づいて AI を呼び出すかどうかを条件分岐で判断する。
+SmartCrab inverts this with the "Tool-to-AI" paradigm. Normal processing (HTTP request handling, cron jobs, chat message reception, etc.) executes first, and the results are used in conditional branching to decide whether to invoke AI.
 
 ```
-従来: AI → ツール
+Traditional: AI → Tool
   ┌──────┐    ┌──────┐    ┌──────┐
   │  AI  │───▶│ Tool │───▶│  AI  │───▶ ...
   └──────┘    └──────┘    └──────┘
-  AIが主導し、ツールを呼び出す
+  AI leads and calls tools
 
-SmartCrab: ツール → AI
+SmartCrab: Tool → AI
   ┌──────┐    ┌───────────┐    ┌──────────────┐
-  │Input │───▶│ 条件判定  │───▶│ Claude Code  │───▶ ...
+  │Input │───▶│ Condition │───▶│ Claude Code  │───▶ ...
   └──────┘    └───────────┘    └──────────────┘
-  非AI処理が先行し、条件に応じてAIを起動する
+  Non-AI processing runs first, AI is activated conditionally
 ```
 
-このアプローチの利点:
+Benefits of this approach:
 
-- **コスト効率**: AI は必要な場合のみ起動される
-- **予測可能性**: 非 AI 処理は決定論的に動作する
-- **テスタビリティ**: AI を含まない処理パスは通常のユニットテストで検証できる
-- **制御性**: AI の起動条件をプログラマが明示的に定義できる
+- **Cost efficiency**: AI is invoked only when necessary
+- **Predictability**: Non-AI processing operates deterministically
+- **Testability**: Processing paths without AI can be verified with ordinary unit tests
+- **Control**: Programmers explicitly define the conditions under which AI is invoked
 
-## システム全体像
+## System Overview
 
 ```mermaid
 C4Context
     title SmartCrab System Context
 
-    Person(dev, "Developer", "SmartCrabでアプリケーションを構築する開発者")
+    Person(dev, "Developer", "Developer building applications with SmartCrab")
 
-    System(smartcrab, "SmartCrab Application", "開発者がSmartCrabフレームワーク上で構築したアプリケーション")
+    System(smartcrab, "SmartCrab Application", "Application built on the SmartCrab framework by developers")
 
-    System_Ext(claude, "Claude Code", "Anthropic AI コーディングツール（子プロセス実行）")
-    System_Ext(discord, "Discord / Chat", "チャットプラットフォーム")
-    System_Ext(http_client, "HTTP Client", "外部HTTPクライアント")
-    System_Ext(jaeger, "Jaeger", "分散トレーシングUI")
+    System_Ext(claude, "Claude Code", "Anthropic AI coding tool (subprocess execution)")
+    System_Ext(discord, "Discord / Chat", "Chat platform")
+    System_Ext(http_client, "HTTP Client", "External HTTP client")
+    System_Ext(jaeger, "Jaeger", "Distributed tracing UI")
 
-    Rel(dev, smartcrab, "smartcrab CLI で開発・実行")
-    Rel(smartcrab, claude, "条件付きで子プロセス実行")
-    Rel(discord, smartcrab, "DM / メンション")
-    Rel(http_client, smartcrab, "HTTP リクエスト")
-    Rel(smartcrab, jaeger, "OpenTelemetry トレース")
+    Rel(dev, smartcrab, "Develop and run with smartcrab CLI")
+    Rel(smartcrab, claude, "Conditionally execute as child process")
+    Rel(discord, smartcrab, "DM / mention")
+    Rel(http_client, smartcrab, "HTTP request")
+    Rel(smartcrab, jaeger, "OpenTelemetry traces")
 ```
 
-## 3 要素の関係
+## The Three Core Elements
 
-SmartCrab アプリケーションは **Layer**、**DTO**、**DAG** の 3 要素で構成される。
+A SmartCrab application is composed of three elements: **Layer**, **DTO**, and **DAG**.
 
 ```mermaid
 classDiagram
@@ -100,13 +100,13 @@ classDiagram
     Dag --> Dto : transfers
 ```
 
-- **Layer**: 処理の最小単位。Input / Hidden / Output の 3 種
-- **DTO**: Layer 間のデータ受け渡しに使う型安全な構造体
-- **DAG**: Layer の実行順序と条件分岐を定義するグラフ
+- **Layer**: The minimal processing unit. Three kinds: Input, Hidden, and Output
+- **DTO**: A type-safe struct for passing data between Layers
+- **DAG**: A graph defining the execution order and conditional branching of Layers
 
-## 並行実行モデル
+## Concurrent Execution Model
 
-SmartCrab は 1 プロセスで複数の DAG を同時実行する。tokio ランタイム上で各 DAG が独立した非同期タスクとして動作する。
+SmartCrab runs multiple DAGs simultaneously in a single process. Each DAG operates as an independent async task on the tokio runtime.
 
 ```mermaid
 flowchart TB
@@ -128,51 +128,51 @@ flowchart TB
     end
 ```
 
-- 各 DAG は `tokio::spawn` で独立したタスクとして実行される
-- DAG 内の Layer は DAG が定義する順序で逐次実行される（並列エッジがある場合は並列実行）
-- Claude Code の呼び出しは `tokio::process::Command` で非同期に実行される
-- グレースフルシャットダウンは `tokio::signal` でシグナル（SIGTERM / SIGINT）を受けて全 DAG に伝播する
+- Each DAG runs as an independent task via `tokio::spawn`
+- Layers within a DAG are executed sequentially in the order defined by the DAG (parallel edges run in parallel)
+- Claude Code invocations are executed asynchronously via `tokio::process::Command`
+- Graceful shutdown propagates to all DAGs upon receiving SIGTERM / SIGINT via `tokio::signal`
 
-## オブザーバビリティ
+## Observability
 
-SmartCrab は OpenTelemetry を用いた構造化トレーシングを標準装備する。
+SmartCrab includes structured tracing via OpenTelemetry out of the box.
 
-### Span 構造
+### Span Structure
 
 ```
 smartcrab                          # Root span
-├── dag::{dag_name}                # DAG実行のspan
-│   ├── layer::{layer_name}        # 各Layerの実行span
-│   │   ├── claude_code::invoke    # Claude Code呼び出し（該当する場合）
+├── dag::{dag_name}                # Span for DAG execution
+│   ├── layer::{layer_name}        # Span for each Layer execution
+│   │   ├── claude_code::invoke    # Claude Code invocation (when applicable)
 │   │   └── ...
-│   ├── edge::{from}→{to}         # エッジ遷移のspan
-│   │   └── condition::evaluate    # 条件評価（条件付きエッジの場合）
+│   ├── edge::{from}→{to}         # Span for edge transition
+│   │   └── condition::evaluate    # Condition evaluation (for conditional edges)
 │   └── ...
 └── ...
 ```
 
-### トレース送信先
+### Trace Destination
 
-現在の構成では Jaeger に OTLP gRPC でトレースを送信する（`compose.yml` 参照）。
+The current configuration sends traces to Jaeger via OTLP gRPC (see `compose.yml`).
 
-| コンポーネント | ポート | 用途 |
+| Component | Port | Purpose |
 |---------------|--------|------|
-| Jaeger UI | 16686 | トレースの可視化 |
-| OTLP gRPC | 4317 | トレースの受信 |
+| Jaeger UI | 16686 | Trace visualization |
+| OTLP gRPC | 4317 | Trace reception |
 
-## デプロイメント
+## Deployment
 
-### Docker 構成
+### Docker Configuration
 
-マルチステージビルドにより最小限のプロダクションイメージを生成する。
+A multi-stage build produces a minimal production image.
 
 ```
-Stage 1: chef      — cargo-chef インストール
-Stage 2: planner   — recipe.json 生成（依存キャッシュ用）
-Stage 3: builder   — 依存ビルド → アプリケーションビルド
-Stage 4: runtime   — distroless イメージに静的バイナリのみコピー
+Stage 1: chef      — Install cargo-chef
+Stage 2: planner   — Generate recipe.json (for dependency caching)
+Stage 3: builder   — Build dependencies → build application
+Stage 4: runtime   — Copy static binary only into distroless image
 ```
 
-- ベースイメージ: `gcr.io/distroless/static-debian12:nonroot`
-- ビルドキャッシュ: cargo registry / git / target ディレクトリをマウントキャッシュ
-- リリース最適化: `codegen-units = 1`, `lto = true`, `strip = true`
+- Base image: `gcr.io/distroless/static-debian12:nonroot`
+- Build cache: Mount cache for cargo registry / git / target directories
+- Release optimizations: `codegen-units = 1`, `lto = true`, `strip = true`
