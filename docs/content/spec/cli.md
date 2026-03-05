@@ -308,7 +308,6 @@ version = "0.1.0"      # Version
 [telemetry]
 enabled = true                         # Enable/disable telemetry
 exporter = "otlp"                      # Exporter type ("otlp" | "stdout")
-endpoint = "http://localhost:4317"     # OTLP endpoint
 
 [claude_code]
 timeout_secs = 300     # Default timeout for Claude Code (seconds)
@@ -325,5 +324,6 @@ Environment variable naming:
 | Setting | Environment Variable |
 |------|---------|
 | `telemetry.enabled` | `SMARTCRAB_TELEMETRY_ENABLED` |
-| `telemetry.endpoint` | `SMARTCRAB_TELEMETRY_ENDPOINT` |
 | `claude_code.timeout_secs` | `SMARTCRAB_CLAUDE_CODE_TIMEOUT_SECS` |
+
+The OTLP export endpoint is configured via the standard OpenTelemetry environment variable `OTEL_EXPORTER_OTLP_ENDPOINT` (default: `http://localhost:4317`), not through `SmartCrab.toml`.
