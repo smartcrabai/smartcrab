@@ -1,0 +1,178 @@
++++
+title = "Architecture"
+description = "Overall architecture — the \"Tool-to-AI\" paradigm, system overview, concurrent execution model"
+weight = 1
++++
+
+## The "Tool-to-AI" Paradigm
+
+Traditional AI agent frameworks (such as OpenClaw) are based on the "AI-to-Tool" paradigm: AI takes the lead and calls tools as needed.
+
+SmartCrab inverts this with the "Tool-to-AI" paradigm. Normal processing (HTTP request handling, cron jobs, chat message reception, etc.) executes first, and the results are used in conditional branching to decide whether to invoke AI.
+
+```
+Traditional: AI → Tool
+  ┌──────┐    ┌──────┐    ┌──────┐
+  │  AI  │───▶│ Tool │───▶│  AI  │───▶ ...
+  └──────┘    └──────┘    └──────┘
+  AI leads and calls tools
+
+SmartCrab: Tool → AI
+  ┌──────┐    ┌───────────┐    ┌──────────────┐
+  │Input │───▶│ Condition │───▶│ Claude Code  │───▶ ...
+  └──────┘    └───────────┘    └──────────────┘
+  Non-AI processing runs first, AI is activated conditionally
+```
+
+Benefits of this approach:
+
+- **Cost efficiency**: AI is invoked only when necessary
+- **Predictability**: Non-AI processing operates deterministically
+- **Testability**: Processing paths without AI can be verified with ordinary unit tests
+- **Control**: Programmers explicitly define the conditions under which AI is invoked
+
+## System Overview
+
+```mermaid
+C4Context
+    title SmartCrab System Context
+
+    Person(dev, "Developer", "Developer building applications with SmartCrab")
+
+    System(smartcrab, "SmartCrab Application", "Application built on the SmartCrab framework by developers")
+
+    System_Ext(claude, "Claude Code", "Anthropic AI coding tool (subprocess execution)")
+    System_Ext(discord, "Discord / Chat", "Chat platform")
+    System_Ext(http_client, "HTTP Client", "External HTTP client")
+    System_Ext(jaeger, "Jaeger", "Distributed tracing UI")
+
+    Rel(dev, smartcrab, "Develop and run with smartcrab CLI")
+    Rel(smartcrab, claude, "Conditionally execute as child process")
+    Rel(discord, smartcrab, "DM / mention")
+    Rel(http_client, smartcrab, "HTTP request")
+    Rel(smartcrab, jaeger, "OpenTelemetry traces")
+```
+
+## The Three Core Elements
+
+A SmartCrab application is composed of three elements: **Layer**, **DTO**, and **DAG**.
+
+```mermaid
+classDiagram
+    class Layer {
+        <<trait>>
+    }
+    class InputLayer {
+        <<trait>>
+        +run() Result~Output~
+    }
+    class HiddenLayer {
+        <<trait>>
+        +run(input: Input) Result~Output~
+    }
+    class OutputLayer {
+        <<trait>>
+        +run(input: Input) Result~()~
+    }
+    class Dto {
+        <<trait>>
+        Serialize + Deserialize + Clone + Send + Sync
+    }
+    class DagBuilder {
+        +new(name) DagBuilder
+        +add_node(layer) DagBuilder
+        +add_edge(from, to) DagBuilder
+        +add_conditional_edge(from, condition, branches) DagBuilder
+        +build() Result~Dag~
+    }
+    class Dag {
+        +run() Result~()~
+    }
+
+    Layer <|-- InputLayer
+    Layer <|-- HiddenLayer
+    Layer <|-- OutputLayer
+    InputLayer ..> Dto : produces
+    HiddenLayer ..> Dto : consumes / produces
+    OutputLayer ..> Dto : consumes
+    DagBuilder --> Dag : builds
+    Dag --> Layer : executes
+    Dag --> Dto : transfers
+```
+
+- **Layer**: The minimal processing unit. Three kinds: Input, Hidden, and Output
+- **DTO**: A type-safe struct for passing data between Layers
+- **DAG**: A graph defining the execution order and conditional branching of Layers
+
+## Concurrent Execution Model
+
+SmartCrab runs multiple DAGs simultaneously in a single process. Each DAG operates as an independent async task on the tokio runtime.
+
+```mermaid
+flowchart TB
+    subgraph Process["SmartCrab Process"]
+        subgraph Runtime["tokio Runtime"]
+            subgraph Task1["tokio::spawn - DAG 1 (HTTP)"]
+                L1[Input: HTTP] --> L2[Hidden: Parse]
+                L2 --> L3[Output: Respond]
+            end
+            subgraph Task2["tokio::spawn - DAG 2 (Cron)"]
+                L4[Input: Cron] --> L5[Hidden: Check]
+                L5 --> L6[Output: Notify]
+            end
+            subgraph Task3["tokio::spawn - DAG 3 (Chat)"]
+                L7[Input: Chat] --> L8[Hidden: Analyze]
+                L8 --> L9[Output: Reply]
+            end
+        end
+    end
+```
+
+- Each DAG runs as an independent task via `tokio::spawn`
+- Layers within a DAG are executed sequentially in the order defined by the DAG (parallel edges run in parallel)
+- Claude Code invocations are executed asynchronously via `tokio::process::Command`
+- Graceful shutdown propagates to all DAGs upon receiving SIGTERM / SIGINT via `tokio::signal`
+
+## Observability
+
+SmartCrab includes structured tracing via OpenTelemetry out of the box.
+
+### Span Structure
+
+```
+smartcrab                          # Root span
+├── dag::{dag_name}                # Span for DAG execution
+│   ├── layer::{layer_name}        # Span for each Layer execution
+│   │   ├── claude_code::invoke    # Claude Code invocation (when applicable)
+│   │   └── ...
+│   ├── edge::{from}→{to}         # Span for edge transition
+│   │   └── condition::evaluate    # Condition evaluation (for conditional edges)
+│   └── ...
+└── ...
+```
+
+### Trace Destination
+
+The current configuration sends traces to Jaeger via OTLP gRPC (see `compose.yml`).
+
+| Component | Port | Purpose |
+|---------------|--------|------|
+| Jaeger UI | 16686 | Trace visualization |
+| OTLP gRPC | 4317 | Trace reception |
+
+## Deployment
+
+### Docker Configuration
+
+A multi-stage build produces a minimal production image.
+
+```
+Stage 1: chef      — Install cargo-chef
+Stage 2: planner   — Generate recipe.json (for dependency caching)
+Stage 3: builder   — Build dependencies → build application
+Stage 4: runtime   — Copy static binary only into distroless image
+```
+
+- Base image: `gcr.io/distroless/static-debian12:nonroot`
+- Build cache: Mount cache for cargo registry / git / target directories
+- Release optimizations: `codegen-units = 1`, `lto = true`, `strip = true`
