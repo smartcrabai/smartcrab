@@ -7,6 +7,7 @@ pub mod graph;
 pub mod layer;
 pub mod runtime;
 pub mod scheduler;
+pub mod storage;
 pub mod telemetry;
 
 /// Convenience re-exports for common usage.
@@ -21,4 +22,5 @@ pub mod prelude {
     pub use crate::graph::{DirectedGraph, DirectedGraphBuilder, TriggerKind};
     pub use crate::layer::{HiddenLayer, InputLayer, Layer, OutputLayer};
     pub use crate::runtime::Runtime;
+    pub use crate::storage::{FileStorage, InMemoryStorage, Storage, StorageExt};
 }
