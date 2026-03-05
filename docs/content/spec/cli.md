@@ -82,7 +82,7 @@ Creating project: my_app
   Created: my_app/src/layer/input/mod.rs
   Created: my_app/src/layer/hidden/mod.rs
   Created: my_app/src/layer/output/mod.rs
-  Created: my_app/src/dag/mod.rs
+  Created: my_app/src/graph/mod.rs
   Created: my_app/tests/integration/mod.rs
 
 Project 'my_app' created successfully!
@@ -216,33 +216,33 @@ $ crab generate dto empty_marker
   Updated: src/dto/mod.rs
 ```
 
-## `crab generate dag`
+## `crab generate graph`
 
-Generates DAG definition function boilerplate code. Alias: `crab g dag`
+Generates Graph definition function boilerplate code. Alias: `crab g graph`
 
 ### Syntax
 
 ```
-crab generate dag <name>
+crab generate graph <name>
 ```
 
 ### Arguments
 
 | Argument | Required | Description |
 |------|------|------|
-| `<name>` | Yes | DAG name (snake_case) |
+| `<name>` | Yes | Graph name (snake_case) |
 
 ### Generated Files
 
 | File | Content |
 |---------|------|
-| `src/dag/<name>.rs` | DAG definition function (using `DagBuilder`) |
+| `src/graph/<name>.rs` | Graph definition function (using `DirectedGraphBuilder`) |
 
 ### Auto-Updated Files
 
 | File | Change |
 |---------|---------|
-| `src/dag/mod.rs` | Adds `pub mod <name>;` |
+| `src/graph/mod.rs` | Adds `pub mod <name>;` |
 
 ### Exit Codes
 
@@ -255,9 +255,9 @@ crab generate dag <name>
 ### Example
 
 ```bash
-$ crab generate dag api_pipeline
-  Created: src/dag/api_pipeline.rs
-  Updated: src/dag/mod.rs
+$ crab generate graph api_pipeline
+  Created: src/graph/api_pipeline.rs
+  Updated: src/graph/mod.rs
 ```
 
 ## `crab run`
@@ -292,8 +292,8 @@ $ crab run
    Finished dev [unoptimized + debuginfo] target(s)
     Running `target/debug/my_app`
 INFO smartcrab: Starting the application
-INFO smartcrab::dag::api: DAG 'api' started
-INFO smartcrab::dag::batch: DAG 'batch' started
+INFO smartcrab::graph::api: Graph 'api' started
+INFO smartcrab::graph::batch: Graph 'batch' started
 ```
 
 ## Configuration File: SmartCrab.toml

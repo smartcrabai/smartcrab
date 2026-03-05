@@ -6,7 +6,7 @@ weight = 1
 
 ## Overview
 
-A Layer is a processing unit (node) in the DAG and the place where business logic is written in a SmartCrab application. There are three kinds — Input, Hidden, and Output — each with a different signature.
+A Layer is a processing unit (node) in the Graph and the place where business logic is written in a SmartCrab application. There are three kinds — Input, Hidden, and Output — each with a different signature.
 
 ## Common Layer Trait
 
@@ -21,7 +21,7 @@ pub trait Layer: Send + Sync + 'static {
 
 ## Input Layer
 
-Receives external events and produces a DTO. Serves as the entry point for the DAG.
+Receives external events and produces a DTO. Serves as the entry point for the Graph.
 
 ### Trait Definition
 

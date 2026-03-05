@@ -104,21 +104,21 @@ async fn run(&self, input: Self::Input) -> Result<Self::Output> {
 }
 ```
 
-### DAG-Level Errors
+### Graph-Level Errors
 
-If a Layer returns `Err`, the DAG engine stops execution and propagates the error to the caller.
+If a Layer returns `Err`, the Graph engine stops execution and propagates the error to the caller.
 
 {% mermaid() %}
 flowchart TD
     A[Layer A] -->|Ok| B[Layer B]
-    B -->|Err| Stop["DAG execution stopped<br/>Error recorded in trace"]
+    B -->|Err| Stop["Graph execution stopped<br/>Error recorded in trace"]
     B -->|Ok| C[Layer C]
     C -->|Ok| Done["Done"]
 {% end %}
 
 - On error, the error information is recorded in the relevant Layer's span
-- The DAG stops execution immediately (subsequent Layers are not executed)
-- Other DAGs are not affected (DAGs are independent of each other)
+- The Graph stops execution immediately (subsequent Layers are not executed)
+- Other Graphs are not affected (Graphs are independent of each other)
 
 ## Scope of Type Safety Guarantees
 
@@ -129,17 +129,17 @@ flowchart TD
 
 ### Runtime Validation
 
-- Edge type consistency check at DAG build time (matching Output type of one Layer with Input type of the next)
+- Edge type consistency check at Graph build time (matching Output type of one Layer with Input type of the next)
 - Exhaustiveness check for conditional branches (all branch targets exist)
-- DAG structure validation (cycle detection, unreachable node detection)
+- Graph structure validation (cycle detection, unreachable node detection)
 
 ```
-Compile time                     Runtime (at DAG build time)
+Compile time                     Runtime (at Graph build time)
 ┌─────────────────────┐      ┌──────────────────────────┐
 │ Layer type parameters│      │ Edge type consistency     │
 │ Dto derive bounds    │      │ Conditional branch coverage│
-│ Send + Sync bounds   │      │ DAG structure (cycles, reachability) │
+│ Send + Sync bounds   │      │ Graph structure (cycles, reachability) │
 └─────────────────────┘      └──────────────────────────┘
 ```
 
-Static checks via type parameters guarantee safety at compile time where possible. Validation related to the DAG's graph structure is performed as a runtime check at `build()` time.
+Static checks via type parameters guarantee safety at compile time where possible. Validation related to the Graph's structure is performed as a runtime check at `build()` time.

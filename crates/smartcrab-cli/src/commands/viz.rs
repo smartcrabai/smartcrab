@@ -1,9 +1,9 @@
 use std::io;
 use std::path::Path;
 
-/// Parsed DAG structure from source code.
+/// Parsed Graph structure from source code.
 #[derive(Debug)]
-struct ParsedDag {
+struct ParsedGraph {
     name: String,
     nodes: Vec<ParsedNode>,
     edges: Vec<ParsedEdge>,
@@ -37,50 +37,50 @@ pub enum VizFormat {
 }
 
 pub fn run(
-    dag_name: Option<&str>,
+    graph_name: Option<&str>,
     format: VizFormat,
     output_path: Option<&str>,
     no_types: bool,
     show_order: bool,
 ) -> io::Result<()> {
     let project_dir = super::ensure_smartcrab_project()?;
-    let dag_dir = project_dir.join("src/dag");
+    let graph_dir = project_dir.join("src/graph");
 
-    if !dag_dir.is_dir() {
+    if !graph_dir.is_dir() {
         return Err(io::Error::new(
             io::ErrorKind::NotFound,
-            "No src/dag/ directory found in the project.",
+            "No src/graph/ directory found in the project.",
         ));
     }
 
-    let dags = discover_dags(&dag_dir)?;
+    let graphs = discover_graphs(&graph_dir)?;
 
-    if dags.is_empty() {
+    if graphs.is_empty() {
         return Err(io::Error::new(
             io::ErrorKind::NotFound,
-            "No DAG definitions found in src/dag/.",
+            "No Graph definitions found in src/graph/.",
         ));
     }
 
-    let selected: Vec<&ParsedDag> = match dag_name {
+    let selected: Vec<&ParsedGraph> = match graph_name {
         Some(name) => {
-            let found: Vec<&ParsedDag> = dags.iter().filter(|d| d.name == name).collect();
+            let found: Vec<&ParsedGraph> = graphs.iter().filter(|d| d.name == name).collect();
             if found.is_empty() {
                 return Err(io::Error::new(
                     io::ErrorKind::NotFound,
                     format!(
-                        "DAG `{name}` not found. Available DAGs: {}",
-                        dag_names(&dags)
+                        "Graph `{name}` not found. Available Graphs: {}",
+                        graph_names(&graphs)
                     ),
                 ));
             }
             found
         }
-        None => dags.iter().collect(),
+        None => graphs.iter().collect(),
     };
 
     let mut rendered = String::new();
-    for (i, dag) in selected.iter().enumerate() {
+    for (i, graph) in selected.iter().enumerate() {
         if i > 0 {
             let separator = match format {
                 VizFormat::Ascii => "\n---\n\n",
@@ -88,7 +88,7 @@ pub fn run(
             };
             rendered.push_str(separator);
         }
-        let output = render_dag(dag, format, no_types, show_order);
+        let output = render_graph(graph, format, no_types, show_order);
         rendered.push_str(&output);
     }
 
@@ -105,18 +105,19 @@ pub fn run(
     Ok(())
 }
 
-fn dag_names(dags: &[ParsedDag]) -> String {
-    dags.iter()
+fn graph_names(graphs: &[ParsedGraph]) -> String {
+    graphs
+        .iter()
         .map(|d| d.name.as_str())
         .collect::<Vec<_>>()
         .join(", ")
 }
 
-/// Discover all DAG definitions by reading `src/dag/*.rs` files (excluding `mod.rs`).
-fn discover_dags(dag_dir: &Path) -> io::Result<Vec<ParsedDag>> {
-    let mut dags = Vec::new();
+/// Discover all Graph definitions by reading `src/graph/*.rs` files (excluding `mod.rs`).
+fn discover_graphs(graph_dir: &Path) -> io::Result<Vec<ParsedGraph>> {
+    let mut graphs = Vec::new();
 
-    for entry in std::fs::read_dir(dag_dir)? {
+    for entry in std::fs::read_dir(graph_dir)? {
         let entry = entry?;
         let path = entry.path();
         if path.extension().and_then(|e| e.to_str()) != Some("rs") {
@@ -131,18 +132,18 @@ fn discover_dags(dag_dir: &Path) -> io::Result<Vec<ParsedDag>> {
         }
 
         let content = std::fs::read_to_string(&path)?;
-        if let Some(dag) = parse_dag_source(&content) {
-            dags.push(dag);
+        if let Some(graph) = parse_graph_source(&content) {
+            graphs.push(graph);
         }
     }
 
-    dags.sort_by(|a, b| a.name.cmp(&b.name));
-    Ok(dags)
+    graphs.sort_by(|a, b| a.name.cmp(&b.name));
+    Ok(graphs)
 }
 
-/// Parse DAG structure from a Rust source file by matching builder patterns.
-fn parse_dag_source(content: &str) -> Option<ParsedDag> {
-    let name = extract_dag_name(content)?;
+/// Parse Graph structure from a Rust source file by matching builder patterns.
+fn parse_graph_source(content: &str) -> Option<ParsedGraph> {
+    let name = extract_graph_name(content)?;
     let nodes = extract_nodes(content);
     let edges = extract_edges(content);
 
@@ -150,10 +151,10 @@ fn parse_dag_source(content: &str) -> Option<ParsedDag> {
         return None;
     }
 
-    Some(ParsedDag { name, nodes, edges })
+    Some(ParsedGraph { name, nodes, edges })
 }
 
-fn extract_dag_name(content: &str) -> Option<String> {
+fn extract_graph_name(content: &str) -> Option<String> {
     // Match DirectedGraphBuilder::new("name")
     let marker = "DirectedGraphBuilder::new(\"";
     let start = content.find(marker)? + marker.len();
@@ -296,11 +297,16 @@ fn extract_conditional_branches(content: &str) -> Vec<(String, String)> {
 // Rendering (simplified, standalone - mirrors core viz output format)
 // ---------------------------------------------------------------------------
 
-fn render_dag(dag: &ParsedDag, format: VizFormat, no_types: bool, show_order: bool) -> String {
+fn render_graph(
+    graph: &ParsedGraph,
+    format: VizFormat,
+    no_types: bool,
+    show_order: bool,
+) -> String {
     match format {
-        VizFormat::Mermaid => render_mermaid(dag, no_types, show_order),
-        VizFormat::Dot => render_dot(dag, no_types, show_order),
-        VizFormat::Ascii => render_ascii(dag, no_types, show_order),
+        VizFormat::Mermaid => render_mermaid(graph, no_types, show_order),
+        VizFormat::Dot => render_dot(graph, no_types, show_order),
+        VizFormat::Ascii => render_ascii(graph, no_types, show_order),
     }
 }
 
@@ -320,10 +326,10 @@ fn kind_emoji(kind: NodeKind) -> &'static str {
     }
 }
 
-fn render_mermaid(dag: &ParsedDag, no_types: bool, show_order: bool) -> String {
+fn render_mermaid(graph: &ParsedGraph, no_types: bool, show_order: bool) -> String {
     let mut out = String::from("flowchart TD\n");
 
-    for (idx, node) in dag.nodes.iter().enumerate() {
+    for (idx, node) in graph.nodes.iter().enumerate() {
         let emoji = kind_emoji(node.kind);
         let kind = kind_str(node.kind);
 
@@ -346,7 +352,7 @@ fn render_mermaid(dag: &ParsedDag, no_types: bool, show_order: bool) -> String {
 
     out.push('\n');
 
-    for edge in &dag.edges {
+    for edge in &graph.edges {
         match &edge.label {
             Some(label) => {
                 out.push_str(&format!(
@@ -363,13 +369,13 @@ fn render_mermaid(dag: &ParsedDag, no_types: bool, show_order: bool) -> String {
     out
 }
 
-fn render_dot(dag: &ParsedDag, no_types: bool, show_order: bool) -> String {
-    let mut out = format!("digraph \"{}\" {{\n", dag.name);
+fn render_dot(graph: &ParsedGraph, no_types: bool, show_order: bool) -> String {
+    let mut out = format!("digraph \"{}\" {{\n", graph.name);
     out.push_str("    rankdir=TB;\n");
     out.push_str("    node [fontname=\"sans-serif\", fontsize=12];\n");
     out.push_str("    edge [fontname=\"sans-serif\", fontsize=10];\n\n");
 
-    for (idx, node) in dag.nodes.iter().enumerate() {
+    for (idx, node) in graph.nodes.iter().enumerate() {
         let emoji = kind_emoji(node.kind);
         let kind = kind_str(node.kind);
 
@@ -395,7 +401,7 @@ fn render_dot(dag: &ParsedDag, no_types: bool, show_order: bool) -> String {
 
     out.push('\n');
 
-    for edge in &dag.edges {
+    for edge in &graph.edges {
         match &edge.label {
             Some(label) => {
                 out.push_str(&format!(
@@ -413,13 +419,13 @@ fn render_dot(dag: &ParsedDag, no_types: bool, show_order: bool) -> String {
     out
 }
 
-fn render_ascii(dag: &ParsedDag, no_types: bool, show_order: bool) -> String {
+fn render_ascii(graph: &ParsedGraph, no_types: bool, show_order: bool) -> String {
     let mut out = String::new();
 
     // Build edge label lookup
     let mut edge_labels: std::collections::HashMap<(&str, &str), Vec<&str>> =
         std::collections::HashMap::new();
-    for edge in &dag.edges {
+    for edge in &graph.edges {
         if let Some(label) = &edge.label {
             edge_labels
                 .entry((edge.from.as_str(), edge.to.as_str()))
@@ -428,7 +434,7 @@ fn render_ascii(dag: &ParsedDag, no_types: bool, show_order: bool) -> String {
         }
     }
 
-    for (idx, node) in dag.nodes.iter().enumerate() {
+    for (idx, node) in graph.nodes.iter().enumerate() {
         let emoji = kind_emoji(node.kind);
         let kind = kind_str(node.kind);
 
@@ -469,8 +475,8 @@ fn render_ascii(dag: &ParsedDag, no_types: bool, show_order: bool) -> String {
         out.push('\n');
 
         // Connector to next node
-        if idx + 1 < dag.nodes.len() {
-            let next = &dag.nodes[idx + 1];
+        if idx + 1 < graph.nodes.len() {
+            let next = &graph.nodes[idx + 1];
             let labels = edge_labels.get(&(node.name.as_str(), next.name.as_str()));
 
             let mid = box_width / 2;
@@ -507,7 +513,7 @@ fn center_text(text: &str, width: usize) -> String {
 mod tests {
     use super::*;
 
-    const SAMPLE_DAG: &str = r#"
+    const SAMPLE_GRAPH: &str = r#"
 use smartcrab::prelude::*;
 
 pub fn build() -> std::result::Result<DirectedGraph, GraphError> {
@@ -522,13 +528,16 @@ pub fn build() -> std::result::Result<DirectedGraph, GraphError> {
 "#;
 
     #[test]
-    fn test_extract_dag_name() {
-        assert_eq!(extract_dag_name(SAMPLE_DAG), Some("my_pipeline".to_owned()));
+    fn test_extract_graph_name() {
+        assert_eq!(
+            extract_graph_name(SAMPLE_GRAPH),
+            Some("my_pipeline".to_owned())
+        );
     }
 
     #[test]
     fn test_extract_nodes() {
-        let nodes = extract_nodes(SAMPLE_DAG);
+        let nodes = extract_nodes(SAMPLE_GRAPH);
         assert_eq!(nodes.len(), 3);
         assert_eq!(nodes[0].name, "DiscordInput");
         assert_eq!(nodes[0].kind, NodeKind::Input);
@@ -540,7 +549,7 @@ pub fn build() -> std::result::Result<DirectedGraph, GraphError> {
 
     #[test]
     fn test_extract_edges() {
-        let edges = extract_edges(SAMPLE_DAG);
+        let edges = extract_edges(SAMPLE_GRAPH);
         assert_eq!(edges.len(), 2);
         assert_eq!(edges[0].from, "DiscordInput");
         assert_eq!(edges[0].to, "DataProcessor");
@@ -550,15 +559,15 @@ pub fn build() -> std::result::Result<DirectedGraph, GraphError> {
     }
 
     #[test]
-    fn test_parse_dag_source() {
-        let dag = parse_dag_source(SAMPLE_DAG).unwrap();
-        assert_eq!(dag.name, "my_pipeline");
-        assert_eq!(dag.nodes.len(), 3);
-        assert_eq!(dag.edges.len(), 2);
+    fn test_parse_graph_source() {
+        let graph = parse_graph_source(SAMPLE_GRAPH).unwrap();
+        assert_eq!(graph.name, "my_pipeline");
+        assert_eq!(graph.nodes.len(), 3);
+        assert_eq!(graph.edges.len(), 2);
     }
 
     #[test]
-    fn test_parse_dag_with_constructor() {
+    fn test_parse_graph_with_constructor() {
         let content = r#"
 DirectedGraphBuilder::new("test")
     .add_input(SourceLayer)
@@ -568,15 +577,15 @@ DirectedGraphBuilder::new("test")
     .add_edge("ClaudeCodeLayer", "DiscordOutput")
     .build()
 "#;
-        let dag = parse_dag_source(content).unwrap();
-        assert_eq!(dag.nodes.len(), 3);
-        assert_eq!(dag.nodes[1].name, "ClaudeCodeLayer");
+        let graph = parse_graph_source(content).unwrap();
+        assert_eq!(graph.nodes.len(), 3);
+        assert_eq!(graph.nodes[1].name, "ClaudeCodeLayer");
     }
 
     #[test]
     fn test_render_mermaid() {
-        let dag = parse_dag_source(SAMPLE_DAG).unwrap();
-        let output = render_mermaid(&dag, false, false);
+        let graph = parse_graph_source(SAMPLE_GRAPH).unwrap();
+        let output = render_mermaid(&graph, false, false);
         assert!(output.starts_with("flowchart TD\n"));
         assert!(output.contains("DiscordInput"));
         assert!(output.contains("DataProcessor"));
@@ -587,8 +596,8 @@ DirectedGraphBuilder::new("test")
 
     #[test]
     fn test_render_dot() {
-        let dag = parse_dag_source(SAMPLE_DAG).unwrap();
-        let output = render_dot(&dag, false, false);
+        let graph = parse_graph_source(SAMPLE_GRAPH).unwrap();
+        let output = render_dot(&graph, false, false);
         assert!(output.starts_with("digraph \"my_pipeline\""));
         assert!(output.contains("DiscordInput"));
         assert!(output.contains("shape=box, style=rounded")); // Input
@@ -597,8 +606,8 @@ DirectedGraphBuilder::new("test")
 
     #[test]
     fn test_render_ascii() {
-        let dag = parse_dag_source(SAMPLE_DAG).unwrap();
-        let output = render_ascii(&dag, false, false);
+        let graph = parse_graph_source(SAMPLE_GRAPH).unwrap();
+        let output = render_ascii(&graph, false, false);
         assert!(output.contains("DiscordInput"));
         assert!(output.contains("DataProcessor"));
         assert!(output.contains("JsonResponder"));
@@ -608,17 +617,17 @@ DirectedGraphBuilder::new("test")
 
     #[test]
     fn test_render_show_order() {
-        let dag = parse_dag_source(SAMPLE_DAG).unwrap();
-        let output = render_mermaid(&dag, false, true);
+        let graph = parse_graph_source(SAMPLE_GRAPH).unwrap();
+        let output = render_mermaid(&graph, false, true);
         assert!(output.contains("#1"));
         assert!(output.contains("#2"));
         assert!(output.contains("#3"));
     }
 
     #[test]
-    fn test_no_dag_in_mod_rs() {
-        // mod.rs content should not be parsed as a DAG
+    fn test_no_graph_in_mod_rs() {
+        // mod.rs content should not be parsed as a Graph
         let content = "pub mod discord_pipeline;\npub mod cron_pipeline;\n";
-        assert!(parse_dag_source(content).is_none());
+        assert!(parse_graph_source(content).is_none());
     }
 }

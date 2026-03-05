@@ -258,7 +258,7 @@ impl ClaudeCodeExecutor for MockClaudeCode {
 | レベル | 対象 | Claude Code |
 |--------|------|-------------|
 | ユニットテスト | 個別 Layer | モック |
-| 結合テスト | DAG 全体 | モック |
+| 結合テスト | Graph 全体 | モック |
 | E2E テスト | アプリケーション全体 | 実際の claude コマンド |
 
 ### ユニットテスト例

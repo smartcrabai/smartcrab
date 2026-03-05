@@ -33,10 +33,10 @@ enum Commands {
         #[arg(long)]
         release: bool,
     },
-    /// Visualize DAG definitions
+    /// Visualize Graph definitions
     Viz {
-        /// DAG name to visualize (all DAGs if omitted)
-        dag: Option<String>,
+        /// Graph name to visualize (all Graphs if omitted)
+        graph: Option<String>,
 
         /// Output format
         #[arg(long, value_enum, default_value_t = VizFormatArg::Mermaid)]
@@ -94,14 +94,14 @@ fn main() {
             }
         }
         Commands::Viz {
-            dag,
+            graph,
             format,
             output,
             no_types,
             show_order,
         } => {
             if let Err(e) = commands::viz::run(
-                dag.as_deref(),
+                graph.as_deref(),
                 format.into(),
                 output.as_deref(),
                 no_types,

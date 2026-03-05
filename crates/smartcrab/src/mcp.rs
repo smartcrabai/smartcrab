@@ -114,7 +114,7 @@ fn rebuild_graph_ref(graph: &DirectedGraph) -> DirectedGraph {
     builder.add_input(StubInput).build().expect("failed to build stub graph")
 }
 
-/// MCP server that exposes DAGs as tools.
+/// MCP server that exposes Graphs as tools.
 pub struct McpServer {
     name: String,
     version: String,
@@ -294,7 +294,7 @@ mod tests {
             .unwrap()
     }
 
-    // To build a second DAG with different layers (to avoid name conflicts)
+    // To build a second Graph with different layers (to avoid name conflicts)
     struct TestInput2;
     impl Layer for TestInput2 {
         fn name(&self) -> &str {

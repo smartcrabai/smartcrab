@@ -21,7 +21,7 @@ impl<T> Dto for T where
 {
 }
 
-/// Object-safe version of `Dto` for type-erased usage inside the DAG engine.
+/// Object-safe version of `Dto` for type-erased usage inside the Graph engine.
 pub trait DtoObject: Debug + Send + Sync + 'static {
     fn as_any(&self) -> &dyn Any;
     fn clone_box(&self) -> Box<dyn DtoObject>;

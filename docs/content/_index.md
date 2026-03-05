@@ -4,7 +4,7 @@ sort_by = "weight"
 weight = 1
 +++
 
-SmartCrab is a Rust framework implementing the "Tool-to-AI" paradigm. It uses conditional branching in a DAG to decide whether to invoke AI (Claude Code) based on the results of non-AI processing.
+SmartCrab is a Rust framework implementing the "Tool-to-AI" paradigm. It uses conditional branching in a Graph to decide whether to invoke AI (Claude Code) based on the results of non-AI processing.
 
 ## How to Read This Documentation
 
@@ -25,7 +25,7 @@ Reading the design docs first, then the spec docs, gives you context-grounded un
 |-------------|------|
 | [architecture](/design/architecture/) | Overall architecture — the "Tool-to-AI" paradigm, system overview, concurrent execution model |
 | [data-flow](/design/data-flow/) | Data flow design — data flow between Layers, type safety, error handling |
-| [dag-engine](/design/dag-engine/) | DAG engine design — execution engine, conditional branching, validation, lifecycle |
+| [graph-engine](/design/graph-engine/) | Graph engine design — execution engine, conditional branching, validation, lifecycle |
 | [claude-code-integration](/design/claude-code-integration/) | Claude Code integration design — subprocess execution, data exchange, test strategy |
 | [cli](/design/cli/) | CLI tool design — Rails-like developer experience, command structure, templates |
 

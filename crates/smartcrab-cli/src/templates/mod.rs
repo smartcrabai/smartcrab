@@ -72,16 +72,19 @@ pub fn render_all(ctx: &TemplateContext) -> BTreeMap<String, String> {
             "src/layer/output/discord_output.rs",
             include_str!("files/layer_output_discord_rs.txt"),
         ),
-        ("src/dag/mod.rs", include_str!("files/dag_mod_rs.txt")),
+        ("src/graph/mod.rs", include_str!("files/graph_mod_rs.txt")),
         (
-            "src/dag/discord_pipeline.rs",
-            include_str!("files/dag_discord_pipeline_rs.txt"),
+            "src/graph/discord_pipeline.rs",
+            include_str!("files/graph_discord_pipeline_rs.txt"),
         ),
         (
-            "src/dag/cron_pipeline.rs",
-            include_str!("files/dag_cron_pipeline_rs.txt"),
+            "src/graph/cron_pipeline.rs",
+            include_str!("files/graph_cron_pipeline_rs.txt"),
         ),
-        ("tests/dag_test.rs", include_str!("files/dag_test_rs.txt")),
+        (
+            "tests/graph_test.rs",
+            include_str!("files/graph_test_rs.txt"),
+        ),
     ];
 
     for (path, template) in templates {
@@ -106,8 +109,8 @@ mod tests {
         assert!(files.contains_key("Cargo.toml"));
         assert!(files.contains_key("src/main.rs"));
         assert!(files.contains_key("src/dto/mod.rs"));
-        assert!(files.contains_key("src/dag/mod.rs"));
-        assert!(files.contains_key("tests/dag_test.rs"));
+        assert!(files.contains_key("src/graph/mod.rs"));
+        assert!(files.contains_key("tests/graph_test.rs"));
 
         // Check that placeholders are replaced
         let cargo = &files["Cargo.toml"];

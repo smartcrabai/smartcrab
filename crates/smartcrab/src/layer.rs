@@ -155,7 +155,7 @@ impl<T: OutputLayer> OutputLayerDyn for T {
     }
 }
 
-/// Type-erased layer enum used in the DAG engine.
+/// Type-erased layer enum used in the Graph engine.
 pub enum AnyLayer {
     Input(Box<dyn InputLayerDyn>),
     Hidden(Box<dyn HiddenLayerDyn>),

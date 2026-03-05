@@ -75,12 +75,12 @@ fn generated_project_has_expected_src_structure() {
         "src/layer/hidden/claude_code_layer.rs",
         "src/layer/output/mod.rs",
         "src/layer/output/discord_output.rs",
-        // dag
-        "src/dag/mod.rs",
-        "src/dag/discord_pipeline.rs",
-        "src/dag/cron_pipeline.rs",
+        // graph
+        "src/graph/mod.rs",
+        "src/graph/discord_pipeline.rs",
+        "src/graph/cron_pipeline.rs",
         // tests
-        "tests/dag_test.rs",
+        "tests/graph_test.rs",
     ];
     for file in &expected_files {
         assert!(project.join(file).is_file(), "Missing source file: {file}");

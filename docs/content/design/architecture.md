@@ -55,7 +55,7 @@ C4Context
 
 ## The Three Core Elements
 
-A SmartCrab application is composed of three elements: **Layer**, **DTO**, and **DAG**.
+A SmartCrab application is composed of three elements: **Layer**, **DTO**, and **Graph**.
 
 {% mermaid() %}
 classDiagram
@@ -78,14 +78,16 @@ classDiagram
         <<trait>>
         Serialize + Deserialize + Clone + Send + Sync
     }
-    class DagBuilder {
-        +new(name) DagBuilder
-        +add_node(layer) DagBuilder
-        +add_edge(from, to) DagBuilder
-        +add_conditional_edge(from, condition, branches) DagBuilder
-        +build() Result~Dag~
+    class DirectedGraphBuilder {
+        +new(name) DirectedGraphBuilder
+        +add_input(layer) DirectedGraphBuilder
+        +add_hidden(layer) DirectedGraphBuilder
+        +add_output(layer) DirectedGraphBuilder
+        +add_edge(from, to) DirectedGraphBuilder
+        +add_conditional_edge(from, condition, branches) DirectedGraphBuilder
+        +build() Result~DirectedGraph~
     }
-    class Dag {
+    class DirectedGraph {
         +run() Result~()~
     }
 
@@ -95,32 +97,32 @@ classDiagram
     InputLayer ..> Dto : produces
     HiddenLayer ..> Dto : consumes / produces
     OutputLayer ..> Dto : consumes
-    DagBuilder --> Dag : builds
-    Dag --> Layer : executes
-    Dag --> Dto : transfers
+    DirectedGraphBuilder --> DirectedGraph : builds
+    DirectedGraph --> Layer : executes
+    DirectedGraph --> Dto : transfers
 {% end %}
 
 - **Layer**: The minimal processing unit. Three kinds: Input, Hidden, and Output
 - **DTO**: A type-safe struct for passing data between Layers
-- **DAG**: A graph defining the execution order and conditional branching of Layers
+- **Graph**: A graph defining the execution order and conditional branching of Layers
 
 ## Concurrent Execution Model
 
-SmartCrab runs multiple DAGs simultaneously in a single process. Each DAG operates as an independent async task on the tokio runtime.
+SmartCrab runs multiple Graphs simultaneously in a single process. Each Graph operates as an independent async task on the tokio runtime.
 
 {% mermaid() %}
 flowchart TB
     subgraph Process["SmartCrab Process"]
         subgraph Runtime["tokio Runtime"]
-            subgraph Task1["tokio::spawn - DAG 1 (HTTP)"]
+            subgraph Task1["tokio::spawn - Graph 1 (HTTP)"]
                 L1[Input: HTTP] --> L2[Hidden: Parse]
                 L2 --> L3[Output: Respond]
             end
-            subgraph Task2["tokio::spawn - DAG 2 (Cron)"]
+            subgraph Task2["tokio::spawn - Graph 2 (Cron)"]
                 L4[Input: Cron] --> L5[Hidden: Check]
                 L5 --> L6[Output: Notify]
             end
-            subgraph Task3["tokio::spawn - DAG 3 (Chat)"]
+            subgraph Task3["tokio::spawn - Graph 3 (Chat)"]
                 L7[Input: Chat] --> L8[Hidden: Analyze]
                 L8 --> L9[Output: Reply]
             end
@@ -128,10 +130,10 @@ flowchart TB
     end
 {% end %}
 
-- Each DAG runs as an independent task via `tokio::spawn`
-- Layers within a DAG are executed sequentially in the order defined by the DAG (parallel edges run in parallel)
+- Each Graph runs as an independent task via `tokio::spawn`
+- Layers within a Graph are executed sequentially in the order defined by the Graph (parallel edges run in parallel)
 - Claude Code invocations are executed asynchronously via `tokio::process::Command`
-- Graceful shutdown propagates to all DAGs upon receiving SIGTERM / SIGINT via `tokio::signal`
+- Graceful shutdown propagates to all Graphs upon receiving SIGTERM / SIGINT via `tokio::signal`
 
 ## Observability
 
@@ -141,7 +143,7 @@ SmartCrab includes structured tracing via OpenTelemetry out of the box.
 
 ```
 smartcrab                          # Root span
-├── dag::{dag_name}                # Span for DAG execution
+├── graph::{graph_name}            # Span for Graph execution
 │   ├── layer::{layer_name}        # Span for each Layer execution
 │   │   ├── claude_code::invoke    # Claude Code invocation (when applicable)
 │   │   └── ...

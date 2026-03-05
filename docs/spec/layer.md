@@ -2,7 +2,7 @@
 
 ## 概要
 
-Layer は DAG 内の処理単位（ノード）であり、SmartCrab アプリケーションのビジネスロジックを記述する場所である。Input / Hidden / Output の 3 種があり、それぞれ異なるシグネチャを持つ。
+Layer は Graph 内の処理単位（ノード）であり、SmartCrab アプリケーションのビジネスロジックを記述する場所である。Input / Hidden / Output の 3 種があり、それぞれ異なるシグネチャを持つ。
 
 ## 共通 Layer トレイト
 
@@ -17,7 +17,7 @@ pub trait Layer: Send + Sync + 'static {
 
 ## Input Layer
 
-外部イベントを受けて DTO を生成する。DAG のエントリーポイントとなる。
+外部イベントを受けて DTO を生成する。Graph のエントリーポイントとなる。
 
 ### トレイト定義
 

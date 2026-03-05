@@ -1,19 +1,19 @@
 +++
-title = "DAG Engine"
-description = "DAG engine design — execution engine, conditional branching, validation, lifecycle"
+title = "Graph Engine"
+description = "Graph engine design — execution engine, conditional branching, validation, lifecycle"
 weight = 3
 +++
 
 ## Conceptual Model
 
-SmartCrab's DAG (Directed Acyclic Graph) is a graph structure that defines the execution order and conditional branching of Layers.
+SmartCrab's Graph (directed graph) is a graph structure that defines the execution order and conditional branching of Layers.
 
 - **Node**: Corresponds to one Layer. Calls the Layer's `run` method at execution time
 - **Edge**: Represents a transition between Nodes. There are two kinds: unconditional edges and conditional edges
 
 {% mermaid() %}
 flowchart LR
-    subgraph DAG
+    subgraph Graph
         A["Node A<br/>(Input Layer)"]
         B["Node B<br/>(Hidden Layer)"]
         C["Node C<br/>(Hidden Layer)"]
@@ -28,15 +28,15 @@ flowchart LR
 
 ## Builder Pattern API Design
 
-DAGs are constructed using the builder pattern. Method chaining allows declarative definition, and `build()` at the end produces a validated DAG.
+Graphs are constructed using the builder pattern. Method chaining allows declarative definition, and `build()` at the end produces a validated Graph.
 
 ```rust
-let dag = DagBuilder::new("my_pipeline")
-    .add_node(HttpInput::new(addr))
-    .add_node(DataAnalyzer::new())
-    .add_node(AiProcessor::new())
-    .add_node(SimpleProcessor::new())
-    .add_node(SlackNotifier::new(webhook))
+let graph = DirectedGraphBuilder::new("my_pipeline")
+    .add_input(HttpInput::new(addr))
+    .add_hidden(DataAnalyzer::new())
+    .add_hidden(AiProcessor::new())
+    .add_hidden(SimpleProcessor::new())
+    .add_output(SlackNotifier::new(webhook))
     .add_edge("HttpInput", "DataAnalyzer")
     .add_conditional_edge(
         "DataAnalyzer",
@@ -55,7 +55,7 @@ let dag = DagBuilder::new("my_pipeline")
 
 ### Design Principles
 
-- **Type erasure**: `add_node` accepts `impl Layer` and stores it internally as `Box<dyn Layer>`. This allows Layers of different types to coexist in the same DAG
+- **Type erasure**: `add_input` / `add_hidden` / `add_output` accept the respective Layer traits and store them internally as `Box<dyn Layer>`. This allows Layers of different types to coexist in the same Graph
 - **Name-based references**: Edges reference Nodes by the Layer's `name()`. A design decision to avoid type parameter explosion
 - **Deferred validation**: Type consistency and graph structure validation are performed all at once during `build()`
 
@@ -63,7 +63,7 @@ let dag = DagBuilder::new("my_pipeline")
 
 ### Topological Sort
 
-At `build()` time, the DAG's nodes are topologically sorted to determine the execution order.
+At `build()` time, the Graph's nodes are topologically sorted to determine the execution order.
 
 {% mermaid() %}
 flowchart TD
@@ -81,13 +81,13 @@ flowchart TD
 
 {% mermaid() %}
 flowchart TD
-    Start([DAG execution start]) --> ExecNode[Execute current Node]
+    Start([Graph execution start]) --> ExecNode[Execute current Node]
     ExecNode --> CheckResult{Result?}
     CheckResult -->|Ok| HasEdge{Outgoing edges?}
-    CheckResult -->|Err| Error([Error: DAG stops])
+    CheckResult -->|Err| Error([Error: Graph stops])
     HasEdge -->|Unconditional edge| NextNode[Go to next Node]
     HasEdge -->|Conditional edge| EvalCond[Evaluate condition closure]
-    HasEdge -->|No edges| Done([DAG complete])
+    HasEdge -->|No edges| Done([Graph complete])
     EvalCond --> SelectBranch[Select branch Node]
     SelectBranch --> NextNode
     NextNode --> ExecNode
@@ -147,13 +147,13 @@ Examples of condition decisions:
 }
 ```
 
-## DAG Validation
+## Graph Validation
 
 The following validations are performed at `build()` time. If any validation fails, `Err` is returned.
 
 ### Cycle Detection
 
-A DAG must be a directed acyclic graph. Cycles are detected using depth-first search (DFS).
+Cycles are detected using depth-first search (DFS).
 
 ```
 Detection algorithm: DFS + visit state tracking
@@ -176,19 +176,19 @@ For two Nodes connected by an edge, the `Output` type of the preceding Node and 
 
 | Error | Description |
 |--------|------|
-| `CycleDetected` | A cycle exists in the DAG |
+| `CycleDetected` | A cycle exists in the Graph |
 | `UnreachableNode` | A node unreachable from the input node exists |
 | `TypeMismatch` | DTO type mismatch between adjacent nodes |
 | `MissingBranch` | A branch target node for a conditional edge does not exist |
-| `NoInputNode` | No input node (Input Layer) exists in the DAG |
+| `NoInputNode` | No input node (Input Layer) exists in the Graph |
 | `DuplicateNodeName` | Multiple nodes with the same name are registered |
 
-## DAG Lifecycle
+## Graph Lifecycle
 
 {% mermaid() %}
 stateDiagram-v2
-    [*] --> Building: DagBuilder::new()
-    Building --> Building: add_node / add_edge
+    [*] --> Building: DirectedGraphBuilder::new()
+    Building --> Building: add_input / add_hidden / add_output / add_edge
     Building --> Ready: build() succeeds
     Building --> [*]: build() fails (validation error)
     Ready --> Running: run()
@@ -210,4 +210,4 @@ When SIGTERM / SIGINT is received via `tokio::signal`:
 3. Close OpenTelemetry spans and flush traces
 4. Exit with exit code 0
 
-When multiple DAGs are running concurrently, the shutdown signal propagates to all DAGs via a `tokio::sync::broadcast` channel.
+When multiple Graphs are running concurrently, the shutdown signal propagates to all Graphs via a `tokio::sync::broadcast` channel.

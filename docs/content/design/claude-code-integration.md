@@ -262,7 +262,7 @@ impl ClaudeCodeExecutor for MockClaudeCode {
 | Level | Scope | Claude Code |
 |--------|------|-------------|
 | Unit test | Individual Layer | Mock |
-| Integration test | Full DAG | Mock |
+| Integration test | Full Graph | Mock |
 | E2E test | Full application | Real claude command |
 
 ### Unit Test Example

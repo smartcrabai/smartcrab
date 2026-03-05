@@ -1,6 +1,6 @@
 # SmartCrab Documentation
 
-SmartCrab は「ツール → AI」パラダイムを実現する Rust フレームワークです。非 AI 処理の結果に基づいて AI（Claude Code）を起動するかどうかを DAG の条件分岐で判断します。
+SmartCrab は「ツール → AI」パラダイムを実現する Rust フレームワークです。非 AI 処理の結果に基づいて AI（Claude Code）を起動するかどうかを Graph の条件分岐で判断します。
 
 ## ドキュメントの読み方
 
@@ -21,7 +21,7 @@ SmartCrab は「ツール → AI」パラダイムを実現する Rust フレー
 |-------------|------|
 | [architecture.md](design/architecture.md) | アーキテクチャ全体設計 — 「ツール → AI」パラダイム、システム全体像、並行実行モデル |
 | [data-flow.md](design/data-flow.md) | データフロー設計 — Layer 間のデータの流れ、型安全性、エラーハンドリング |
-| [dag-engine.md](design/dag-engine.md) | DAG エンジン設計 — 実行エンジン、条件分岐、検証、ライフサイクル |
+| [graph-engine.md](design/graph-engine.md) | Graph エンジン設計 — 実行エンジン、条件分岐、検証、ライフサイクル |
 | [claude-code-integration.md](design/claude-code-integration.md) | Claude Code 連携設計 — 子プロセス実行、データ交換、テスト戦略 |
 | [cli.md](design/cli.md) | CLI ツール設計 — Rails ライク開発体験、コマンド体系、テンプレート |
 

@@ -82,7 +82,7 @@ Creating project: my_app
   Created: my_app/src/layer/input/mod.rs
   Created: my_app/src/layer/hidden/mod.rs
   Created: my_app/src/layer/output/mod.rs
-  Created: my_app/src/dag/mod.rs
+  Created: my_app/src/graph/mod.rs
   Created: my_app/tests/integration/mod.rs
 
 Project 'my_app' created successfully!
@@ -216,33 +216,33 @@ $ crab generate dto empty_marker
   Updated: src/dto/mod.rs
 ```
 
-## `crab generate dag`
+## `crab generate graph`
 
-DAG 定義関数のボイラープレートコードを生成する。エイリアス: `crab g dag`
+Graph 定義関数のボイラープレートコードを生成する。エイリアス: `crab g graph`
 
 ### 構文
 
 ```
-crab generate dag <name>
+crab generate graph <name>
 ```
 
 ### 引数
 
 | 引数 | 必須 | 説明 |
 |------|------|------|
-| `<name>` | Yes | DAG 名（snake_case） |
+| `<name>` | Yes | Graph 名（snake_case） |
 
 ### 生成ファイル
 
 | ファイル | 内容 |
 |---------|------|
-| `src/dag/<name>.rs` | DAG 定義関数（`DagBuilder` 使用） |
+| `src/graph/<name>.rs` | Graph 定義関数（`DirectedGraphBuilder` 使用） |
 
 ### 自動更新ファイル
 
 | ファイル | 変更内容 |
 |---------|---------|
-| `src/dag/mod.rs` | `pub mod <name>;` を追加 |
+| `src/graph/mod.rs` | `pub mod <name>;` を追加 |
 
 ### 終了コード
 
@@ -255,9 +255,9 @@ crab generate dag <name>
 ### 実行例
 
 ```bash
-$ crab generate dag api_pipeline
-  Created: src/dag/api_pipeline.rs
-  Updated: src/dag/mod.rs
+$ crab generate graph api_pipeline
+  Created: src/graph/api_pipeline.rs
+  Updated: src/graph/mod.rs
 ```
 
 ## `crab run`
@@ -292,8 +292,8 @@ $ crab run
    Finished dev [unoptimized + debuginfo] target(s)
     Running `target/debug/my_app`
 INFO smartcrab: Starting the application
-INFO smartcrab::dag::api: DAG 'api' started
-INFO smartcrab::dag::batch: DAG 'batch' started
+INFO smartcrab::graph::api: Graph 'api' started
+INFO smartcrab::graph::batch: Graph 'batch' started
 ```
 
 ## 設定ファイル: SmartCrab.toml
