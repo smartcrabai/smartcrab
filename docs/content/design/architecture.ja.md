@@ -155,12 +155,15 @@ smartcrab                          # Root span
 
 ### トレース送信先
 
-現在の構成では Jaeger に OTLP gRPC でトレースを送信する（`compose.yml` 参照）。
+SmartCrab は標準的な OpenTelemetry OTLP エクスポータを使用する。送信先は標準の OTEL 環境変数で設定できる：
 
-| コンポーネント | ポート | 用途 |
-|---------------|--------|------|
-| Jaeger UI | 16686 | トレースの可視化 |
-| OTLP gRPC | 4317 | トレースの受信 |
+| 環境変数 | デフォルト | 説明 |
+|----------|---------|-------------|
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://localhost:4317` | OTLP エンドポイント URL |
+| `OTEL_EXPORTER_OTLP_PROTOCOL` | `grpc` | トランスポートプロトコル（`grpc` または `http/protobuf`） |
+| `OTEL_EXPORTER_OTLP_HEADERS` | — | 追加ヘッダー（認証用など） |
+
+OTLP 互換の任意のバックエンド（Jaeger、Grafana Tempo、Datadog など）でトレースを受信できる。
 
 ## デプロイメント
 

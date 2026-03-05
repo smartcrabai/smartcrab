@@ -155,12 +155,15 @@ smartcrab                          # Root span
 
 ### Trace Destination
 
-The current configuration sends traces to Jaeger via OTLP gRPC (see `compose.yml`).
+SmartCrab uses the standard OpenTelemetry OTLP exporter. The export destination can be configured via standard OTEL environment variables:
 
-| Component | Port | Purpose |
-|---------------|--------|------|
-| Jaeger UI | 16686 | Trace visualization |
-| OTLP gRPC | 4317 | Trace reception |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://localhost:4317` | OTLP endpoint URL |
+| `OTEL_EXPORTER_OTLP_PROTOCOL` | `grpc` | Transport protocol (`grpc` or `http/protobuf`) |
+| `OTEL_EXPORTER_OTLP_HEADERS` | — | Additional headers (e.g. for authentication) |
+
+Any OTLP-compatible backend (Jaeger, Grafana Tempo, Datadog, etc.) can receive traces.
 
 ## Deployment
 
