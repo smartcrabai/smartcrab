@@ -25,19 +25,19 @@ struct Text {
 }
 
 // ---------------------------------------------------------------------------
-// Layers
+// Nodes
 // ---------------------------------------------------------------------------
 
 struct TextInput;
 
-impl Layer for TextInput {
+impl Node for TextInput {
     fn name(&self) -> &str {
         "TextInput"
     }
 }
 
 #[async_trait]
-impl InputLayer for TextInput {
+impl InputNode for TextInput {
     type TriggerData = ();
     type Output = Text;
     async fn run(&self, _: ()) -> Result<Text> {
@@ -49,14 +49,14 @@ impl InputLayer for TextInput {
 
 struct UpperCase;
 
-impl Layer for UpperCase {
+impl Node for UpperCase {
     fn name(&self) -> &str {
         "UpperCase"
     }
 }
 
 #[async_trait]
-impl HiddenLayer for UpperCase {
+impl HiddenNode for UpperCase {
     type Input = Text;
     type Output = Text;
     async fn run(&self, input: Text) -> Result<Text> {
@@ -68,14 +68,14 @@ impl HiddenLayer for UpperCase {
 
 struct Reverse;
 
-impl Layer for Reverse {
+impl Node for Reverse {
     fn name(&self) -> &str {
         "Reverse"
     }
 }
 
 #[async_trait]
-impl HiddenLayer for Reverse {
+impl HiddenNode for Reverse {
     type Input = Text;
     type Output = Text;
     async fn run(&self, input: Text) -> Result<Text> {
@@ -87,14 +87,14 @@ impl HiddenLayer for Reverse {
 
 struct Merger;
 
-impl Layer for Merger {
+impl Node for Merger {
     fn name(&self) -> &str {
         "Merger"
     }
 }
 
 #[async_trait]
-impl HiddenLayer for Merger {
+impl HiddenNode for Merger {
     type Input = Text;
     type Output = Text;
     async fn run(&self, input: Text) -> Result<Text> {
@@ -105,14 +105,14 @@ impl HiddenLayer for Merger {
 
 struct Display;
 
-impl Layer for Display {
+impl Node for Display {
     fn name(&self) -> &str {
         "Display"
     }
 }
 
 #[async_trait]
-impl OutputLayer for Display {
+impl OutputNode for Display {
     type Input = Text;
     async fn run(&self, input: Text) -> Result<()> {
         println!("📄 Result: {}", input.content);

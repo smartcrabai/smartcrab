@@ -27,19 +27,19 @@ struct Counter {
 }
 
 // ---------------------------------------------------------------------------
-// Layers
+// Nodes
 // ---------------------------------------------------------------------------
 
 struct Seed;
 
-impl Layer for Seed {
+impl Node for Seed {
     fn name(&self) -> &str {
         "Seed"
     }
 }
 
 #[async_trait]
-impl InputLayer for Seed {
+impl InputNode for Seed {
     type TriggerData = ();
     type Output = Counter;
     async fn run(&self, _: ()) -> Result<Counter> {
@@ -52,14 +52,14 @@ struct Accumulator {
     iteration: Arc<AtomicU32>,
 }
 
-impl Layer for Accumulator {
+impl Node for Accumulator {
     fn name(&self) -> &str {
         "Accumulator"
     }
 }
 
 #[async_trait]
-impl HiddenLayer for Accumulator {
+impl HiddenNode for Accumulator {
     type Input = Counter;
     type Output = Counter;
     async fn run(&self, input: Counter) -> Result<Counter> {
@@ -75,14 +75,14 @@ impl HiddenLayer for Accumulator {
 
 struct ResultPrinter;
 
-impl Layer for ResultPrinter {
+impl Node for ResultPrinter {
     fn name(&self) -> &str {
         "ResultPrinter"
     }
 }
 
 #[async_trait]
-impl OutputLayer for ResultPrinter {
+impl OutputNode for ResultPrinter {
     type Input = Counter;
     async fn run(&self, input: Counter) -> Result<()> {
         println!("✅ Final value: {}", input.value);

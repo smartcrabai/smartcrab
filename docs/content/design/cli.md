@@ -24,7 +24,7 @@ The SmartCrab CLI provides a Rails-like developer experience. Developers work wi
 crab
 ├── new <project-name>       # Generate a new project
 ├── generate (g)             # Code generators
-│   ├── layer <name>         # Generate a Layer
+│   ├── node <name>          # Generate a Node
 │   ├── dto <name>           # Generate a DTO
 │   └── dag <name>           # Generate a DAG definition
 └── run                      # Run the application
@@ -95,7 +95,7 @@ use smartcrab::prelude::*;
 use smartcrab::runtime::Runtime;
 
 mod dto;
-mod layer;
+mod node;
 mod dag;
 
 #[tokio::main]
@@ -124,35 +124,35 @@ exporter = "otlp"
 timeout_secs = 300
 ```
 
-## Layer Generator Design
+## Node Generator Design
 
-`crab generate layer <name>` generates Layer boilerplate.
+`crab generate node <name>` generates Node boilerplate.
 
 ### Generated Targets
 
 | Option | Generated File |
 |-----------|-------------|
-| `--type input` | `src/layer/input/<name>.rs` |
-| `--type hidden` | `src/layer/hidden/<name>.rs` |
-| `--type output` | `src/layer/output/<name>.rs` |
+| `--type input` | `src/node/input/<name>.rs` |
+| `--type hidden` | `src/node/hidden/<name>.rs` |
+| `--type output` | `src/node/output/<name>.rs` |
 
-### Generation Template Example (Hidden Layer)
+### Generation Template Example (Hidden Node)
 
 ```rust
-// src/layer/hidden/{{name}}.rs
+// src/node/hidden/{{name}}.rs
 use smartcrab::prelude::*;
 use crate::dto::{/*{ name | pascal_case }*/Input, /*{ name | pascal_case }*/Output};
 
 pub struct /*{ name | pascal_case }*/ ;
 
-impl Layer for /*{ name | pascal_case }*/ {
+impl Node for /*{ name | pascal_case }*/ {
     fn name(&self) -> &str {
         "/*{ name | pascal_case }*/"
     }
 }
 
 #[async_trait]
-impl HiddenLayer for /*{ name | pascal_case }*/ {
+impl HiddenNode for /*{ name | pascal_case }*/ {
     type Input = /*{ name | pascal_case }*/Input;
     type Output = /*{ name | pascal_case }*/Output;
 
@@ -162,23 +162,23 @@ impl HiddenLayer for /*{ name | pascal_case }*/ {
 }
 ```
 
-### Specifying Input Layer Subtypes
+### Specifying Input Node Subtypes
 
 ```bash
-crab generate layer webhook_receiver --type input --input-type http
-crab generate layer daily_check --type input --input-type cron
-crab generate layer discord_listener --type input --input-type chat
+crab generate node webhook_receiver --type input --input-type http
+crab generate node daily_check --type input --input-type cron
+crab generate node discord_listener --type input --input-type chat
 ```
 
 `--input-type` generates boilerplate tailored to the specified subtype.
 
-### Specifying Output Layer Subtypes
+### Specifying Output Node Subtypes
 
 ```bash
-crab generate layer discord_notifier --type output --output-type discord
+crab generate node discord_notifier --type output --output-type discord
 ```
 
-Specifying `--output-type discord` generates a Layer that already includes the boilerplate needed for sending to a Discord Webhook (a `webhook_url` field and message sending logic).
+Specifying `--output-type discord` generates a Node that already includes the boilerplate needed for sending to a Discord Webhook (a `webhook_url` field and message sending logic).
 
 ## DTO Generator Design
 
@@ -240,10 +240,10 @@ Code generator templates are embedded in the binary (via the `include_str!` macr
 The generator not only creates new files but also automatically adds `pub mod` declarations to the corresponding `mod.rs`.
 
 ```bash
-$ crab generate layer data_analyzer --type hidden
+$ crab generate node data_analyzer --type hidden
 
-Created: src/layer/hidden/data_analyzer.rs
-Updated: src/layer/hidden/mod.rs  (added: pub mod data_analyzer;)
+Created: src/node/hidden/data_analyzer.rs
+Updated: src/node/hidden/mod.rs  (added: pub mod data_analyzer;)
 Created: src/dto/data_analyzer.rs  (DataAnalyzerInput, DataAnalyzerOutput)
 Updated: src/dto/mod.rs  (added: pub mod data_analyzer;)
 ```

@@ -2,19 +2,19 @@ use smartcrab::prelude::*;
 
 use crate::dto::discord::DiscordNotification;
 
-/// Input layer that fires on a cron schedule (every minute).
+/// Input node that fires on a cron schedule (every minute).
 pub struct CronInput {
     pub target_channel_id: String,
 }
 
-impl Layer for CronInput {
+impl Node for CronInput {
     fn name(&self) -> &str {
         "CronInput"
     }
 }
 
 #[async_trait]
-impl InputLayer for CronInput {
+impl InputNode for CronInput {
     type TriggerData = ();
     type Output = DiscordNotification;
 

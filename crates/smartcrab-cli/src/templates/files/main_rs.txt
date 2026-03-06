@@ -1,6 +1,6 @@
 mod dto;
 mod graph;
-mod layer;
+mod node;
 
 use smartcrab::prelude::*;
 

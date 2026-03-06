@@ -1,12 +1,12 @@
 +++
 title = "Data Flow"
-description = "データフロー設計 — Layer 間のデータの流れ、型安全性、エラーハンドリング"
+description = "データフロー設計 — Node 間のデータの流れ、型安全性、エラーハンドリング"
 weight = 2
 +++
 
 ## 全体フロー
 
-SmartCrab のデータフローは Input → DTO → Hidden → DTO → Output の流れで構成される。各 Layer 間のデータ受け渡しは型安全な DTO を介して行われる。
+SmartCrab のデータフローは Input → DTO → Hidden → DTO → Output の流れで構成される。各 Node 間のデータ受け渡しは型安全な DTO を介して行われる。
 
 {% mermaid() %}
 flowchart LR
@@ -33,21 +33,21 @@ flowchart LR
     O -->|"Result&lt;()&gt;"| Done["完了"]
 {% end %}
 
-## Layer のシグネチャ設計
+## Node のシグネチャ設計
 
-各 Layer はジェネリクスで入出力の DTO 型を指定する。
+各 Node はジェネリクスで入出力の DTO 型を指定する。
 
 ```rust
 // Input Layer: 入力なし → DTO を生成
 #[async_trait]
-pub trait InputLayer: Send + Sync {
+pub trait InputNode: Send + Sync {
     type Output: Dto;
     async fn run(&self) -> Result<Self::Output>;
 }
 
 // Hidden Layer: DTO を受け取り → DTO を返す
 #[async_trait]
-pub trait HiddenLayer: Send + Sync {
+pub trait HiddenNode: Send + Sync {
     type Input: Dto;
     type Output: Dto;
     async fn run(&self, input: Self::Input) -> Result<Self::Output>;
@@ -55,7 +55,7 @@ pub trait HiddenLayer: Send + Sync {
 
 // Output Layer: DTO を受け取り → 副作用を実行
 #[async_trait]
-pub trait OutputLayer: Send + Sync {
+pub trait OutputNode: Send + Sync {
     type Input: Dto;
     async fn run(&self, input: Self::Input) -> Result<()>;
 }
@@ -63,13 +63,13 @@ pub trait OutputLayer: Send + Sync {
 
 ## 条件分岐におけるデータフロー
 
-条件付きエッジでは、先行 Layer の出力 DTO を参照して分岐先を決定する。クロージャはDTO の参照を受け取り、分岐先の識別子を返す。
+条件付きエッジでは、先行 Node の出力 DTO を参照して分岐先を決定する。クロージャはDTO の参照を受け取り、分岐先の識別子を返す。
 
 {% mermaid() %}
 flowchart TD
-    A[Hidden Layer A] -->|"AnalysisOutput"| Cond{"条件判定クロージャ<br/>Fn(&AnalysisOutput) → &str"}
-    Cond -->|"needs_ai"| B[Hidden Layer B<br/>Claude Code 呼び出し]
-    Cond -->|"simple"| C[Hidden Layer C<br/>通常処理]
+    A[Hidden Node A] -->|"AnalysisOutput"| Cond{"条件判定クロージャ<br/>Fn(&AnalysisOutput) → &str"}
+    Cond -->|"needs_ai"| B[Hidden Node B<br/>Claude Code 呼び出し]
+    Cond -->|"simple"| C[Hidden Node C<br/>通常処理]
     B --> D[Output Layer]
     C --> D
 {% end %}
@@ -87,12 +87,12 @@ Fn(&dyn Dto) -> &str
 
 エラーは 2 つのレベルで処理される。
 
-### Layer 内エラー
+### Node 内エラー
 
-各 Layer の `run` メソッドは `Result` を返す。Layer 内で発生するエラーは Layer の責務で適切な `Error` 型に変換する。
+各 Node の `run` メソッドは `Result` を返す。Layer 内で発生するエラーは Node の責務で適切な `Error` 型に変換する。
 
 ```rust
-// Layer 内でのエラーハンドリング例
+// Node 内でのエラーハンドリング例
 async fn run(&self, input: Self::Input) -> Result<Self::Output> {
     let response = self.client.get(&input.url)
         .await
@@ -116,27 +116,27 @@ flowchart TD
     C -->|Ok| Done["完了"]
 {% end %}
 
-- エラー発生時、該当 Layer の span にエラー情報が記録される
-- Graph は即座に実行を停止する（後続の Layer は実行されない）
+- エラー発生時、該当 Node の span にエラー情報が記録される
+- Graph は即座に実行を停止する（後続の Node は実行されない）
 - 他の Graph の実行には影響しない（Graph 間は独立）
 
 ## 型安全性の保証範囲
 
 ### コンパイル時保証
 
-- 各 Layer の `Input` / `Output` 関連型による DTO 型の一致
+- 各 Node の `Input` / `Output` 関連型による DTO 型の一致
 - `Dto` トレイトの derive 要件（`Serialize`, `Deserialize`, `Clone`, `Send`, `Sync`）
 
 ### 実行時検証
 
-- Graph ビルド時のエッジの型整合性チェック（隣接 Layer の Output 型と Input 型の一致）
+- Graph ビルド時のエッジの型整合性チェック（隣接 Node の Output 型と Input 型の一致）
 - 条件分岐の網羅性チェック（全分岐先が存在するか）
 - Graph の構造検証（循環検出、到達不能ノード検出）
 
 ```
 コンパイル時                     実行時（Graph ビルド時）
 ┌─────────────────────┐      ┌──────────────────────────┐
-│ Layer の型パラメータ  │      │ エッジの型整合性           │
+│ Node の型パラメータ  │      │ エッジの型整合性           │
 │ Dto の derive 要件    │      │ 条件分岐の網羅性           │
 │ Send + Sync 境界     │      │ Graph 構造検証（循環、到達性） │
 └─────────────────────┘      └──────────────────────────┘

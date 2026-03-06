@@ -6,18 +6,18 @@ weight = 3
 
 ## 概念モデル
 
-SmartCrab の Graph（有向グラフ）は、Layer の実行順序と条件分岐を定義するグラフ構造である。
+SmartCrab の Graph（有向グラフ）は、Node の実行順序と条件分岐を定義するグラフ構造である。
 
-- **Node**: 1 つの Layer に対応する。実行時に Layer の `run` メソッドを呼び出す
+- **Node**: 1 つの Node に対応する。実行時に Node の `run` メソッドを呼び出す
 - **Edge**: Node 間の遷移を表す。無条件エッジと条件付きエッジの 2 種がある
 
 {% mermaid() %}
 flowchart LR
     subgraph Graph
-        A["Node A<br/>(Input Layer)"]
-        B["Node B<br/>(Hidden Layer)"]
-        C["Node C<br/>(Hidden Layer)"]
-        D["Node D<br/>(Output Layer)"]
+        A["Node A<br/>(Input Node)"]
+        B["Node B<br/>(Hidden Node)"]
+        C["Node C<br/>(Hidden Node)"]
+        D["Node D<br/>(Output Node)"]
 
         A -->|"無条件エッジ"| B
         B -->|"条件付きエッジ<br/>needs_ai = true"| C
@@ -55,8 +55,8 @@ let graph = DirectedGraphBuilder::new("my_pipeline")
 
 ### 設計方針
 
-- **型消去**: `add_input` / `add_hidden` / `add_output` は各 Layer trait を受け取り、内部で `Box<dyn Layer>` として保持する。これにより異なる型の Layer を同一の Graph に混在できる
-- **名前ベースの参照**: エッジは Layer の `name()` で Node を参照する。型パラメータの爆発を避けるための設計判断
+- **型消去**: `add_input` / `add_hidden` / `add_output` は各 Node trait を受け取り、内部で `Box<dyn Layer>` として保持する。これにより異なる型の Node を同一の Graph に混在できる
+- **名前ベースの参照**: エッジは Node の `name()` で Node を参照する。型パラメータの爆発を避けるための設計判断
 - **遅延検証**: 型整合性やグラフ構造の検証は `build()` 時にまとめて実行する
 
 ## 実行エンジン設計
@@ -192,11 +192,11 @@ stateDiagram-v2
     Building --> Ready: build() 成功
     Building --> [*]: build() 失敗（検証エラー）
     Ready --> Running: run()
-    Running --> Running: Layer 実行中
-    Running --> Completed: 全 Layer 完了
-    Running --> Failed: Layer がエラーを返した
+    Running --> Running: Node 実行中
+    Running --> Completed: 全 Node 完了
+    Running --> Failed: Node がエラーを返した
     Running --> ShuttingDown: シャットダウンシグナル受信
-    ShuttingDown --> Failed: 現在の Layer 完了後に停止
+    ShuttingDown --> Failed: 現在の Node 完了後に停止
     Completed --> [*]
     Failed --> [*]
 {% end %}
@@ -205,8 +205,8 @@ stateDiagram-v2
 
 `tokio::signal` で SIGTERM / SIGINT を受信した場合:
 
-1. 実行中の Layer の完了を待つ（途中で中断しない）
-2. 後続の Layer は実行しない
+1. 実行中の Node の完了を待つ（途中で中断しない）
+2. 後続の Node は実行しない
 3. OpenTelemetry の span をクローズし、トレースをフラッシュする
 4. 終了コード 0 で終了する
 

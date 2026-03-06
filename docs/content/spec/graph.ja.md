@@ -6,7 +6,7 @@ weight = 3
 
 ## 概要
 
-DirectedGraph（有向グラフ）は Layer の実行順序と条件分岐を定義するグラフ構造である。ビルダーパターンで構築し、`build()` で検証済みの実行可能な DirectedGraph を生成する。
+DirectedGraph（有向グラフ）は Node の実行順序と条件分岐を定義するグラフ構造である。ビルダーパターンで構築し、`build()` で検証済みの実行可能な DirectedGraph を生成する。
 
 DAG とは異なり、サイクル（有向閉路）を含むグラフもサポートする。
 
@@ -23,26 +23,26 @@ pub fn new(name: impl Into<String>) -> Self
 ### `add_input`
 
 ```rust
-pub fn add_input<L: InputLayer>(self, layer: L) -> Self
+pub fn add_input<L: InputNode>(self, node: L) -> Self
 ```
 
-Input Layer を追加する。
+Input Node を追加する。
 
 ### `add_hidden`
 
 ```rust
-pub fn add_hidden<L: HiddenLayer>(self, layer: L) -> Self
+pub fn add_hidden<L: HiddenNode>(self, node: L) -> Self
 ```
 
-Hidden Layer を追加する。
+Hidden Node を追加する。
 
 ### `add_output`
 
 ```rust
-pub fn add_output<L: OutputLayer>(self, layer: L) -> Self
+pub fn add_output<L: OutputNode>(self, node: L) -> Self
 ```
 
-Output Layer を追加する。
+Output Node を追加する。
 
 ### `add_edge`
 
@@ -92,7 +92,7 @@ Graph を検証し、実行可能な `DirectedGraph` インスタンスを返す
 検証内容:
 - DTO 型整合性チェック
 - 条件分岐の分岐先存在チェック
-- Input Layer の存在チェック
+- Input Node の存在チェック
 - ノード名の一意性チェック
 
 ※ DAG と異なり、循環検出と到達不能ノード検出は行わない。
@@ -103,7 +103,7 @@ Graph を検証し、実行可能な `DirectedGraph` インスタンスを返す
 Fn(&dyn DtoObject) -> Option<String> + Send + Sync + 'static
 ```
 
-- 入力: 前段 Layer の出力 DTO の参照（`&dyn DtoObject`）
+- 入力: 前段 Node の出力 DTO の参照（`&dyn DtoObject`）
 - 出力: 分岐先のラベル（`branches` のキーに対応）、または `None` で終了
 - `Send + Sync`: 非同期タスク間で安全に共有可能
 - `'static`: Graph のライフタイム中有効
@@ -187,15 +187,15 @@ let graph = DirectedGraphBuilder::new("ai_routing")
 use smartcrab::prelude::*;
 
 let graph = DirectedGraphBuilder::new("feedback_loop")
-    .add_input(SourceLayer)
-    .add_hidden(ProcessLayer)
-    .add_hidden(FeedbackLayer)
-    .add_output(ExitLayer)
-    .add_edge("Source", "Process")
-    .add_edge("Process", "Feedback")
-    .add_edge("Feedback", "Feedback")  // 自己ループ
-    .add_edge("Feedback", "Exit")
-    .add_exit_condition("Feedback", |output| {
+    .add_input(SourceNode::new())
+    .add_hidden(ProcessNode::new())
+    .add_hidden(FeedbackNode::new())
+    .add_output(ExitNode::new())
+    .add_edge("SourceNode", "ProcessNode")
+    .add_edge("ProcessNode", "FeedbackNode")
+    .add_edge("FeedbackNode", "FeedbackNode")  // 自己ループ
+    .add_edge("FeedbackNode", "ExitNode")
+    .add_exit_condition("FeedbackNode", |output| {
         if output.downcast_ref::<FeedbackOutput>().unwrap().should_continue {
             Some("continue".to_owned())
         } else {

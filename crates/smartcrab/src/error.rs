@@ -107,8 +107,8 @@ pub enum GraphError {
     #[error("Invalid trigger configuration: {message}")]
     InvalidTriggerConfig { message: String },
 
-    #[error("Layer `{name}` failed: {source}")]
-    LayerFailed {
+    #[error("Node `{name}` failed: {source}")]
+    NodeFailed {
         name: String,
         source: Box<dyn std::error::Error + Send + Sync>,
     },

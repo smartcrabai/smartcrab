@@ -22,13 +22,13 @@ mod basic_pipeline {
     }
 
     pub struct Greeter;
-    impl Layer for Greeter {
+    impl Node for Greeter {
         fn name(&self) -> &str {
             "Greeter"
         }
     }
     #[async_trait]
-    impl InputLayer for Greeter {
+    impl InputNode for Greeter {
         type TriggerData = ();
         type Output = Greeting;
         async fn run(&self, _: ()) -> Result<Greeting> {
@@ -39,13 +39,13 @@ mod basic_pipeline {
     }
 
     pub struct Formatter;
-    impl Layer for Formatter {
+    impl Node for Formatter {
         fn name(&self) -> &str {
             "Formatter"
         }
     }
     #[async_trait]
-    impl HiddenLayer for Formatter {
+    impl HiddenNode for Formatter {
         type Input = Greeting;
         type Output = Greeting;
         async fn run(&self, input: Greeting) -> Result<Greeting> {
@@ -56,13 +56,13 @@ mod basic_pipeline {
     }
 
     pub struct Printer;
-    impl Layer for Printer {
+    impl Node for Printer {
         fn name(&self) -> &str {
             "Printer"
         }
     }
     #[async_trait]
-    impl OutputLayer for Printer {
+    impl OutputNode for Printer {
         type Input = Greeting;
         async fn run(&self, input: Greeting) -> Result<()> {
             println!("{}", input.message);
@@ -98,13 +98,13 @@ mod conditional_branch {
     }
 
     pub struct Sensor;
-    impl Layer for Sensor {
+    impl Node for Sensor {
         fn name(&self) -> &str {
             "Sensor"
         }
     }
     #[async_trait]
-    impl InputLayer for Sensor {
+    impl InputNode for Sensor {
         type TriggerData = ();
         type Output = SensorData;
         async fn run(&self, _: ()) -> Result<SensorData> {
@@ -116,13 +116,13 @@ mod conditional_branch {
     }
 
     pub struct Classifier;
-    impl Layer for Classifier {
+    impl Node for Classifier {
         fn name(&self) -> &str {
             "Classifier"
         }
     }
     #[async_trait]
-    impl HiddenLayer for Classifier {
+    impl HiddenNode for Classifier {
         type Input = SensorData;
         type Output = SensorData;
         async fn run(&self, mut input: SensorData) -> Result<SensorData> {
@@ -136,13 +136,13 @@ mod conditional_branch {
     }
 
     pub struct Celebrate;
-    impl Layer for Celebrate {
+    impl Node for Celebrate {
         fn name(&self) -> &str {
             "Celebrate"
         }
     }
     #[async_trait]
-    impl OutputLayer for Celebrate {
+    impl OutputNode for Celebrate {
         type Input = SensorData;
         async fn run(&self, input: SensorData) -> Result<()> {
             println!("🎉 Temperature is positive: {}°C", input.temperature);
@@ -151,13 +151,13 @@ mod conditional_branch {
     }
 
     pub struct Alert;
-    impl Layer for Alert {
+    impl Node for Alert {
         fn name(&self) -> &str {
             "Alert"
         }
     }
     #[async_trait]
-    impl HiddenLayer for Alert {
+    impl HiddenNode for Alert {
         type Input = SensorData;
         type Output = SensorData;
         async fn run(&self, input: SensorData) -> Result<SensorData> {
@@ -167,13 +167,13 @@ mod conditional_branch {
     }
 
     pub struct Logger;
-    impl Layer for Logger {
+    impl Node for Logger {
         fn name(&self) -> &str {
             "Logger"
         }
     }
     #[async_trait]
-    impl OutputLayer for Logger {
+    impl OutputNode for Logger {
         type Input = SensorData;
         async fn run(&self, input: SensorData) -> Result<()> {
             println!(
@@ -224,13 +224,13 @@ mod diamond {
     }
 
     pub struct TextInput;
-    impl Layer for TextInput {
+    impl Node for TextInput {
         fn name(&self) -> &str {
             "TextInput"
         }
     }
     #[async_trait]
-    impl InputLayer for TextInput {
+    impl InputNode for TextInput {
         type TriggerData = ();
         type Output = Text;
         async fn run(&self, _: ()) -> Result<Text> {
@@ -241,13 +241,13 @@ mod diamond {
     }
 
     pub struct UpperCase;
-    impl Layer for UpperCase {
+    impl Node for UpperCase {
         fn name(&self) -> &str {
             "UpperCase"
         }
     }
     #[async_trait]
-    impl HiddenLayer for UpperCase {
+    impl HiddenNode for UpperCase {
         type Input = Text;
         type Output = Text;
         async fn run(&self, input: Text) -> Result<Text> {
@@ -258,13 +258,13 @@ mod diamond {
     }
 
     pub struct Reverse;
-    impl Layer for Reverse {
+    impl Node for Reverse {
         fn name(&self) -> &str {
             "Reverse"
         }
     }
     #[async_trait]
-    impl HiddenLayer for Reverse {
+    impl HiddenNode for Reverse {
         type Input = Text;
         type Output = Text;
         async fn run(&self, input: Text) -> Result<Text> {
@@ -275,13 +275,13 @@ mod diamond {
     }
 
     pub struct Merger;
-    impl Layer for Merger {
+    impl Node for Merger {
         fn name(&self) -> &str {
             "Merger"
         }
     }
     #[async_trait]
-    impl HiddenLayer for Merger {
+    impl HiddenNode for Merger {
         type Input = Text;
         type Output = Text;
         async fn run(&self, input: Text) -> Result<Text> {
@@ -291,13 +291,13 @@ mod diamond {
     }
 
     pub struct Display;
-    impl Layer for Display {
+    impl Node for Display {
         fn name(&self) -> &str {
             "Display"
         }
     }
     #[async_trait]
-    impl OutputLayer for Display {
+    impl OutputNode for Display {
         type Input = Text;
         async fn run(&self, input: Text) -> Result<()> {
             println!("📄 Result: {}", input.content);
@@ -340,13 +340,13 @@ mod chat_pipeline {
     }
 
     pub struct MessageInput;
-    impl Layer for MessageInput {
+    impl Node for MessageInput {
         fn name(&self) -> &str {
             "MessageInput"
         }
     }
     #[async_trait]
-    impl InputLayer for MessageInput {
+    impl InputNode for MessageInput {
         type TriggerData = DiscordMessage;
         type Output = DiscordMessage;
         async fn run(&self, msg: DiscordMessage) -> Result<DiscordMessage> {
@@ -356,13 +356,13 @@ mod chat_pipeline {
     }
 
     pub struct AgentProcessor;
-    impl Layer for AgentProcessor {
+    impl Node for AgentProcessor {
         fn name(&self) -> &str {
             "AgentProcessor"
         }
     }
     #[async_trait]
-    impl HiddenLayer for AgentProcessor {
+    impl HiddenNode for AgentProcessor {
         type Input = DiscordMessage;
         type Output = ChatReply;
         async fn run(&self, input: DiscordMessage) -> Result<ChatReply> {
@@ -380,13 +380,13 @@ mod chat_pipeline {
     pub struct MessageOutput {
         pub client: Option<DiscordClient>,
     }
-    impl Layer for MessageOutput {
+    impl Node for MessageOutput {
         fn name(&self) -> &str {
             "MessageOutput"
         }
     }
     #[async_trait]
-    impl OutputLayer for MessageOutput {
+    impl OutputNode for MessageOutput {
         type Input = ChatReply;
         async fn run(&self, input: ChatReply) -> Result<()> {
             println!("📤 #{}: {}", input.channel, input.content);
@@ -435,13 +435,13 @@ mod cron_pipeline {
     }
 
     pub struct ScheduledPoller;
-    impl Layer for ScheduledPoller {
+    impl Node for ScheduledPoller {
         fn name(&self) -> &str {
             "ScheduledPoller"
         }
     }
     #[async_trait]
-    impl InputLayer for ScheduledPoller {
+    impl InputNode for ScheduledPoller {
         type TriggerData = ();
         type Output = Snapshot;
         async fn run(&self, _: ()) -> Result<Snapshot> {
@@ -459,13 +459,13 @@ mod cron_pipeline {
     }
 
     pub struct ReportBuilder;
-    impl Layer for ReportBuilder {
+    impl Node for ReportBuilder {
         fn name(&self) -> &str {
             "ReportBuilder"
         }
     }
     #[async_trait]
-    impl HiddenLayer for ReportBuilder {
+    impl HiddenNode for ReportBuilder {
         type Input = Snapshot;
         type Output = Report;
         async fn run(&self, input: Snapshot) -> Result<Report> {
@@ -480,13 +480,13 @@ mod cron_pipeline {
     }
 
     pub struct NotificationSender;
-    impl Layer for NotificationSender {
+    impl Node for NotificationSender {
         fn name(&self) -> &str {
             "NotificationSender"
         }
     }
     #[async_trait]
-    impl OutputLayer for NotificationSender {
+    impl OutputNode for NotificationSender {
         type Input = Report;
         async fn run(&self, input: Report) -> Result<()> {
             println!("📢 Sending notification: {}", input.summary);

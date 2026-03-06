@@ -24,19 +24,19 @@ struct Record {
 }
 
 // ---------------------------------------------------------------------------
-// Layers
+// Nodes
 // ---------------------------------------------------------------------------
 
 struct DataSource;
 
-impl Layer for DataSource {
+impl Node for DataSource {
     fn name(&self) -> &str {
         "DataSource"
     }
 }
 
 #[async_trait]
-impl InputLayer for DataSource {
+impl InputNode for DataSource {
     type TriggerData = ();
     type Output = Record;
     async fn run(&self, _: ()) -> Result<Record> {
@@ -50,14 +50,14 @@ impl InputLayer for DataSource {
 
 struct Normalizer;
 
-impl Layer for Normalizer {
+impl Node for Normalizer {
     fn name(&self) -> &str {
         "Normalizer"
     }
 }
 
 #[async_trait]
-impl HiddenLayer for Normalizer {
+impl HiddenNode for Normalizer {
     type Input = Record;
     type Output = Record;
     async fn run(&self, mut input: Record) -> Result<Record> {
@@ -68,14 +68,14 @@ impl HiddenLayer for Normalizer {
 
 struct Enricher;
 
-impl Layer for Enricher {
+impl Node for Enricher {
     fn name(&self) -> &str {
         "Enricher"
     }
 }
 
 #[async_trait]
-impl HiddenLayer for Enricher {
+impl HiddenNode for Enricher {
     type Input = Record;
     type Output = Record;
     async fn run(&self, mut input: Record) -> Result<Record> {
@@ -87,14 +87,14 @@ impl HiddenLayer for Enricher {
 
 struct Scorer;
 
-impl Layer for Scorer {
+impl Node for Scorer {
     fn name(&self) -> &str {
         "Scorer"
     }
 }
 
 #[async_trait]
-impl HiddenLayer for Scorer {
+impl HiddenNode for Scorer {
     type Input = Record;
     type Output = Record;
     async fn run(&self, mut input: Record) -> Result<Record> {
@@ -106,14 +106,14 @@ impl HiddenLayer for Scorer {
 
 struct Reporter;
 
-impl Layer for Reporter {
+impl Node for Reporter {
     fn name(&self) -> &str {
         "Reporter"
     }
 }
 
 #[async_trait]
-impl OutputLayer for Reporter {
+impl OutputNode for Reporter {
     type Input = Record;
     async fn run(&self, input: Record) -> Result<()> {
         println!(

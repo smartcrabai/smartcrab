@@ -29,19 +29,19 @@ struct ChatReply {
 }
 
 // ---------------------------------------------------------------------------
-// Layers
+// Nodes
 // ---------------------------------------------------------------------------
 
 struct MessageInput;
 
-impl Layer for MessageInput {
+impl Node for MessageInput {
     fn name(&self) -> &str {
         "MessageInput"
     }
 }
 
 #[async_trait]
-impl InputLayer for MessageInput {
+impl InputNode for MessageInput {
     type TriggerData = DiscordMessage;
     type Output = DiscordMessage;
     async fn run(&self, msg: DiscordMessage) -> Result<DiscordMessage> {
@@ -52,14 +52,14 @@ impl InputLayer for MessageInput {
 
 struct AgentProcessor;
 
-impl Layer for AgentProcessor {
+impl Node for AgentProcessor {
     fn name(&self) -> &str {
         "AgentProcessor"
     }
 }
 
 #[async_trait]
-impl HiddenLayer for AgentProcessor {
+impl HiddenNode for AgentProcessor {
     type Input = DiscordMessage;
     type Output = ChatReply;
     async fn run(&self, input: DiscordMessage) -> Result<ChatReply> {
@@ -78,14 +78,14 @@ struct MessageOutput {
     client: DiscordClient,
 }
 
-impl Layer for MessageOutput {
+impl Node for MessageOutput {
     fn name(&self) -> &str {
         "MessageOutput"
     }
 }
 
 #[async_trait]
-impl OutputLayer for MessageOutput {
+impl OutputNode for MessageOutput {
     type Input = ChatReply;
     async fn run(&self, input: ChatReply) -> Result<()> {
         println!("📤 #{}: {}", input.channel, input.content);

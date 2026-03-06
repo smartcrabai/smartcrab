@@ -22,19 +22,19 @@ struct Greeting {
 }
 
 // ---------------------------------------------------------------------------
-// Layers
+// Nodes
 // ---------------------------------------------------------------------------
 
 struct Greeter;
 
-impl Layer for Greeter {
+impl Node for Greeter {
     fn name(&self) -> &str {
         "Greeter"
     }
 }
 
 #[async_trait]
-impl InputLayer for Greeter {
+impl InputNode for Greeter {
     type TriggerData = ();
     type Output = Greeting;
     async fn run(&self, _: ()) -> Result<Greeting> {
@@ -46,14 +46,14 @@ impl InputLayer for Greeter {
 
 struct Formatter;
 
-impl Layer for Formatter {
+impl Node for Formatter {
     fn name(&self) -> &str {
         "Formatter"
     }
 }
 
 #[async_trait]
-impl HiddenLayer for Formatter {
+impl HiddenNode for Formatter {
     type Input = Greeting;
     type Output = Greeting;
     async fn run(&self, input: Greeting) -> Result<Greeting> {
@@ -65,14 +65,14 @@ impl HiddenLayer for Formatter {
 
 struct Printer;
 
-impl Layer for Printer {
+impl Node for Printer {
     fn name(&self) -> &str {
         "Printer"
     }
 }
 
 #[async_trait]
-impl OutputLayer for Printer {
+impl OutputNode for Printer {
     type Input = Greeting;
     async fn run(&self, input: Greeting) -> Result<()> {
         println!("{}", input.message);

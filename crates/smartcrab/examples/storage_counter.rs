@@ -23,21 +23,21 @@ use smartcrab::prelude::*;
 struct Count(u32);
 
 // ---------------------------------------------------------------------------
-// Layers
+// Nodes
 // ---------------------------------------------------------------------------
 
 struct ReadCount {
     storage: Arc<dyn Storage>,
 }
 
-impl Layer for ReadCount {
+impl Node for ReadCount {
     fn name(&self) -> &str {
         "ReadCount"
     }
 }
 
 #[async_trait]
-impl InputLayer for ReadCount {
+impl InputNode for ReadCount {
     type TriggerData = ();
     type Output = Count;
     async fn run(&self, _: ()) -> Result<Count> {
@@ -55,14 +55,14 @@ struct IncrementCount {
     storage: Arc<dyn Storage>,
 }
 
-impl Layer for IncrementCount {
+impl Node for IncrementCount {
     fn name(&self) -> &str {
         "IncrementCount"
     }
 }
 
 #[async_trait]
-impl HiddenLayer for IncrementCount {
+impl HiddenNode for IncrementCount {
     type Input = Count;
     type Output = Count;
     async fn run(&self, input: Count) -> Result<Count> {
@@ -74,14 +74,14 @@ impl HiddenLayer for IncrementCount {
 
 struct PrintCount;
 
-impl Layer for PrintCount {
+impl Node for PrintCount {
     fn name(&self) -> &str {
         "PrintCount"
     }
 }
 
 #[async_trait]
-impl OutputLayer for PrintCount {
+impl OutputNode for PrintCount {
     type Input = Count;
     async fn run(&self, input: Count) -> Result<()> {
         println!("counter = {}", input.0);

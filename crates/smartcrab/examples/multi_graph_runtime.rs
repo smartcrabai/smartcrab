@@ -37,14 +37,14 @@ struct Task {
 
 struct HealthChecker;
 
-impl Layer for HealthChecker {
+impl Node for HealthChecker {
     fn name(&self) -> &str {
         "HealthChecker"
     }
 }
 
 #[async_trait]
-impl InputLayer for HealthChecker {
+impl InputNode for HealthChecker {
     type TriggerData = ();
     type Output = HealthStatus;
     async fn run(&self, _: ()) -> Result<HealthStatus> {
@@ -58,14 +58,14 @@ impl InputLayer for HealthChecker {
 
 struct HealthReporter;
 
-impl Layer for HealthReporter {
+impl Node for HealthReporter {
     fn name(&self) -> &str {
         "HealthReporter"
     }
 }
 
 #[async_trait]
-impl OutputLayer for HealthReporter {
+impl OutputNode for HealthReporter {
     type Input = HealthStatus;
     async fn run(&self, input: HealthStatus) -> Result<()> {
         let icon = if input.healthy { "✅" } else { "❌" };
@@ -84,14 +84,14 @@ impl OutputLayer for HealthReporter {
 
 struct TaskPoller;
 
-impl Layer for TaskPoller {
+impl Node for TaskPoller {
     fn name(&self) -> &str {
         "TaskPoller"
     }
 }
 
 #[async_trait]
-impl InputLayer for TaskPoller {
+impl InputNode for TaskPoller {
     type TriggerData = ();
     type Output = Task;
     async fn run(&self, _: ()) -> Result<Task> {
@@ -106,14 +106,14 @@ impl InputLayer for TaskPoller {
 
 struct TaskExecutor;
 
-impl Layer for TaskExecutor {
+impl Node for TaskExecutor {
     fn name(&self) -> &str {
         "TaskExecutor"
     }
 }
 
 #[async_trait]
-impl HiddenLayer for TaskExecutor {
+impl HiddenNode for TaskExecutor {
     type Input = Task;
     type Output = Task;
     async fn run(&self, mut input: Task) -> Result<Task> {
@@ -125,14 +125,14 @@ impl HiddenLayer for TaskExecutor {
 
 struct TaskReporter;
 
-impl Layer for TaskReporter {
+impl Node for TaskReporter {
     fn name(&self) -> &str {
         "TaskReporter"
     }
 }
 
 #[async_trait]
-impl OutputLayer for TaskReporter {
+impl OutputNode for TaskReporter {
     type Input = Task;
     async fn run(&self, input: Task) -> Result<()> {
         println!("📊 Task #{} ({}): {}", input.id, input.name, input.status);

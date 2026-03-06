@@ -24,19 +24,19 @@ struct DataPoint {
 }
 
 // ---------------------------------------------------------------------------
-// Layers
+// Nodes
 // ---------------------------------------------------------------------------
 
 struct ApiSource;
 
-impl Layer for ApiSource {
+impl Node for ApiSource {
     fn name(&self) -> &str {
         "ApiSource"
     }
 }
 
 #[async_trait]
-impl InputLayer for ApiSource {
+impl InputNode for ApiSource {
     type TriggerData = ();
     type Output = DataPoint;
     async fn run(&self, _: ()) -> Result<DataPoint> {
@@ -49,14 +49,14 @@ impl InputLayer for ApiSource {
 
 struct DbSource;
 
-impl Layer for DbSource {
+impl Node for DbSource {
     fn name(&self) -> &str {
         "DbSource"
     }
 }
 
 #[async_trait]
-impl InputLayer for DbSource {
+impl InputNode for DbSource {
     type TriggerData = ();
     type Output = DataPoint;
     async fn run(&self, _: ()) -> Result<DataPoint> {
@@ -69,14 +69,14 @@ impl InputLayer for DbSource {
 
 struct Aggregator;
 
-impl Layer for Aggregator {
+impl Node for Aggregator {
     fn name(&self) -> &str {
         "Aggregator"
     }
 }
 
 #[async_trait]
-impl HiddenLayer for Aggregator {
+impl HiddenNode for Aggregator {
     type Input = DataPoint;
     type Output = DataPoint;
     async fn run(&self, input: DataPoint) -> Result<DataPoint> {
@@ -90,14 +90,14 @@ impl HiddenLayer for Aggregator {
 
 struct Dashboard;
 
-impl Layer for Dashboard {
+impl Node for Dashboard {
     fn name(&self) -> &str {
         "Dashboard"
     }
 }
 
 #[async_trait]
-impl OutputLayer for Dashboard {
+impl OutputNode for Dashboard {
     type Input = DataPoint;
     async fn run(&self, input: DataPoint) -> Result<()> {
         println!("📊 Dashboard: {} = {}", input.source, input.value);

@@ -31,19 +31,19 @@ struct Report {
 }
 
 // ---------------------------------------------------------------------------
-// Layers
+// Nodes
 // ---------------------------------------------------------------------------
 
 struct ScheduledPoller;
 
-impl Layer for ScheduledPoller {
+impl Node for ScheduledPoller {
     fn name(&self) -> &str {
         "ScheduledPoller"
     }
 }
 
 #[async_trait]
-impl InputLayer for ScheduledPoller {
+impl InputNode for ScheduledPoller {
     type TriggerData = ();
     type Output = Snapshot;
     async fn run(&self, _: ()) -> Result<Snapshot> {
@@ -63,14 +63,14 @@ impl InputLayer for ScheduledPoller {
 
 struct ReportBuilder;
 
-impl Layer for ReportBuilder {
+impl Node for ReportBuilder {
     fn name(&self) -> &str {
         "ReportBuilder"
     }
 }
 
 #[async_trait]
-impl HiddenLayer for ReportBuilder {
+impl HiddenNode for ReportBuilder {
     type Input = Snapshot;
     type Output = Report;
     async fn run(&self, input: Snapshot) -> Result<Report> {
@@ -86,14 +86,14 @@ impl HiddenLayer for ReportBuilder {
 
 struct NotificationSender;
 
-impl Layer for NotificationSender {
+impl Node for NotificationSender {
     fn name(&self) -> &str {
         "NotificationSender"
     }
 }
 
 #[async_trait]
-impl OutputLayer for NotificationSender {
+impl OutputNode for NotificationSender {
     type Input = Report;
     async fn run(&self, input: Report) -> Result<()> {
         // In production: post to Discord / Slack / etc.

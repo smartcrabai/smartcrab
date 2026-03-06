@@ -3,7 +3,7 @@ use std::fmt::Debug;
 
 use serde::{Deserialize, Serialize};
 
-/// Marker trait for data transfer objects passed between layers.
+/// Marker trait for data transfer objects passed between nodes.
 ///
 /// This trait is automatically implemented for any type that satisfies
 /// `Serialize + Deserialize + Clone + Debug + Send + Sync + 'static`.

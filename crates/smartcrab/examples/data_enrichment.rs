@@ -28,19 +28,19 @@ struct UserProfile {
 }
 
 // ---------------------------------------------------------------------------
-// Layers
+// Nodes
 // ---------------------------------------------------------------------------
 
 struct FetchData;
 
-impl Layer for FetchData {
+impl Node for FetchData {
     fn name(&self) -> &str {
         "FetchData"
     }
 }
 
 #[async_trait]
-impl InputLayer for FetchData {
+impl InputNode for FetchData {
     type TriggerData = ();
     type Output = UserProfile;
     async fn run(&self, _: ()) -> Result<UserProfile> {
@@ -58,14 +58,14 @@ impl InputLayer for FetchData {
 
 struct ValidateProfile;
 
-impl Layer for ValidateProfile {
+impl Node for ValidateProfile {
     fn name(&self) -> &str {
         "ValidateProfile"
     }
 }
 
 #[async_trait]
-impl HiddenLayer for ValidateProfile {
+impl HiddenNode for ValidateProfile {
     type Input = UserProfile;
     type Output = UserProfile;
     async fn run(&self, mut input: UserProfile) -> Result<UserProfile> {
@@ -82,14 +82,14 @@ impl HiddenLayer for ValidateProfile {
 
 struct EnrichProfile;
 
-impl Layer for EnrichProfile {
+impl Node for EnrichProfile {
     fn name(&self) -> &str {
         "EnrichProfile"
     }
 }
 
 #[async_trait]
-impl HiddenLayer for EnrichProfile {
+impl HiddenNode for EnrichProfile {
     type Input = UserProfile;
     type Output = UserProfile;
     async fn run(&self, mut input: UserProfile) -> Result<UserProfile> {
@@ -103,14 +103,14 @@ impl HiddenLayer for EnrichProfile {
 
 struct TransformProfile;
 
-impl Layer for TransformProfile {
+impl Node for TransformProfile {
     fn name(&self) -> &str {
         "TransformProfile"
     }
 }
 
 #[async_trait]
-impl HiddenLayer for TransformProfile {
+impl HiddenNode for TransformProfile {
     type Input = UserProfile;
     type Output = UserProfile;
     async fn run(&self, mut input: UserProfile) -> Result<UserProfile> {
@@ -125,14 +125,14 @@ impl HiddenLayer for TransformProfile {
 
 struct StoreProfile;
 
-impl Layer for StoreProfile {
+impl Node for StoreProfile {
     fn name(&self) -> &str {
         "StoreProfile"
     }
 }
 
 #[async_trait]
-impl OutputLayer for StoreProfile {
+impl OutputNode for StoreProfile {
     type Input = UserProfile;
     async fn run(&self, input: UserProfile) -> Result<()> {
         println!(

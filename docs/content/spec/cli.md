@@ -78,10 +78,10 @@ Creating project: my_app
   Created: my_app/.gitignore
   Created: my_app/src/main.rs
   Created: my_app/src/dto/mod.rs
-  Created: my_app/src/layer/mod.rs
-  Created: my_app/src/layer/input/mod.rs
-  Created: my_app/src/layer/hidden/mod.rs
-  Created: my_app/src/layer/output/mod.rs
+  Created: my_app/src/node/mod.rs
+  Created: my_app/src/node/input/mod.rs
+  Created: my_app/src/node/hidden/mod.rs
+  Created: my_app/src/node/output/mod.rs
   Created: my_app/src/graph/mod.rs
   Created: my_app/tests/integration/mod.rs
 
@@ -95,7 +95,7 @@ Next steps:
 
 ## `crab generate layer`
 
-Generates Layer boilerplate code. Alias: `crab g layer`
+Generates Node boilerplate code. Alias: `crab g layer`
 
 ### Syntax
 
@@ -107,28 +107,28 @@ crab generate layer <name> --type <layer-type> [OPTIONS]
 
 | Argument | Required | Description |
 |------|------|------|
-| `<name>` | Yes | Layer name (snake_case) |
+| `<name>` | Yes | Node name (snake_case) |
 
 ### Options
 
 | Option | Required | Default | Values | Description |
 |-----------|------|-----------|-----|------|
-| `--type` | Yes | - | `input`, `hidden`, `output` | Layer type |
-| `--input-type` | No | - | `chat`, `cron`, `http` | Input Layer subtype (valid only with `--type input`) |
-| `--output-type` | No | - | `discord` | Output Layer subtype (valid only with `--type output`) |
+| `--type` | Yes | - | `input`, `hidden`, `output` | Node type |
+| `--input-type` | No | - | `chat`, `cron`, `http` | Input Node subtype (valid only with `--type input`) |
+| `--output-type` | No | - | `discord` | Output Node subtype (valid only with `--type output`) |
 
 ### Generated Files
 
 | File | Content |
 |---------|------|
-| `src/layer/<type>/<name>.rs` | Layer struct and trait implementation |
+| `src/node/<type>/<name>.rs` | Node struct and trait implementation |
 | `src/dto/<name>.rs` | Corresponding Input/Output DTOs |
 
 ### Auto-Updated Files
 
 | File | Change |
 |---------|---------|
-| `src/layer/<type>/mod.rs` | Adds `pub mod <name>;` |
+| `src/node/<type>/mod.rs` | Adds `pub mod <name>;` |
 | `src/dto/mod.rs` | Adds `pub mod <name>;` |
 
 ### Exit Codes
@@ -143,20 +143,20 @@ crab generate layer <name> --type <layer-type> [OPTIONS]
 
 ```bash
 $ crab generate layer data_analyzer --type hidden
-  Created: src/layer/hidden/data_analyzer.rs
-  Updated: src/layer/hidden/mod.rs
+  Created: src/node/hidden/data_analyzer.rs
+  Updated: src/node/hidden/mod.rs
   Created: src/dto/data_analyzer.rs
   Updated: src/dto/mod.rs
 
 $ crab generate layer webhook --type input --input-type http
-  Created: src/layer/input/webhook.rs
-  Updated: src/layer/input/mod.rs
+  Created: src/node/input/webhook.rs
+  Updated: src/node/input/mod.rs
   Created: src/dto/webhook.rs
   Updated: src/dto/mod.rs
 
 $ crab generate layer discord_notifier --type output --output-type discord
-  Created: src/layer/output/discord_notifier.rs
-  Updated: src/layer/output/mod.rs
+  Created: src/node/output/discord_notifier.rs
+  Updated: src/node/output/mod.rs
   Created: src/dto/discord_notifier.rs
   Updated: src/dto/mod.rs
 ```

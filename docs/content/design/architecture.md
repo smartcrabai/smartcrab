@@ -59,18 +59,18 @@ A SmartCrab application is composed of three elements: **Layer**, **DTO**, and *
 
 {% mermaid() %}
 classDiagram
-    class Layer {
+    class Node {
         <<trait>>
     }
-    class InputLayer {
+    class InputNode {
         <<trait>>
         +run() Result~Output~
     }
-    class HiddenLayer {
+    class HiddenNode {
         <<trait>>
         +run(input: Input) Result~Output~
     }
-    class OutputLayer {
+    class OutputNode {
         <<trait>>
         +run(input: Input) Result~()~
     }
@@ -91,14 +91,14 @@ classDiagram
         +run() Result~()~
     }
 
-    Layer <|-- InputLayer
-    Layer <|-- HiddenLayer
-    Layer <|-- OutputLayer
-    InputLayer ..> Dto : produces
-    HiddenLayer ..> Dto : consumes / produces
-    OutputLayer ..> Dto : consumes
+    Node <|-- InputNode
+    Node <|-- HiddenNode
+    Node <|-- OutputNode
+    InputNode ..> Dto : produces
+    HiddenNode ..> Dto : consumes / produces
+    OutputNode ..> Dto : consumes
     DirectedGraphBuilder --> DirectedGraph : builds
-    DirectedGraph --> Layer : executes
+    DirectedGraph --> Node : executes
     DirectedGraph --> Dto : transfers
 {% end %}
 
@@ -144,7 +144,7 @@ SmartCrab includes structured tracing via OpenTelemetry out of the box.
 ```
 smartcrab                          # Root span
 ├── graph::{graph_name}            # Span for Graph execution
-│   ├── layer::{layer_name}        # Span for each Layer execution
+│   ├── layer::{layer_name}        # Span for each Node execution
 │   │   ├── claude_code::invoke    # Claude Code invocation (when applicable)
 │   │   └── ...
 │   ├── edge::{from}→{to}         # Span for edge transition
