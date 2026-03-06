@@ -84,19 +84,19 @@ impl GraphToMcpTool for DirectedGraph {
 /// into `to_mcp_tool`/`add_graph_tool` and dropped. This stub preserves only the name and
 /// description for metadata purposes and is not intended for execution.
 fn rebuild_graph_ref(graph: &DirectedGraph) -> DirectedGraph {
-    // We need to build a minimal valid graph. Since we can't clone layers/edges,
+    // We need to build a minimal valid graph. Since we can't clone nodes/edges,
     // we create a stub that preserves name/description.
     use crate::graph::DirectedGraphBuilder;
-    use crate::layer::{InputLayer, Layer};
+    use crate::node::{InputNode, Node};
 
     struct StubInput;
-    impl Layer for StubInput {
+    impl Node for StubInput {
         fn name(&self) -> &str {
             "__mcp_stub__"
         }
     }
     #[async_trait::async_trait]
-    impl InputLayer for StubInput {
+    impl InputNode for StubInput {
         type TriggerData = ();
         type Output = StubDto;
         async fn run(&self, _: ()) -> Result<StubDto> {
@@ -246,7 +246,7 @@ mod tests {
     use super::*;
     use crate::error::McpError;
     use crate::graph::DirectedGraphBuilder;
-    use crate::layer::{InputLayer, Layer, OutputLayer};
+    use crate::node::{InputNode, Node, OutputNode};
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     struct TestMsg {
@@ -254,13 +254,13 @@ mod tests {
     }
 
     struct TestInput;
-    impl Layer for TestInput {
+    impl Node for TestInput {
         fn name(&self) -> &str {
             "TestInput"
         }
     }
     #[async_trait]
-    impl InputLayer for TestInput {
+    impl InputNode for TestInput {
         type TriggerData = ();
         type Output = TestMsg;
         async fn run(&self, _: ()) -> Result<TestMsg> {
@@ -271,13 +271,13 @@ mod tests {
     }
 
     struct TestOutput;
-    impl Layer for TestOutput {
+    impl Node for TestOutput {
         fn name(&self) -> &str {
             "TestOutput"
         }
     }
     #[async_trait]
-    impl OutputLayer for TestOutput {
+    impl OutputNode for TestOutput {
         type Input = TestMsg;
         async fn run(&self, _input: TestMsg) -> Result<()> {
             Ok(())
@@ -294,15 +294,15 @@ mod tests {
             .unwrap()
     }
 
-    // To build a second Graph with different layers (to avoid name conflicts)
+    // To build a second Graph with different nodes (to avoid name conflicts)
     struct TestInput2;
-    impl Layer for TestInput2 {
+    impl Node for TestInput2 {
         fn name(&self) -> &str {
             "TestInput2"
         }
     }
     #[async_trait]
-    impl InputLayer for TestInput2 {
+    impl InputNode for TestInput2 {
         type TriggerData = ();
         type Output = TestMsg;
         async fn run(&self, _: ()) -> Result<TestMsg> {
@@ -313,13 +313,13 @@ mod tests {
     }
 
     struct TestOutput2;
-    impl Layer for TestOutput2 {
+    impl Node for TestOutput2 {
         fn name(&self) -> &str {
             "TestOutput2"
         }
     }
     #[async_trait]
-    impl OutputLayer for TestOutput2 {
+    impl OutputNode for TestOutput2 {
         type Input = TestMsg;
         async fn run(&self, _input: TestMsg) -> Result<()> {
             Ok(())

@@ -33,7 +33,7 @@ Reading the design docs first, then the spec docs, gives you context-grounded un
 
 | Document | Summary |
 |-------------|------|
-| [layer](/spec/layer/) | Layer specification — trait definitions and code examples for Input/Hidden/Output Layers |
+| [layer](/spec/layer/) | Node specification — trait definitions and code examples for Input/Hidden/Output Nodes |
 | [dto](/spec/dto/) | DTO specification — the Dto trait, naming conventions, conversions, and code examples |
 | [graph](/spec/graph/) | DirectedGraph specification — DirectedGraphBuilder API, execution semantics, validation |
 | [cli](/spec/cli/) | CLI command specification — details of `crab new` / `generate` / `run` |
@@ -43,12 +43,12 @@ Reading the design docs first, then the spec docs, gives you context-grounded un
 | Term | Description |
 |------|------|
 | **Layer** | A processing unit (node) in the graph. There are three kinds: Input, Hidden, and Output |
-| **Input Layer** | A Layer that receives external events and produces a DTO. Has subtypes: chat, cron, and http |
-| **Hidden Layer** | An intermediate processing Layer that receives a DTO, transforms it, and returns a DTO. Can invoke Claude Code |
-| **Output Layer** | A Layer that receives a DTO and performs final side effects (notifications, persistence, etc.). Can invoke Claude Code |
-| **DTO** | Data Transfer Object. A type-safe Rust struct used to pass data between Layers |
-| **DirectedGraph** | A directed graph that defines the execution order and conditional branching of Layers. Supports cycles |
-| **Node** | A node in the graph. Corresponds to one Layer |
+| **Input Layer** | A Node that receives external events and produces a DTO. Has subtypes: chat, cron, and http |
+| **Hidden Layer** | An intermediate processing Node that receives a DTO, transforms it, and returns a DTO. Can invoke Claude Code |
+| **Output Layer** | A Node that receives a DTO and performs final side effects (notifications, persistence, etc.). Can invoke Claude Code |
+| **DTO** | Data Transfer Object. A type-safe Rust struct used to pass data between Nodes |
+| **DirectedGraph** | A directed graph that defines the execution order and conditional branching of Nodes. Supports cycles |
+| **Node** | A processing unit in the graph. Corresponds to one Layer implementation. There are three kinds: Input, Hidden, and Output |
 | **Edge** | An edge in the graph. Represents a transition between Nodes. Conditional edges use closures for branching logic |
 | **DirectedGraphBuilder** | API for constructing a DirectedGraph using the builder pattern |
 | **Claude Code** | Anthropic's AI coding tool. Can be invoked as a subprocess from Hidden/Output Layers |

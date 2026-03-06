@@ -25,7 +25,7 @@ The simplest graph — a linear Input → Hidden → Output chain.
 
 **File:** [`multi_transform.rs`](./multi_transform.rs)
 
-Multiple hidden layers chained to perform staged data transformations.
+Multiple hidden nodes chained to perform staged data transformations.
 
 ![multi_transform](./figures/multi_transform.svg)
 
@@ -127,6 +127,6 @@ The SVG figures were generated using [Graphviz](https://graphviz.org/) DOT forma
 matching the output style of `smartcrab viz --format dot`.
 
 Node shapes:
-- **Rounded box** — Input layer
-- **Box** — Hidden layer
-- **Hexagon** — Output layer
+- **Rounded box** — Input node
+- **Box** — Hidden node
+- **Hexagon** — Output node

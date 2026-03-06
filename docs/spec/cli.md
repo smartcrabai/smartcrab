@@ -74,10 +74,10 @@ Creating project: my_app
   Created: my_app/.gitignore
   Created: my_app/src/main.rs
   Created: my_app/src/dto/mod.rs
-  Created: my_app/src/layer/mod.rs
-  Created: my_app/src/layer/input/mod.rs
-  Created: my_app/src/layer/hidden/mod.rs
-  Created: my_app/src/layer/output/mod.rs
+  Created: my_app/src/node/mod.rs
+  Created: my_app/src/node/input/mod.rs
+  Created: my_app/src/node/hidden/mod.rs
+  Created: my_app/src/node/output/mod.rs
   Created: my_app/src/graph/mod.rs
   Created: my_app/tests/integration/mod.rs
 
@@ -103,28 +103,28 @@ crab generate layer <name> --type <layer-type> [OPTIONS]
 
 | 引数 | 必須 | 説明 |
 |------|------|------|
-| `<name>` | Yes | Layer 名（snake_case） |
+| `<name>` | Yes | Node 名（snake_case） |
 
 ### オプション
 
 | オプション | 必須 | デフォルト | 値 | 説明 |
 |-----------|------|-----------|-----|------|
-| `--type` | Yes | - | `input`, `hidden`, `output` | Layer の種類 |
-| `--input-type` | No | - | `chat`, `cron`, `http` | Input Layer のサブタイプ（`--type input` 時のみ有効） |
-| `--output-type` | No | - | `discord` | Output Layer のサブタイプ（`--type output` 時のみ有効） |
+| `--type` | Yes | - | `input`, `hidden`, `output` | Node の種類 |
+| `--input-type` | No | - | `chat`, `cron`, `http` | Input Node のサブタイプ（`--type input` 時のみ有効） |
+| `--output-type` | No | - | `discord` | Output Node のサブタイプ（`--type output` 時のみ有効） |
 
 ### 生成ファイル
 
 | ファイル | 内容 |
 |---------|------|
-| `src/layer/<type>/<name>.rs` | Layer 構造体とトレイト実装 |
+| `src/node/<type>/<name>.rs` | Node 構造体とトレイト実装 |
 | `src/dto/<name>.rs` | 対応する Input/Output DTO |
 
 ### 自動更新ファイル
 
 | ファイル | 変更内容 |
 |---------|---------|
-| `src/layer/<type>/mod.rs` | `pub mod <name>;` を追加 |
+| `src/node/<type>/mod.rs` | `pub mod <name>;` を追加 |
 | `src/dto/mod.rs` | `pub mod <name>;` を追加 |
 
 ### 終了コード
@@ -139,20 +139,20 @@ crab generate layer <name> --type <layer-type> [OPTIONS]
 
 ```bash
 $ crab generate layer data_analyzer --type hidden
-  Created: src/layer/hidden/data_analyzer.rs
-  Updated: src/layer/hidden/mod.rs
+  Created: src/node/hidden/data_analyzer.rs
+  Updated: src/node/hidden/mod.rs
   Created: src/dto/data_analyzer.rs
   Updated: src/dto/mod.rs
 
 $ crab generate layer webhook --type input --input-type http
-  Created: src/layer/input/webhook.rs
-  Updated: src/layer/input/mod.rs
+  Created: src/node/input/webhook.rs
+  Updated: src/node/input/mod.rs
   Created: src/dto/webhook.rs
   Updated: src/dto/mod.rs
 
 $ crab generate layer discord_notifier --type output --output-type discord
-  Created: src/layer/output/discord_notifier.rs
-  Updated: src/layer/output/mod.rs
+  Created: src/node/output/discord_notifier.rs
+  Updated: src/node/output/mod.rs
   Created: src/dto/discord_notifier.rs
   Updated: src/dto/mod.rs
 ```

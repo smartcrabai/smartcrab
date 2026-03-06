@@ -283,7 +283,7 @@ mod tests {
 
     use super::*;
     use crate::graph::DirectedGraphBuilder;
-    use crate::layer::{InputLayer, Layer, OutputLayer};
+    use crate::node::{InputNode, Node, OutputNode};
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     struct Msg {
@@ -291,13 +291,13 @@ mod tests {
     }
 
     struct In;
-    impl Layer for In {
+    impl Node for In {
         fn name(&self) -> &str {
             "In"
         }
     }
     #[async_trait]
-    impl InputLayer for In {
+    impl InputNode for In {
         type TriggerData = ();
         type Output = Msg;
         async fn run(&self, _: ()) -> Result<Msg> {
@@ -306,13 +306,13 @@ mod tests {
     }
 
     struct Out;
-    impl Layer for Out {
+    impl Node for Out {
         fn name(&self) -> &str {
             "Out"
         }
     }
     #[async_trait]
-    impl OutputLayer for Out {
+    impl OutputNode for Out {
         type Input = Msg;
         async fn run(&self, _input: Msg) -> Result<()> {
             Ok(())
@@ -329,13 +329,13 @@ mod tests {
             .unwrap();
 
         struct In2;
-        impl Layer for In2 {
+        impl Node for In2 {
             fn name(&self) -> &str {
                 "In2"
             }
         }
         #[async_trait]
-        impl InputLayer for In2 {
+        impl InputNode for In2 {
             type TriggerData = ();
             type Output = Msg;
             async fn run(&self, _: ()) -> Result<Msg> {
@@ -343,13 +343,13 @@ mod tests {
             }
         }
         struct Out2;
-        impl Layer for Out2 {
+        impl Node for Out2 {
             fn name(&self) -> &str {
                 "Out2"
             }
         }
         #[async_trait]
-        impl OutputLayer for Out2 {
+        impl OutputNode for Out2 {
             type Input = Msg;
             async fn run(&self, _input: Msg) -> Result<()> {
                 Ok(())

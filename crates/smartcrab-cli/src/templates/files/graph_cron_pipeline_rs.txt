@@ -1,7 +1,7 @@
 use smartcrab::prelude::*;
 
-use crate::layer::input::cron_input::CronInput;
-use crate::layer::output::discord_output::DiscordOutput;
+use crate::node::input::cron_input::CronInput;
+use crate::node::output::discord_output::DiscordOutput;
 
 /// Build the Cron pipeline graph:
 ///   CronInput -> DiscordOutput

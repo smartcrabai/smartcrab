@@ -6,15 +6,15 @@ weight = 1
 
 ## Overview
 
-A Layer is a processing unit (node) in the Graph and the place where business logic is written in a SmartCrab application. There are three kinds — Input, Hidden, and Output — each with a different signature.
+A Node is a processing unit (node) in the Graph and the place where business logic is written in a SmartCrab application. There are three kinds — Input, Hidden, and Output — each with a different signature.
 
-## Common Layer Trait
+## Common Node Trait
 
 The base trait implemented by all Layers.
 
 ```rust
 pub trait Layer: Send + Sync + 'static {
-    /// The identifying name of the Layer (used as the span name in traces)
+    /// The identifying name of the Node (used as the span name in traces)
     fn name(&self) -> &str;
 }
 ```
@@ -27,7 +27,7 @@ Receives external events and produces a DTO. Serves as the entry point for the G
 
 ```rust
 #[async_trait]
-pub trait InputLayer: Layer {
+pub trait InputNode: Node {
     /// The type of trigger data (typically `()` is used).
     type TriggerData: Dto;
     type Output: Dto;
@@ -38,7 +38,7 @@ pub trait InputLayer: Layer {
 
 ### TriggerKind
 
-Specifies when the Layer fires via `DirectedGraphBuilder::trigger()`.
+Specifies when the Node fires via `DirectedGraphBuilder::trigger()`.
 
 ```rust
 pub enum TriggerKind {
@@ -68,14 +68,14 @@ use smartcrab::prelude::*;
 
 pub struct DiscordInput;
 
-impl Layer for DiscordInput {
+impl Node for DiscordInput {
     fn name(&self) -> &str {
         "DiscordInput"
     }
 }
 
 #[async_trait]
-impl InputLayer for DiscordInput {
+impl InputNode for DiscordInput {
     type TriggerData = ();
     type Output = DiscordMessage;
 
@@ -88,13 +88,13 @@ impl InputLayer for DiscordInput {
 
 ## Hidden Layer
 
-An intermediate processing Layer that receives a DTO, transforms or processes it, and returns a DTO. Can invoke Claude Code as a subprocess.
+An intermediate processing Node that receives a DTO, transforms or processes it, and returns a DTO. Can invoke Claude Code as a subprocess.
 
 ### Trait Definition
 
 ```rust
 #[async_trait]
-pub trait HiddenLayer: Layer {
+pub trait HiddenNode: Node {
     type Input: Dto;
     type Output: Dto;
 
@@ -111,14 +111,14 @@ use smartcrab::claude::ClaudeCode;
 
 pub struct AiAnalysis;
 
-impl Layer for AiAnalysis {
+impl Node for AiAnalysis {
     fn name(&self) -> &str {
         "AiAnalysis"
     }
 }
 
 #[async_trait]
-impl HiddenLayer for AiAnalysis {
+impl HiddenNode for AiAnalysis {
     type Input = AnalysisInput;
     type Output = AnalysisOutput;
 
@@ -147,7 +147,7 @@ Receives a DTO and performs final side effects (notifications, persistence, resp
 
 ```rust
 #[async_trait]
-pub trait OutputLayer: Layer {
+pub trait OutputNode: Node {
     type Input: Dto;
 
     async fn run(&self, input: Self::Input) -> Result<()>;
@@ -163,14 +163,14 @@ pub struct SlackNotifier {
     webhook_url: String,
 }
 
-impl Layer for SlackNotifier {
+impl Node for SlackNotifier {
     fn name(&self) -> &str {
         "SlackNotifier"
     }
 }
 
 #[async_trait]
-impl OutputLayer for SlackNotifier {
+impl OutputNode for SlackNotifier {
     type Input = NotificationPayload;
 
     async fn run(&self, input: Self::Input) -> Result<()> {
@@ -187,19 +187,19 @@ impl OutputLayer for SlackNotifier {
 }
 ```
 
-### Output Layer Using Claude Code
+### Output Node Using Claude Code
 
 ```rust
 pub struct AiReport;
 
-impl Layer for AiReport {
+impl Node for AiReport {
     fn name(&self) -> &str {
         "AiReport"
     }
 }
 
 #[async_trait]
-impl OutputLayer for AiReport {
+impl OutputNode for AiReport {
     type Input = ReportData;
 
     async fn run(&self, input: Self::Input) -> Result<()> {
@@ -222,7 +222,7 @@ impl OutputLayer for AiReport {
 
 | Element | Convention | Example |
 |------|------|-----|
-| Layer struct name | PascalCase, role-descriptive name | `HttpInput`, `DataAnalyzer`, `SlackNotifier` |
+| Node struct name | PascalCase, role-descriptive name | `HttpInput`, `DataAnalyzer`, `SlackNotifier` |
 | `name()` return value | Same as struct name | `"HttpInput"`, `"DataAnalyzer"` |
 | File name | snake_case | `http_input.rs`, `data_analyzer.rs` |
 

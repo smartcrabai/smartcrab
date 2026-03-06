@@ -2,7 +2,7 @@
 
 ## 概要
 
-DTO（Data Transfer Object）は Layer 間のデータ受け渡しに使う型安全な Rust 構造体である。`Dto` トレイトを実装することで、フレームワークが要求するシリアライズ・クローン・スレッド安全性を保証する。
+DTO（Data Transfer Object）は Node 間のデータ受け渡しに使う型安全な Rust 構造体である。`Dto` トレイトを実装することで、フレームワークが要求するシリアライズ・クローン・スレッド安全性を保証する。
 
 ## Dto トレイト定義
 
@@ -45,14 +45,14 @@ impl Dto for MyData {}
 
 ## 命名規約
 
-DTO はそれを生成する Layer の名前に基づいて命名する。
+DTO はそれを生成する Node の名前に基づいて命名する。
 
 | パターン | 説明 | 例 |
 |---------|------|-----|
-| `<LayerName>Input` | Layer の入力 DTO | `AnalyzerInput` |
-| `<LayerName>Output` | Layer の出力 DTO | `AnalyzerOutput` |
+| `<NodeName>Input` | Node の入力 DTO | `AnalyzerInput` |
+| `<NodeName>Output` | Node の出力 DTO | `AnalyzerOutput` |
 
-Layer の `Input` 関連型は前段 Layer の `Output` DTO と一致する。このため、隣接する Layer 間で同一の DTO 型を共有することが一般的である。
+Node の `Input` 関連型は前段 Node の `Output` DTO と一致する。このため、隣接する Node 間で同一の DTO 型を共有することが一般的である。
 
 ```
 FetchLayer::Output = FetchOutput
@@ -62,7 +62,7 @@ AnalyzeLayer::Output = AnalyzeOutput
 
 ## DTO 間変換
 
-隣接しない Layer 間でデータを受け渡す場合や、DTO の構造が異なる場合は `From` / `Into` トレイトで変換を定義する。
+隣接しない Node 間でデータを受け渡す場合や、DTO の構造が異なる場合は `From` / `Into` トレイトで変換を定義する。
 
 ```rust
 #[derive(Dto)]

@@ -6,7 +6,7 @@ weight = 4
 
 ## Claude Code の役割
 
-SmartCrab における Claude Code は、Hidden Layer と Output Layer から条件付きで呼び出される AI 処理エンジンである。「ツール → AI」パラダイムの「AI」部分を担う。
+SmartCrab における Claude Code は、Hidden Node と Output Node から条件付きで呼び出される AI 処理エンジンである。「ツール → AI」パラダイムの「AI」部分を担う。
 
 Claude Code は以下の場面で使用される:
 
@@ -31,7 +31,7 @@ sequenceDiagram
     CC-->>L: Result<String>
 {% end %}
 
-### Hidden Layer での使用
+### Hidden Node での使用
 
 ```rust
 // DTO → プロンプト → Claude Code → レスポンス → DTO
@@ -44,7 +44,7 @@ async fn run(&self, input: Self::Input) -> Result<Self::Output> {
 }
 ```
 
-### Output Layer での使用
+### Output Node での使用
 
 ```rust
 // DTO → プロンプト → Claude Code → 副作用（ファイル生成等）
@@ -261,7 +261,7 @@ impl ClaudeCodeExecutor for MockClaudeCode {
 
 | レベル | 対象 | Claude Code |
 |--------|------|-------------|
-| ユニットテスト | 個別 Layer | モック |
+| ユニットテスト | 個別 Node | モック |
 | 結合テスト | DAG 全体 | モック |
 | E2E テスト | アプリケーション全体 | 実際の claude コマンド |
 

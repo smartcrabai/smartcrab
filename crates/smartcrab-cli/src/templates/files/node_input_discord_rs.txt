@@ -1,17 +1,17 @@
 use smartcrab::chat::discord::DiscordMessage;
 use smartcrab::prelude::*;
 
-/// Input layer that receives Discord messages (mentions and DMs).
+/// Input node that receives Discord messages (mentions and DMs).
 pub struct DiscordInput;
 
-impl Layer for DiscordInput {
+impl Node for DiscordInput {
     fn name(&self) -> &str {
         "DiscordInput"
     }
 }
 
 #[async_trait]
-impl InputLayer for DiscordInput {
+impl InputNode for DiscordInput {
     type TriggerData = DiscordMessage;
     type Output = DiscordMessage;
 

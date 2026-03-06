@@ -20,19 +20,19 @@ struct DiscordNotification {
 }
 
 // ---------------------------------------------------------------------------
-// Mock layers
+// Mock nodes
 // ---------------------------------------------------------------------------
 
 struct MockDiscordInput;
 
-impl Layer for MockDiscordInput {
+impl Node for MockDiscordInput {
     fn name(&self) -> &str {
         "DiscordInput"
     }
 }
 
 #[async_trait]
-impl InputLayer for MockDiscordInput {
+impl InputNode for MockDiscordInput {
     type TriggerData = ();
     type Output = DiscordMessage;
 
@@ -47,16 +47,16 @@ impl InputLayer for MockDiscordInput {
     }
 }
 
-struct MockClaudeCodeLayer;
+struct MockClaudeCodeNode;
 
-impl Layer for MockClaudeCodeLayer {
+impl Node for MockClaudeCodeNode {
     fn name(&self) -> &str {
-        "ClaudeCodeLayer"
+        "ClaudeCodeNode"
     }
 }
 
 #[async_trait]
-impl HiddenLayer for MockClaudeCodeLayer {
+impl HiddenNode for MockClaudeCodeNode {
     type Input = DiscordMessage;
     type Output = DiscordNotification;
 
@@ -70,14 +70,14 @@ impl HiddenLayer for MockClaudeCodeLayer {
 
 struct MockDiscordOutput;
 
-impl Layer for MockDiscordOutput {
+impl Node for MockDiscordOutput {
     fn name(&self) -> &str {
         "DiscordOutput"
     }
 }
 
 #[async_trait]
-impl OutputLayer for MockDiscordOutput {
+impl OutputNode for MockDiscordOutput {
     type Input = DiscordNotification;
 
     async fn run(&self, input: DiscordNotification) -> Result<()> {
@@ -89,14 +89,14 @@ impl OutputLayer for MockDiscordOutput {
 
 struct MockCronInput;
 
-impl Layer for MockCronInput {
+impl Node for MockCronInput {
     fn name(&self) -> &str {
         "CronInput"
     }
 }
 
 #[async_trait]
-impl InputLayer for MockCronInput {
+impl InputNode for MockCronInput {
     type TriggerData = ();
     type Output = DiscordNotification;
 
@@ -116,10 +116,10 @@ impl InputLayer for MockCronInput {
 async fn test_discord_pipeline_graph() {
     let graph = DirectedGraphBuilder::new("discord_pipeline")
         .add_input(MockDiscordInput)
-        .add_hidden(MockClaudeCodeLayer)
+        .add_hidden(MockClaudeCodeNode)
         .add_output(MockDiscordOutput)
-        .add_edge("DiscordInput", "ClaudeCodeLayer")
-        .add_edge("ClaudeCodeLayer", "DiscordOutput")
+        .add_edge("DiscordInput", "ClaudeCodeNode")
+        .add_edge("ClaudeCodeNode", "DiscordOutput")
         .build()
         .expect("graph should build successfully");
 
@@ -142,13 +142,13 @@ async fn test_cron_pipeline_graph() {
 fn test_discord_pipeline_type_safety() {
     // Verify that the graph builder rejects type mismatches
     struct WrongOutput;
-    impl Layer for WrongOutput {
+    impl Node for WrongOutput {
         fn name(&self) -> &str {
             "WrongOutput"
         }
     }
     #[async_trait]
-    impl OutputLayer for WrongOutput {
+    impl OutputNode for WrongOutput {
         type Input = DiscordMessage; // Wrong type - expects DiscordMessage but gets DiscordNotification
         async fn run(&self, _input: DiscordMessage) -> Result<()> {
             Ok(())

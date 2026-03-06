@@ -6,7 +6,7 @@ weight = 2
 
 ## Overview
 
-A DTO (Data Transfer Object) is a type-safe Rust struct used to pass data between Layers. Implementing the `Dto` trait guarantees the serialization, cloning, and thread-safety required by the framework.
+A DTO (Data Transfer Object) is a type-safe Rust struct used to pass data between Nodes. Implementing the `Dto` trait guarantees the serialization, cloning, and thread-safety required by the framework.
 
 ## Dto Trait Definition
 
@@ -49,24 +49,24 @@ impl Dto for MyData {}
 
 ## Naming Conventions
 
-DTOs are named based on the Layer that produces them.
+DTOs are named based on the Node that produces them.
 
 | Pattern | Description | Example |
 |---------|------|-----|
-| `<LayerName>Input` | Input DTO for a Layer | `AnalyzerInput` |
-| `<LayerName>Output` | Output DTO for a Layer | `AnalyzerOutput` |
+| `<NodeName>Input` | Input DTO for a Node | `AnalyzerInput` |
+| `<NodeName>Output` | Output DTO for a Node | `AnalyzerOutput` |
 
-A Layer's `Input` associated type matches the `Output` DTO of the preceding Layer. For this reason, it is common for adjacent Layers to share the same DTO type.
+A Node's `Input` associated type matches the `Output` DTO of the preceding Node. For this reason, it is common for adjacent Nodes to share the same DTO type.
 
 ```
-FetchLayer::Output = FetchOutput
-AnalyzeLayer::Input = FetchOutput   ← Same type
-AnalyzeLayer::Output = AnalyzeOutput
+FetchNode::Output = FetchOutput
+AnalyzeNode::Input = FetchOutput   ← Same type
+AnalyzeNode::Output = AnalyzeOutput
 ```
 
 ## DTO Conversion
 
-When passing data between non-adjacent Layers, or when DTO structures differ, define conversions using the `From` / `Into` traits.
+When passing data between non-adjacent Nodes, or when DTO structures differ, define conversions using the `From` / `Into` traits.
 
 ```rust
 #[derive(Dto)]

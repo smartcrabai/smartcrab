@@ -37,21 +37,21 @@ struct BatchInfo {
 }
 
 // ---------------------------------------------------------------------------
-// Layers
+// Nodes
 // ---------------------------------------------------------------------------
 
 struct GenerateTasks {
     storage: Arc<dyn Storage>,
 }
 
-impl Layer for GenerateTasks {
+impl Node for GenerateTasks {
     fn name(&self) -> &str {
         "GenerateTasks"
     }
 }
 
 #[async_trait]
-impl InputLayer for GenerateTasks {
+impl InputNode for GenerateTasks {
     type TriggerData = ();
     type Output = BatchInfo;
     async fn run(&self, _: ()) -> Result<BatchInfo> {
@@ -86,14 +86,14 @@ struct ProcessTask {
     storage: Arc<dyn Storage>,
 }
 
-impl Layer for ProcessTask {
+impl Node for ProcessTask {
     fn name(&self) -> &str {
         "ProcessTask"
     }
 }
 
 #[async_trait]
-impl HiddenLayer for ProcessTask {
+impl HiddenNode for ProcessTask {
     type Input = BatchInfo;
     type Output = BatchInfo;
     async fn run(&self, input: BatchInfo) -> Result<BatchInfo> {
@@ -126,14 +126,14 @@ struct Summarize {
     storage: Arc<dyn Storage>,
 }
 
-impl Layer for Summarize {
+impl Node for Summarize {
     fn name(&self) -> &str {
         "Summarize"
     }
 }
 
 #[async_trait]
-impl OutputLayer for Summarize {
+impl OutputNode for Summarize {
     type Input = BatchInfo;
     async fn run(&self, _input: BatchInfo) -> Result<()> {
         let total = self

@@ -33,21 +33,21 @@ struct DeployInfo {
 }
 
 // ---------------------------------------------------------------------------
-// Layers
+// Nodes
 // ---------------------------------------------------------------------------
 
 struct RecordDeployment {
     storage: Arc<dyn Storage>,
 }
 
-impl Layer for RecordDeployment {
+impl Node for RecordDeployment {
     fn name(&self) -> &str {
         "RecordDeployment"
     }
 }
 
 #[async_trait]
-impl InputLayer for RecordDeployment {
+impl InputNode for RecordDeployment {
     type TriggerData = ();
     type Output = DeployInfo;
     async fn run(&self, _: ()) -> Result<DeployInfo> {
@@ -75,14 +75,14 @@ struct UpdateHistory {
     storage: Arc<dyn Storage>,
 }
 
-impl Layer for UpdateHistory {
+impl Node for UpdateHistory {
     fn name(&self) -> &str {
         "UpdateHistory"
     }
 }
 
 #[async_trait]
-impl HiddenLayer for UpdateHistory {
+impl HiddenNode for UpdateHistory {
     type Input = DeployInfo;
     type Output = DeployInfo;
     async fn run(&self, input: DeployInfo) -> Result<DeployInfo> {
@@ -108,14 +108,14 @@ struct PrintReport {
     storage: Arc<dyn Storage>,
 }
 
-impl Layer for PrintReport {
+impl Node for PrintReport {
     fn name(&self) -> &str {
         "PrintReport"
     }
 }
 
 #[async_trait]
-impl OutputLayer for PrintReport {
+impl OutputNode for PrintReport {
     type Input = DeployInfo;
     async fn run(&self, input: DeployInfo) -> Result<()> {
         let deploy: Option<Deployment> = self

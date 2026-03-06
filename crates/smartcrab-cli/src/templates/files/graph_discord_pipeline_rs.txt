@@ -1,11 +1,11 @@
 use smartcrab::prelude::*;
 
-use crate::layer::hidden::claude_code_layer::ClaudeCodeLayer;
-use crate::layer::input::discord_input::DiscordInput;
-use crate::layer::output::discord_output::DiscordOutput;
+use crate::node::hidden::claude_code_node::ClaudeCodeNode;
+use crate::node::input::discord_input::DiscordInput;
+use crate::node::output::discord_output::DiscordOutput;
 
 /// Build the Discord pipeline graph:
-///   DiscordInput -> ClaudeCodeLayer -> DiscordOutput
+///   DiscordInput -> ClaudeCodeNode -> DiscordOutput
 pub fn build() -> std::result::Result<DirectedGraph, GraphError> {
     DirectedGraphBuilder::new("discord_pipeline")
         .trigger(TriggerKind::discord(
@@ -13,9 +13,9 @@ pub fn build() -> std::result::Result<DirectedGraph, GraphError> {
             None,
         ))
         .add_input(DiscordInput)
-        .add_hidden(ClaudeCodeLayer::new())
+        .add_hidden(ClaudeCodeNode::new())
         .add_output(DiscordOutput)
-        .add_edge("DiscordInput", "ClaudeCodeLayer")
-        .add_edge("ClaudeCodeLayer", "DiscordOutput")
+        .add_edge("DiscordInput", "ClaudeCodeNode")
+        .add_edge("ClaudeCodeNode", "DiscordOutput")
         .build()
 }

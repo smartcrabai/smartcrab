@@ -27,19 +27,19 @@ struct Document {
 }
 
 // ---------------------------------------------------------------------------
-// Layers
+// Nodes
 // ---------------------------------------------------------------------------
 
 struct Ingest;
 
-impl Layer for Ingest {
+impl Node for Ingest {
     fn name(&self) -> &str {
         "Ingest"
     }
 }
 
 #[async_trait]
-impl InputLayer for Ingest {
+impl InputNode for Ingest {
     type TriggerData = ();
     type Output = Document;
     async fn run(&self, _: ()) -> Result<Document> {
@@ -55,14 +55,14 @@ impl InputLayer for Ingest {
 
 struct Validate;
 
-impl Layer for Validate {
+impl Node for Validate {
     fn name(&self) -> &str {
         "Validate"
     }
 }
 
 #[async_trait]
-impl HiddenLayer for Validate {
+impl HiddenNode for Validate {
     type Input = Document;
     type Output = Document;
     async fn run(&self, mut input: Document) -> Result<Document> {
@@ -79,14 +79,14 @@ impl HiddenLayer for Validate {
 
 struct Enrich;
 
-impl Layer for Enrich {
+impl Node for Enrich {
     fn name(&self) -> &str {
         "Enrich"
     }
 }
 
 #[async_trait]
-impl HiddenLayer for Enrich {
+impl HiddenNode for Enrich {
     type Input = Document;
     type Output = Document;
     async fn run(&self, mut input: Document) -> Result<Document> {
@@ -98,14 +98,14 @@ impl HiddenLayer for Enrich {
 
 struct IndexOutput;
 
-impl Layer for IndexOutput {
+impl Node for IndexOutput {
     fn name(&self) -> &str {
         "IndexOutput"
     }
 }
 
 #[async_trait]
-impl OutputLayer for IndexOutput {
+impl OutputNode for IndexOutput {
     type Input = Document;
     async fn run(&self, input: Document) -> Result<()> {
         println!(
@@ -120,14 +120,14 @@ impl OutputLayer for IndexOutput {
 
 struct Quarantine;
 
-impl Layer for Quarantine {
+impl Node for Quarantine {
     fn name(&self) -> &str {
         "Quarantine"
     }
 }
 
 #[async_trait]
-impl OutputLayer for Quarantine {
+impl OutputNode for Quarantine {
     type Input = Document;
     async fn run(&self, input: Document) -> Result<()> {
         println!("🚫 Quarantined document #{}: {}", input.id, input.status);

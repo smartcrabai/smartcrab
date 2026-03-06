@@ -5,30 +5,30 @@ use async_trait::async_trait;
 use crate::dto::{Dto, DtoObject};
 use crate::error::Result;
 
-/// Base trait for all layers.
-pub trait Layer: Send + Sync + 'static {
+/// Base trait for all nodes.
+pub trait Node: Send + Sync + 'static {
     fn name(&self) -> &str;
 }
 
-/// A layer that produces data from an external source.
+/// A node that produces data from an external source.
 #[async_trait]
-pub trait InputLayer: Layer {
+pub trait InputNode: Node {
     type TriggerData: Dto;
     type Output: Dto;
     async fn run(&self, trigger: Self::TriggerData) -> Result<Self::Output>;
 }
 
-/// A layer that transforms data.
+/// A node that transforms data.
 #[async_trait]
-pub trait HiddenLayer: Layer {
+pub trait HiddenNode: Node {
     type Input: Dto;
     type Output: Dto;
     async fn run(&self, input: Self::Input) -> Result<Self::Output>;
 }
 
-/// A layer that consumes data and performs a side effect.
+/// A node that consumes data and performs a side effect.
 #[async_trait]
-pub trait OutputLayer: Layer {
+pub trait OutputNode: Node {
     type Input: Dto;
     async fn run(&self, input: Self::Input) -> Result<()>;
 }
@@ -37,9 +37,9 @@ pub trait OutputLayer: Layer {
 // Object-safe dynamic dispatch wrappers
 // ---------------------------------------------------------------------------
 
-/// Object-safe wrapper for `InputLayer`.
+/// Object-safe wrapper for `InputNode`.
 #[async_trait]
-pub trait InputLayerDyn: Layer {
+pub trait InputNodeDyn: Node {
     fn trigger_data_type_id(&self) -> TypeId;
     fn trigger_data_type_name(&self) -> &'static str;
     fn output_type_id(&self) -> TypeId;
@@ -48,7 +48,7 @@ pub trait InputLayerDyn: Layer {
 }
 
 #[async_trait]
-impl<T: InputLayer> InputLayerDyn for T {
+impl<T: InputNode> InputNodeDyn for T {
     fn trigger_data_type_id(&self) -> TypeId {
         TypeId::of::<T::TriggerData>()
     }
@@ -82,9 +82,9 @@ impl<T: InputLayer> InputLayerDyn for T {
     }
 }
 
-/// Object-safe wrapper for `HiddenLayer`.
+/// Object-safe wrapper for `HiddenNode`.
 #[async_trait]
-pub trait HiddenLayerDyn: Layer {
+pub trait HiddenNodeDyn: Node {
     fn input_type_id(&self) -> TypeId;
     fn input_type_name(&self) -> &'static str;
     fn output_type_id(&self) -> TypeId;
@@ -93,7 +93,7 @@ pub trait HiddenLayerDyn: Layer {
 }
 
 #[async_trait]
-impl<T: HiddenLayer> HiddenLayerDyn for T {
+impl<T: HiddenNode> HiddenNodeDyn for T {
     fn input_type_id(&self) -> TypeId {
         TypeId::of::<T::Input>()
     }
@@ -124,16 +124,16 @@ impl<T: HiddenLayer> HiddenLayerDyn for T {
     }
 }
 
-/// Object-safe wrapper for `OutputLayer`.
+/// Object-safe wrapper for `OutputNode`.
 #[async_trait]
-pub trait OutputLayerDyn: Layer {
+pub trait OutputNodeDyn: Node {
     fn input_type_id(&self) -> TypeId;
     fn input_type_name(&self) -> &'static str;
     async fn run_dyn(&self, input: &dyn DtoObject) -> Result<()>;
 }
 
 #[async_trait]
-impl<T: OutputLayer> OutputLayerDyn for T {
+impl<T: OutputNode> OutputNodeDyn for T {
     fn input_type_id(&self) -> TypeId {
         TypeId::of::<T::Input>()
     }
@@ -155,34 +155,34 @@ impl<T: OutputLayer> OutputLayerDyn for T {
     }
 }
 
-/// Type-erased layer enum used in the Graph engine.
-pub enum AnyLayer {
-    Input(Box<dyn InputLayerDyn>),
-    Hidden(Box<dyn HiddenLayerDyn>),
-    Output(Box<dyn OutputLayerDyn>),
+/// Type-erased node enum used in the Graph engine.
+pub enum AnyNode {
+    Input(Box<dyn InputNodeDyn>),
+    Hidden(Box<dyn HiddenNodeDyn>),
+    Output(Box<dyn OutputNodeDyn>),
 }
 
-impl AnyLayer {
+impl AnyNode {
     pub fn name(&self) -> &str {
         match self {
-            AnyLayer::Input(l) => l.name(),
-            AnyLayer::Hidden(l) => l.name(),
-            AnyLayer::Output(l) => l.name(),
+            AnyNode::Input(l) => l.name(),
+            AnyNode::Hidden(l) => l.name(),
+            AnyNode::Output(l) => l.name(),
         }
     }
 
-    /// Returns the `TypeId` of the trigger data (if Input layer).
+    /// Returns the `TypeId` of the trigger data (if Input node).
     pub fn trigger_data_type_id(&self) -> Option<TypeId> {
         match self {
-            AnyLayer::Input(l) => Some(l.trigger_data_type_id()),
+            AnyNode::Input(l) => Some(l.trigger_data_type_id()),
             _ => None,
         }
     }
 
-    /// Returns the trigger data type name (if Input layer).
+    /// Returns the trigger data type name (if Input node).
     pub fn trigger_data_type_name(&self) -> Option<&'static str> {
         match self {
-            AnyLayer::Input(l) => Some(l.trigger_data_type_name()),
+            AnyNode::Input(l) => Some(l.trigger_data_type_name()),
             _ => None,
         }
     }
@@ -190,36 +190,36 @@ impl AnyLayer {
     /// Returns the `TypeId` of the output DTO (if any).
     pub fn output_type_id(&self) -> Option<TypeId> {
         match self {
-            AnyLayer::Input(l) => Some(l.output_type_id()),
-            AnyLayer::Hidden(l) => Some(l.output_type_id()),
-            AnyLayer::Output(_) => None,
+            AnyNode::Input(l) => Some(l.output_type_id()),
+            AnyNode::Hidden(l) => Some(l.output_type_id()),
+            AnyNode::Output(_) => None,
         }
     }
 
     /// Returns the output type name (if any).
     pub fn output_type_name(&self) -> Option<&'static str> {
         match self {
-            AnyLayer::Input(l) => Some(l.output_type_name()),
-            AnyLayer::Hidden(l) => Some(l.output_type_name()),
-            AnyLayer::Output(_) => None,
+            AnyNode::Input(l) => Some(l.output_type_name()),
+            AnyNode::Hidden(l) => Some(l.output_type_name()),
+            AnyNode::Output(_) => None,
         }
     }
 
     /// Returns the `TypeId` of the input DTO (if any).
     pub fn input_type_id(&self) -> Option<TypeId> {
         match self {
-            AnyLayer::Input(_) => None,
-            AnyLayer::Hidden(l) => Some(l.input_type_id()),
-            AnyLayer::Output(l) => Some(l.input_type_id()),
+            AnyNode::Input(_) => None,
+            AnyNode::Hidden(l) => Some(l.input_type_id()),
+            AnyNode::Output(l) => Some(l.input_type_id()),
         }
     }
 
     /// Returns the input type name (if any).
     pub fn input_type_name(&self) -> Option<&'static str> {
         match self {
-            AnyLayer::Input(_) => None,
-            AnyLayer::Hidden(l) => Some(l.input_type_name()),
-            AnyLayer::Output(l) => Some(l.input_type_name()),
+            AnyNode::Input(_) => None,
+            AnyNode::Hidden(l) => Some(l.input_type_name()),
+            AnyNode::Output(l) => Some(l.input_type_name()),
         }
     }
 }
@@ -240,16 +240,16 @@ mod tests {
         result: String,
     }
 
-    struct MockInputLayer;
+    struct MockInputNode;
 
-    impl Layer for MockInputLayer {
+    impl Node for MockInputNode {
         fn name(&self) -> &str {
-            "MockInputLayer"
+            "MockInputNode"
         }
     }
 
     #[async_trait]
-    impl InputLayer for MockInputLayer {
+    impl InputNode for MockInputNode {
         type TriggerData = ();
         type Output = MockOutput;
         async fn run(&self, _: ()) -> Result<MockOutput> {
@@ -259,16 +259,16 @@ mod tests {
         }
     }
 
-    struct MockHiddenLayer;
+    struct MockHiddenNode;
 
-    impl Layer for MockHiddenLayer {
+    impl Node for MockHiddenNode {
         fn name(&self) -> &str {
-            "MockHiddenLayer"
+            "MockHiddenNode"
         }
     }
 
     #[async_trait]
-    impl HiddenLayer for MockHiddenLayer {
+    impl HiddenNode for MockHiddenNode {
         type Input = MockOutput;
         type Output = MockInput;
         async fn run(&self, input: MockOutput) -> Result<MockInput> {
@@ -278,16 +278,16 @@ mod tests {
         }
     }
 
-    struct MockOutputLayer;
+    struct MockOutputNode;
 
-    impl Layer for MockOutputLayer {
+    impl Node for MockOutputNode {
         fn name(&self) -> &str {
-            "MockOutputLayer"
+            "MockOutputNode"
         }
     }
 
     #[async_trait]
-    impl OutputLayer for MockOutputLayer {
+    impl OutputNode for MockOutputNode {
         type Input = MockInput;
         async fn run(&self, _input: MockInput) -> Result<()> {
             Ok(())
@@ -295,54 +295,54 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_input_layer_dyn() {
-        let layer = MockInputLayer;
+    async fn test_input_node_dyn() {
+        let node = MockInputNode;
         let trigger: Box<dyn DtoObject> = Box::new(());
-        let output = layer.run_dyn(trigger.as_ref()).await.unwrap();
+        let output = node.run_dyn(trigger.as_ref()).await.unwrap();
         let concrete = output.as_any().downcast_ref::<MockOutput>().unwrap();
         assert_eq!(concrete.result, "from input");
     }
 
     #[tokio::test]
-    async fn test_hidden_layer_dyn() {
-        let layer = MockHiddenLayer;
+    async fn test_hidden_node_dyn() {
+        let node = MockHiddenNode;
         let input = MockOutput {
             result: "hello".into(),
         };
         let boxed: Box<dyn DtoObject> = Box::new(input);
-        let output = layer.run_dyn(boxed.as_ref()).await.unwrap();
+        let output = node.run_dyn(boxed.as_ref()).await.unwrap();
         let concrete = output.as_any().downcast_ref::<MockInput>().unwrap();
         assert_eq!(concrete.value, "hello");
     }
 
     #[tokio::test]
-    async fn test_output_layer_dyn() {
-        let layer = MockOutputLayer;
+    async fn test_output_node_dyn() {
+        let node = MockOutputNode;
         let input = MockInput {
             value: "test".into(),
         };
         let boxed: Box<dyn DtoObject> = Box::new(input);
-        layer.run_dyn(boxed.as_ref()).await.unwrap();
+        node.run_dyn(boxed.as_ref()).await.unwrap();
     }
 
     #[test]
-    fn test_any_layer_type_info() {
-        let input_layer = AnyLayer::Input(Box::new(MockInputLayer));
-        assert_eq!(input_layer.name(), "MockInputLayer");
-        assert!(input_layer.output_type_id().is_some());
-        assert!(input_layer.input_type_id().is_none());
-        assert!(input_layer.trigger_data_type_id().is_some());
+    fn test_any_node_type_info() {
+        let input_node = AnyNode::Input(Box::new(MockInputNode));
+        assert_eq!(input_node.name(), "MockInputNode");
+        assert!(input_node.output_type_id().is_some());
+        assert!(input_node.input_type_id().is_none());
+        assert!(input_node.trigger_data_type_id().is_some());
 
-        let hidden_layer = AnyLayer::Hidden(Box::new(MockHiddenLayer));
-        assert_eq!(hidden_layer.name(), "MockHiddenLayer");
-        assert!(hidden_layer.output_type_id().is_some());
-        assert!(hidden_layer.input_type_id().is_some());
-        assert!(hidden_layer.trigger_data_type_id().is_none());
+        let hidden_node = AnyNode::Hidden(Box::new(MockHiddenNode));
+        assert_eq!(hidden_node.name(), "MockHiddenNode");
+        assert!(hidden_node.output_type_id().is_some());
+        assert!(hidden_node.input_type_id().is_some());
+        assert!(hidden_node.trigger_data_type_id().is_none());
 
-        let output_layer = AnyLayer::Output(Box::new(MockOutputLayer));
-        assert_eq!(output_layer.name(), "MockOutputLayer");
-        assert!(output_layer.output_type_id().is_none());
-        assert!(output_layer.input_type_id().is_some());
-        assert!(output_layer.trigger_data_type_id().is_none());
+        let output_node = AnyNode::Output(Box::new(MockOutputNode));
+        assert_eq!(output_node.name(), "MockOutputNode");
+        assert!(output_node.output_type_id().is_none());
+        assert!(output_node.input_type_id().is_some());
+        assert!(output_node.trigger_data_type_id().is_none());
     }
 }

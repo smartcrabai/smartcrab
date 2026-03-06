@@ -5,7 +5,7 @@ use tracing::{info, instrument};
 
 use crate::dto::DtoObject;
 use crate::error::{GraphError, Result, SmartCrabError};
-use crate::layer::{AnyLayer, HiddenLayer, InputLayer, OutputLayer};
+use crate::node::{AnyNode, HiddenNode, InputNode, OutputNode};
 use crate::storage::Storage;
 
 type ConditionFn = Box<dyn Fn(&dyn DtoObject) -> Option<String> + Send + Sync>;
@@ -72,7 +72,7 @@ enum Edge {
 pub struct DirectedGraph {
     name: String,
     description: Option<String>,
-    nodes: HashMap<String, AnyLayer>,
+    nodes: HashMap<String, AnyNode>,
     edges: Vec<Edge>,
     execution_order: Vec<String>,
     trigger_kind: Option<TriggerKind>,
@@ -94,7 +94,7 @@ impl DirectedGraph {
         self.description.as_deref()
     }
 
-    pub fn nodes(&self) -> &HashMap<String, AnyLayer> {
+    pub fn nodes(&self) -> &HashMap<String, AnyNode> {
         &self.nodes
     }
 
@@ -142,7 +142,7 @@ impl DirectedGraph {
         self.run_with_trigger(Box::new(())).await
     }
 
-    /// Run the graph, passing `trigger_data` to the InputLayer.
+    /// Run the graph, passing `trigger_data` to the InputNode.
     #[instrument(skip(self, trigger_data), fields(graph = %self.name))]
     pub async fn run_with_trigger(&self, trigger_data: Box<dyn DtoObject>) -> Result<()> {
         let mut outputs: HashMap<String, Box<dyn DtoObject>> = HashMap::new();
@@ -159,12 +159,12 @@ impl DirectedGraph {
             for node_name in &executables {
                 let node = self.nodes.get(node_name).expect("node must exist");
 
-                info!(node = %node_name, "executing layer");
+                info!(node = %node_name, "executing node");
 
                 match node {
-                    AnyLayer::Input(layer) => {
-                        let output = layer.run_dyn(trigger_data.as_ref()).await.map_err(|e| {
-                            SmartCrabError::Graph(GraphError::LayerFailed {
+                    AnyNode::Input(node) => {
+                        let output = node.run_dyn(trigger_data.as_ref()).await.map_err(|e| {
+                            SmartCrabError::Graph(GraphError::NodeFailed {
                                 name: node_name.clone(),
                                 source: Box::new(e),
                             })
@@ -172,10 +172,10 @@ impl DirectedGraph {
                         outputs.insert(node_name.clone(), output);
                         completed.insert(node_name.clone());
                     }
-                    AnyLayer::Hidden(layer) => {
+                    AnyNode::Hidden(node) => {
                         let input = self.resolve_input(node_name, &outputs)?;
-                        let output = layer.run_dyn(input.as_ref()).await.map_err(|e| {
-                            SmartCrabError::Graph(GraphError::LayerFailed {
+                        let output = node.run_dyn(input.as_ref()).await.map_err(|e| {
+                            SmartCrabError::Graph(GraphError::NodeFailed {
                                 name: node_name.clone(),
                                 source: Box::new(e),
                             })
@@ -183,10 +183,10 @@ impl DirectedGraph {
                         outputs.insert(node_name.clone(), output);
                         completed.insert(node_name.clone());
                     }
-                    AnyLayer::Output(layer) => {
+                    AnyNode::Output(node) => {
                         let input = self.resolve_input(node_name, &outputs)?;
-                        layer.run_dyn(input.as_ref()).await.map_err(|e| {
-                            SmartCrabError::Graph(GraphError::LayerFailed {
+                        node.run_dyn(input.as_ref()).await.map_err(|e| {
+                            SmartCrabError::Graph(GraphError::NodeFailed {
                                 name: node_name.clone(),
                                 source: Box::new(e),
                             })
@@ -272,7 +272,7 @@ impl DirectedGraph {
         });
 
         if !has_unconditional_dep && !has_conditional_dep {
-            return matches!(self.nodes.get(node_name), Some(AnyLayer::Input(_)));
+            return matches!(self.nodes.get(node_name), Some(AnyNode::Input(_)));
         }
 
         // If this node is only reachable via conditional edges and none of them selected
@@ -339,7 +339,7 @@ impl DirectedGraph {
 pub struct DirectedGraphBuilder {
     name: String,
     description: Option<String>,
-    nodes: HashMap<String, AnyLayer>,
+    nodes: HashMap<String, AnyNode>,
     edges: Vec<Edge>,
     insertion_order: Vec<String>,
     trigger_kind: Option<TriggerKind>,
@@ -374,24 +374,24 @@ impl DirectedGraphBuilder {
         self
     }
 
-    pub fn add_input<L: InputLayer>(mut self, layer: L) -> Self {
-        let name = layer.name().to_owned();
+    pub fn add_input<L: InputNode>(mut self, node: L) -> Self {
+        let name = node.name().to_owned();
         self.insertion_order.push(name.clone());
-        self.nodes.insert(name, AnyLayer::Input(Box::new(layer)));
+        self.nodes.insert(name, AnyNode::Input(Box::new(node)));
         self
     }
 
-    pub fn add_hidden<L: HiddenLayer>(mut self, layer: L) -> Self {
-        let name = layer.name().to_owned();
+    pub fn add_hidden<L: HiddenNode>(mut self, node: L) -> Self {
+        let name = node.name().to_owned();
         self.insertion_order.push(name.clone());
-        self.nodes.insert(name, AnyLayer::Hidden(Box::new(layer)));
+        self.nodes.insert(name, AnyNode::Hidden(Box::new(node)));
         self
     }
 
-    pub fn add_output<L: OutputLayer>(mut self, layer: L) -> Self {
-        let name = layer.name().to_owned();
+    pub fn add_output<L: OutputNode>(mut self, node: L) -> Self {
+        let name = node.name().to_owned();
         self.insertion_order.push(name.clone());
-        self.nodes.insert(name, AnyLayer::Output(Box::new(layer)));
+        self.nodes.insert(name, AnyNode::Output(Box::new(node)));
         self
     }
 
@@ -451,7 +451,7 @@ impl DirectedGraphBuilder {
             }
         }
 
-        let has_input = self.nodes.values().any(|n| matches!(n, AnyLayer::Input(_)));
+        let has_input = self.nodes.values().any(|n| matches!(n, AnyNode::Input(_)));
         if !has_input {
             return Err(GraphError::NoInputNode);
         }
@@ -550,7 +550,7 @@ mod tests {
     use serde::{Deserialize, Serialize};
 
     use super::*;
-    use crate::layer::{HiddenLayer, InputLayer, Layer, OutputLayer};
+    use crate::node::{HiddenNode, InputNode, Node, OutputNode};
     use crate::storage::{InMemoryStorage, StorageExt};
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -562,14 +562,14 @@ mod tests {
         text: String,
     }
 
-    struct SourceLayer;
-    impl Layer for SourceLayer {
+    struct SourceNode;
+    impl Node for SourceNode {
         fn name(&self) -> &str {
             "Source"
         }
     }
     #[async_trait]
-    impl InputLayer for SourceLayer {
+    impl InputNode for SourceNode {
         type TriggerData = ();
         type Output = MsgA;
         async fn run(&self, _: ()) -> Result<MsgA> {
@@ -579,14 +579,14 @@ mod tests {
         }
     }
 
-    struct TransformLayer;
-    impl Layer for TransformLayer {
+    struct TransformNode;
+    impl Node for TransformNode {
         fn name(&self) -> &str {
             "Transform"
         }
     }
     #[async_trait]
-    impl HiddenLayer for TransformLayer {
+    impl HiddenNode for TransformNode {
         type Input = MsgA;
         type Output = MsgA;
         async fn run(&self, input: MsgA) -> Result<MsgA> {
@@ -596,28 +596,28 @@ mod tests {
         }
     }
 
-    struct SinkLayer;
-    impl Layer for SinkLayer {
+    struct SinkNode;
+    impl Node for SinkNode {
         fn name(&self) -> &str {
             "Sink"
         }
     }
     #[async_trait]
-    impl OutputLayer for SinkLayer {
+    impl OutputNode for SinkNode {
         type Input = MsgA;
         async fn run(&self, _input: MsgA) -> Result<()> {
             Ok(())
         }
     }
 
-    struct BadSinkLayer;
-    impl Layer for BadSinkLayer {
+    struct BadSinkNode;
+    impl Node for BadSinkNode {
         fn name(&self) -> &str {
             "BadSink"
         }
     }
     #[async_trait]
-    impl OutputLayer for BadSinkLayer {
+    impl OutputNode for BadSinkNode {
         type Input = MsgB;
         async fn run(&self, _input: MsgB) -> Result<()> {
             Ok(())
@@ -627,9 +627,9 @@ mod tests {
     #[test]
     fn test_valid_graph_builds() {
         let graph = DirectedGraphBuilder::new("test")
-            .add_input(SourceLayer)
-            .add_hidden(TransformLayer)
-            .add_output(SinkLayer)
+            .add_input(SourceNode)
+            .add_hidden(TransformNode)
+            .add_output(SinkNode)
             .add_edge("Source", "Transform")
             .add_edge("Transform", "Sink")
             .build();
@@ -640,8 +640,8 @@ mod tests {
     #[test]
     fn test_no_input_node() {
         let result = DirectedGraphBuilder::new("test")
-            .add_hidden(TransformLayer)
-            .add_output(SinkLayer)
+            .add_hidden(TransformNode)
+            .add_output(SinkNode)
             .add_edge("Transform", "Sink")
             .build();
         assert!(matches!(result, Err(GraphError::NoInputNode)));
@@ -650,8 +650,8 @@ mod tests {
     #[test]
     fn test_type_mismatch() {
         let result = DirectedGraphBuilder::new("test")
-            .add_input(SourceLayer)
-            .add_output(BadSinkLayer)
+            .add_input(SourceNode)
+            .add_output(BadSinkNode)
             .add_edge("Source", "BadSink")
             .build();
         assert!(matches!(result, Err(GraphError::TypeMismatch { .. })));
@@ -660,7 +660,7 @@ mod tests {
     #[test]
     fn test_missing_branch_target() {
         let result = DirectedGraphBuilder::new("test")
-            .add_input(SourceLayer)
+            .add_input(SourceNode)
             .add_conditional_edge(
                 "Source",
                 |_| Some("branch_a".to_owned()),
@@ -673,8 +673,8 @@ mod tests {
     #[test]
     fn test_duplicate_node_name() {
         let result = DirectedGraphBuilder::new("test")
-            .add_input(SourceLayer)
-            .add_input(SourceLayer)
+            .add_input(SourceNode)
+            .add_input(SourceNode)
             .add_edge("Source", "Source")
             .build();
         assert!(matches!(result, Err(GraphError::DuplicateNodeName { .. })));
@@ -683,7 +683,7 @@ mod tests {
     #[test]
     fn test_trigger_kind_startup() {
         let graph = DirectedGraphBuilder::new("test")
-            .add_input(SourceLayer)
+            .add_input(SourceNode)
             .trigger(TriggerKind::Startup)
             .build()
             .unwrap();
@@ -693,7 +693,7 @@ mod tests {
     #[test]
     fn test_trigger_kind_default_none() {
         let graph = DirectedGraphBuilder::new("test")
-            .add_input(SourceLayer)
+            .add_input(SourceNode)
             .build()
             .unwrap();
         assert!(graph.trigger_kind().is_none());
@@ -702,7 +702,7 @@ mod tests {
     #[test]
     fn test_trigger_kind_empty_schedule_error() {
         let result = DirectedGraphBuilder::new("test")
-            .add_input(SourceLayer)
+            .add_input(SourceNode)
             .trigger(TriggerKind::Cron {
                 schedule: String::new(),
             })
@@ -716,7 +716,7 @@ mod tests {
     #[test]
     fn test_trigger_kind_empty_triggers_error() {
         let result = DirectedGraphBuilder::new("test")
-            .add_input(SourceLayer)
+            .add_input(SourceNode)
             .trigger(TriggerKind::Chat {
                 platform: None,
                 triggers: Vec::new(),
@@ -732,9 +732,9 @@ mod tests {
     #[tokio::test]
     async fn test_graph_execution() {
         let graph = DirectedGraphBuilder::new("exec_test")
-            .add_input(SourceLayer)
-            .add_hidden(TransformLayer)
-            .add_output(SinkLayer)
+            .add_input(SourceNode)
+            .add_hidden(TransformNode)
+            .add_output(SinkNode)
             .add_edge("Source", "Transform")
             .add_edge("Transform", "Sink")
             .build()
@@ -746,8 +746,8 @@ mod tests {
     #[tokio::test]
     async fn test_run_with_trigger() {
         let graph = DirectedGraphBuilder::new("trigger_test")
-            .add_input(SourceLayer)
-            .add_output(SinkLayer)
+            .add_input(SourceNode)
+            .add_output(SinkNode)
             .add_edge("Source", "Sink")
             .build()
             .unwrap();
@@ -758,13 +758,13 @@ mod tests {
     #[tokio::test]
     async fn test_cycle_graph_execution() {
         struct CycleSource;
-        impl Layer for CycleSource {
+        impl Node for CycleSource {
             fn name(&self) -> &str {
                 "Source"
             }
         }
         #[async_trait]
-        impl InputLayer for CycleSource {
+        impl InputNode for CycleSource {
             type TriggerData = ();
             type Output = MsgA;
             async fn run(&self, _: ()) -> Result<MsgA> {
@@ -774,16 +774,16 @@ mod tests {
             }
         }
 
-        struct LoopLayer {
+        struct LoopNode {
             executed: std::sync::Arc<std::sync::atomic::AtomicBool>,
         }
-        impl Layer for LoopLayer {
+        impl Node for LoopNode {
             fn name(&self) -> &str {
                 "Loop"
             }
         }
         #[async_trait]
-        impl HiddenLayer for LoopLayer {
+        impl HiddenNode for LoopNode {
             type Input = MsgA;
             type Output = MsgA;
             async fn run(&self, input: MsgA) -> Result<MsgA> {
@@ -795,14 +795,14 @@ mod tests {
             }
         }
 
-        struct ExitLayer;
-        impl Layer for ExitLayer {
+        struct ExitNode;
+        impl Node for ExitNode {
             fn name(&self) -> &str {
                 "Exit"
             }
         }
         #[async_trait]
-        impl OutputLayer for ExitLayer {
+        impl OutputNode for ExitNode {
             type Input = MsgA;
             async fn run(&self, input: MsgA) -> Result<()> {
                 assert!(input.text.starts_with("looped:"));
@@ -814,10 +814,10 @@ mod tests {
 
         let graph = DirectedGraphBuilder::new("cycle_test")
             .add_input(CycleSource)
-            .add_hidden(LoopLayer {
+            .add_hidden(LoopNode {
                 executed: loop_executed.clone(),
             })
-            .add_output(ExitLayer)
+            .add_output(ExitNode)
             .add_edge("Source", "Loop")
             .add_edge("Loop", "Loop")
             .add_edge("Loop", "Exit")
@@ -828,20 +828,20 @@ mod tests {
         assert!(result.is_ok());
         assert!(
             loop_executed.load(std::sync::atomic::Ordering::SeqCst),
-            "Loop layer must execute"
+            "Loop node must execute"
         );
     }
 
     #[tokio::test]
     async fn test_exit_condition_terminates() {
         struct CountSource;
-        impl Layer for CountSource {
+        impl Node for CountSource {
             fn name(&self) -> &str {
                 "Source"
             }
         }
         #[async_trait]
-        impl InputLayer for CountSource {
+        impl InputNode for CountSource {
             type TriggerData = ();
             type Output = MsgA;
             async fn run(&self, _: ()) -> Result<MsgA> {
@@ -872,16 +872,16 @@ mod tests {
     async fn test_graph_storage_attach_and_access() {
         let storage: Arc<dyn Storage> = Arc::new(InMemoryStorage::new());
 
-        struct WriteLayer {
+        struct WriteNode {
             storage: Arc<dyn Storage>,
         }
-        impl Layer for WriteLayer {
+        impl Node for WriteNode {
             fn name(&self) -> &str {
                 "Write"
             }
         }
         #[async_trait]
-        impl InputLayer for WriteLayer {
+        impl InputNode for WriteNode {
             type TriggerData = ();
             type Output = MsgA;
             async fn run(&self, _: ()) -> Result<MsgA> {
@@ -897,7 +897,7 @@ mod tests {
 
         let graph = DirectedGraphBuilder::new("storage_test")
             .storage(storage.clone())
-            .add_input(WriteLayer {
+            .add_input(WriteNode {
                 storage: storage.clone(),
             })
             .build()
@@ -920,7 +920,7 @@ mod tests {
     #[test]
     fn test_graph_no_storage_by_default() {
         let graph = DirectedGraphBuilder::new("test")
-            .add_input(SourceLayer)
+            .add_input(SourceNode)
             .build()
             .unwrap();
         assert!(graph.storage().is_none());
@@ -936,13 +936,13 @@ mod tests {
         }
 
         struct FlagSource;
-        impl Layer for FlagSource {
+        impl Node for FlagSource {
             fn name(&self) -> &str {
                 "FlagSource"
             }
         }
         #[async_trait]
-        impl InputLayer for FlagSource {
+        impl InputNode for FlagSource {
             type TriggerData = ();
             type Output = Flag;
             async fn run(&self, _: ()) -> Result<Flag> {
@@ -954,13 +954,13 @@ mod tests {
         let false_executed = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
 
         struct TrueSink(std::sync::Arc<std::sync::atomic::AtomicBool>);
-        impl Layer for TrueSink {
+        impl Node for TrueSink {
             fn name(&self) -> &str {
                 "TrueSink"
             }
         }
         #[async_trait]
-        impl OutputLayer for TrueSink {
+        impl OutputNode for TrueSink {
             type Input = Flag;
             async fn run(&self, _: Flag) -> Result<()> {
                 self.0.store(true, std::sync::atomic::Ordering::SeqCst);
@@ -969,13 +969,13 @@ mod tests {
         }
 
         struct FalseSink(std::sync::Arc<std::sync::atomic::AtomicBool>);
-        impl Layer for FalseSink {
+        impl Node for FalseSink {
             fn name(&self) -> &str {
                 "FalseSink"
             }
         }
         #[async_trait]
-        impl OutputLayer for FalseSink {
+        impl OutputNode for FalseSink {
             type Input = Flag;
             async fn run(&self, _: Flag) -> Result<()> {
                 self.0.store(true, std::sync::atomic::Ordering::SeqCst);

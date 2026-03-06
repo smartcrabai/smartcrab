@@ -14,10 +14,10 @@ SmartCrab's Graph (directed graph) is a graph structure that defines the executi
 {% mermaid() %}
 flowchart LR
     subgraph Graph
-        A["Node A<br/>(Input Layer)"]
-        B["Node B<br/>(Hidden Layer)"]
-        C["Node C<br/>(Hidden Layer)"]
-        D["Node D<br/>(Output Layer)"]
+        A["Node A<br/>(Input Node)"]
+        B["Node B<br/>(Hidden Node)"]
+        C["Node C<br/>(Hidden Node)"]
+        D["Node D<br/>(Output Node)"]
 
         A -->|"Unconditional edge"| B
         B -->|"Conditional edge<br/>needs_ai = true"| C
@@ -55,7 +55,7 @@ let graph = DirectedGraphBuilder::new("my_pipeline")
 
 ### Design Principles
 
-- **Type erasure**: `add_input` / `add_hidden` / `add_output` accept the respective Layer traits and store them internally as `Box<dyn Layer>`. This allows Layers of different types to coexist in the same Graph
+- **Type erasure**: `add_input` / `add_hidden` / `add_output` accept the respective Node traits and store them internally as `Box<dyn Node>`. This allows Nodes of different types to coexist in the same Graph
 - **Name-based references**: Edges reference Nodes by the Layer's `name()`. A design decision to avoid type parameter explosion
 - **Deferred validation**: Type consistency and graph structure validation are performed all at once during `build()`
 
@@ -180,7 +180,7 @@ For two Nodes connected by an edge, the `Output` type of the preceding Node and 
 | `UnreachableNode` | A node unreachable from the input node exists |
 | `TypeMismatch` | DTO type mismatch between adjacent nodes |
 | `MissingBranch` | A branch target node for a conditional edge does not exist |
-| `NoInputNode` | No input node (Input Layer) exists in the Graph |
+| `NoInputNode` | No input node (Input Node) exists in the Graph |
 | `DuplicateNodeName` | Multiple nodes with the same name are registered |
 
 ## Graph Lifecycle
@@ -192,11 +192,11 @@ stateDiagram-v2
     Building --> Ready: build() succeeds
     Building --> [*]: build() fails (validation error)
     Ready --> Running: run()
-    Running --> Running: Layer executing
-    Running --> Completed: All Layers complete
-    Running --> Failed: Layer returned an error
+    Running --> Running: Node executing
+    Running --> Completed: All Nodes complete
+    Running --> Failed: Node returned an error
     Running --> ShuttingDown: Shutdown signal received
-    ShuttingDown --> Failed: Stop after current Layer completes
+    ShuttingDown --> Failed: Stop after current Node completes
     Completed --> [*]
     Failed --> [*]
 {% end %}
@@ -205,8 +205,8 @@ stateDiagram-v2
 
 When SIGTERM / SIGINT is received via `tokio::signal`:
 
-1. Wait for the currently running Layer to complete (no mid-execution interruption)
-2. Do not execute subsequent Layers
+1. Wait for the currently running Node to complete (no mid-execution interruption)
+2. Do not execute subsequent Nodes
 3. Close OpenTelemetry spans and flush traces
 4. Exit with exit code 0
 

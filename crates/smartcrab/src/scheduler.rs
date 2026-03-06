@@ -92,7 +92,7 @@ mod tests {
 
     use super::*;
     use crate::graph::DirectedGraphBuilder;
-    use crate::layer::{InputLayer, Layer, OutputLayer};
+    use crate::node::{InputNode, Node, OutputNode};
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     struct Msg {
@@ -100,13 +100,13 @@ mod tests {
     }
 
     struct TestIn;
-    impl Layer for TestIn {
+    impl Node for TestIn {
         fn name(&self) -> &str {
             "TestIn"
         }
     }
     #[async_trait]
-    impl InputLayer for TestIn {
+    impl InputNode for TestIn {
         type TriggerData = ();
         type Output = Msg;
         async fn run(&self, _: ()) -> Result<Msg> {
@@ -115,13 +115,13 @@ mod tests {
     }
 
     struct TestOut;
-    impl Layer for TestOut {
+    impl Node for TestOut {
         fn name(&self) -> &str {
             "TestOut"
         }
     }
     #[async_trait]
-    impl OutputLayer for TestOut {
+    impl OutputNode for TestOut {
         type Input = Msg;
         async fn run(&self, _input: Msg) -> Result<()> {
             Ok(())

@@ -173,7 +173,7 @@ fn extract_nodes(content: &str) -> Vec<ParsedNode> {
         let mut search_from = 0;
         while let Some(pos) = content[search_from..].find(pattern) {
             let abs_pos = search_from + pos + pattern.len();
-            if let Some(name) = extract_layer_name(&content[abs_pos..]) {
+            if let Some(name) = extract_node_name(&content[abs_pos..]) {
                 nodes.push(ParsedNode { name, kind });
             }
             search_from = abs_pos;
@@ -183,9 +183,9 @@ fn extract_nodes(content: &str) -> Vec<ParsedNode> {
     nodes
 }
 
-/// Extract the layer struct name from the constructor expression.
-/// Handles patterns like: `SourceLayer)`, `SourceLayer::new())`, `SourceLayer { .. })`
-fn extract_layer_name(content: &str) -> Option<String> {
+/// Extract the node struct name from the constructor expression.
+/// Handles patterns like: `SourceNode)`, `SourceNode::new())`, `SourceNode { .. })`
+fn extract_node_name(content: &str) -> Option<String> {
     let content = content.trim();
     let mut name = String::new();
     for ch in content.chars() {
@@ -442,7 +442,7 @@ fn render_ascii(graph: &ParsedGraph, no_types: bool, show_order: bool) -> String
         if show_order {
             line1 = format!("#{} {line1}", idx + 1);
         }
-        let line2 = format!("({kind} Layer)");
+        let line2 = format!("({kind} Node)");
 
         let content_width = if no_types {
             line1.chars().count() + 2
@@ -570,16 +570,16 @@ pub fn build() -> std::result::Result<DirectedGraph, GraphError> {
     fn test_parse_graph_with_constructor() {
         let content = r#"
 DirectedGraphBuilder::new("test")
-    .add_input(SourceLayer)
-    .add_hidden(ClaudeCodeLayer::new())
+    .add_input(SourceNode)
+    .add_hidden(ClaudeCodeNode::new())
     .add_output(DiscordOutput)
-    .add_edge("SourceLayer", "ClaudeCodeLayer")
-    .add_edge("ClaudeCodeLayer", "DiscordOutput")
+    .add_edge("SourceNode", "ClaudeCodeNode")
+    .add_edge("ClaudeCodeNode", "DiscordOutput")
     .build()
 "#;
         let graph = parse_graph_source(content).unwrap();
         assert_eq!(graph.nodes.len(), 3);
-        assert_eq!(graph.nodes[1].name, "ClaudeCodeLayer");
+        assert_eq!(graph.nodes[1].name, "ClaudeCodeNode");
     }
 
     #[test]

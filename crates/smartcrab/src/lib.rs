@@ -4,7 +4,7 @@ pub mod discord;
 pub mod dto;
 pub mod error;
 pub mod graph;
-pub mod layer;
+pub mod node;
 pub mod runtime;
 pub mod scheduler;
 pub mod storage;
@@ -20,7 +20,7 @@ pub mod prelude {
     pub use crate::dto::{Dto, DtoObject};
     pub use crate::error::{GraphError, Result, SmartCrabError};
     pub use crate::graph::{DirectedGraph, DirectedGraphBuilder, TriggerKind};
-    pub use crate::layer::{HiddenLayer, InputLayer, Layer, OutputLayer};
+    pub use crate::node::{HiddenNode, InputNode, Node, OutputNode};
     pub use crate::runtime::Runtime;
     pub use crate::storage::{FileStorage, InMemoryStorage, Storage, StorageExt};
 }

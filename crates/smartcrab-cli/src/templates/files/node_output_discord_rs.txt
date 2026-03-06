@@ -2,17 +2,17 @@ use smartcrab::prelude::*;
 
 use crate::dto::discord::DiscordNotification;
 
-/// Output layer that sends a notification to a Discord channel.
+/// Output node that sends a notification to a Discord channel.
 pub struct DiscordOutput;
 
-impl Layer for DiscordOutput {
+impl Node for DiscordOutput {
     fn name(&self) -> &str {
         "DiscordOutput"
     }
 }
 
 #[async_trait]
-impl OutputLayer for DiscordOutput {
+impl OutputNode for DiscordOutput {
     type Input = DiscordNotification;
 
     async fn run(&self, input: DiscordNotification) -> Result<()> {

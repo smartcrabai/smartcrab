@@ -24,19 +24,19 @@ struct SensorData {
 }
 
 // ---------------------------------------------------------------------------
-// Layers
+// Nodes
 // ---------------------------------------------------------------------------
 
 struct Sensor;
 
-impl Layer for Sensor {
+impl Node for Sensor {
     fn name(&self) -> &str {
         "Sensor"
     }
 }
 
 #[async_trait]
-impl InputLayer for Sensor {
+impl InputNode for Sensor {
     type TriggerData = ();
     type Output = SensorData;
     async fn run(&self, _: ()) -> Result<SensorData> {
@@ -49,14 +49,14 @@ impl InputLayer for Sensor {
 
 struct Classifier;
 
-impl Layer for Classifier {
+impl Node for Classifier {
     fn name(&self) -> &str {
         "Classifier"
     }
 }
 
 #[async_trait]
-impl HiddenLayer for Classifier {
+impl HiddenNode for Classifier {
     type Input = SensorData;
     type Output = SensorData;
     async fn run(&self, mut input: SensorData) -> Result<SensorData> {
@@ -71,14 +71,14 @@ impl HiddenLayer for Classifier {
 
 struct Celebrate;
 
-impl Layer for Celebrate {
+impl Node for Celebrate {
     fn name(&self) -> &str {
         "Celebrate"
     }
 }
 
 #[async_trait]
-impl OutputLayer for Celebrate {
+impl OutputNode for Celebrate {
     type Input = SensorData;
     async fn run(&self, input: SensorData) -> Result<()> {
         println!("🎉 Temperature is positive: {}°C", input.temperature);
@@ -88,14 +88,14 @@ impl OutputLayer for Celebrate {
 
 struct Alert;
 
-impl Layer for Alert {
+impl Node for Alert {
     fn name(&self) -> &str {
         "Alert"
     }
 }
 
 #[async_trait]
-impl HiddenLayer for Alert {
+impl HiddenNode for Alert {
     type Input = SensorData;
     type Output = SensorData;
     async fn run(&self, input: SensorData) -> Result<SensorData> {
@@ -106,14 +106,14 @@ impl HiddenLayer for Alert {
 
 struct Logger;
 
-impl Layer for Logger {
+impl Node for Logger {
     fn name(&self) -> &str {
         "Logger"
     }
 }
 
 #[async_trait]
-impl OutputLayer for Logger {
+impl OutputNode for Logger {
     type Input = SensorData;
     async fn run(&self, input: SensorData) -> Result<()> {
         println!(

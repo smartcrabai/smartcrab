@@ -25,19 +25,19 @@ struct Event {
 }
 
 // ---------------------------------------------------------------------------
-// Layers
+// Nodes
 // ---------------------------------------------------------------------------
 
 struct EventSource;
 
-impl Layer for EventSource {
+impl Node for EventSource {
     fn name(&self) -> &str {
         "EventSource"
     }
 }
 
 #[async_trait]
-impl InputLayer for EventSource {
+impl InputNode for EventSource {
     type TriggerData = ();
     type Output = Event;
     async fn run(&self, _: ()) -> Result<Event> {
@@ -50,14 +50,14 @@ impl InputLayer for EventSource {
 
 struct ConsoleOutput;
 
-impl Layer for ConsoleOutput {
+impl Node for ConsoleOutput {
     fn name(&self) -> &str {
         "ConsoleOutput"
     }
 }
 
 #[async_trait]
-impl OutputLayer for ConsoleOutput {
+impl OutputNode for ConsoleOutput {
     type Input = Event;
     async fn run(&self, input: Event) -> Result<()> {
         println!("🖥️  Console: [{}] {}", input.kind, input.payload);
@@ -67,14 +67,14 @@ impl OutputLayer for ConsoleOutput {
 
 struct FileOutput;
 
-impl Layer for FileOutput {
+impl Node for FileOutput {
     fn name(&self) -> &str {
         "FileOutput"
     }
 }
 
 #[async_trait]
-impl OutputLayer for FileOutput {
+impl OutputNode for FileOutput {
     type Input = Event;
     async fn run(&self, input: Event) -> Result<()> {
         println!("📁 File: would write {} to events.log", input.kind);
@@ -84,14 +84,14 @@ impl OutputLayer for FileOutput {
 
 struct MetricsOutput;
 
-impl Layer for MetricsOutput {
+impl Node for MetricsOutput {
     fn name(&self) -> &str {
         "MetricsOutput"
     }
 }
 
 #[async_trait]
-impl OutputLayer for MetricsOutput {
+impl OutputNode for MetricsOutput {
     type Input = Event;
     async fn run(&self, input: Event) -> Result<()> {
         println!("📊 Metrics: recorded event type={}", input.kind);

@@ -3,13 +3,13 @@ use smartcrab::prelude::*;
 
 use crate::dto::discord::{DiscordMessage, DiscordNotification};
 
-/// Hidden layer that processes a Discord message through Claude Code
+/// Hidden node that processes a Discord message through Claude Code
 /// and produces a Discord notification with the response.
-pub struct ClaudeCodeLayer {
+pub struct ClaudeCodeNode {
     agent: ClaudeCode,
 }
 
-impl ClaudeCodeLayer {
+impl ClaudeCodeNode {
     pub fn new() -> Self {
         Self {
             agent: ClaudeCode::new()
@@ -19,20 +19,20 @@ impl ClaudeCodeLayer {
     }
 }
 
-impl Default for ClaudeCodeLayer {
+impl Default for ClaudeCodeNode {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Layer for ClaudeCodeLayer {
+impl Node for ClaudeCodeNode {
     fn name(&self) -> &str {
-        "ClaudeCodeLayer"
+        "ClaudeCodeNode"
     }
 }
 
 #[async_trait]
-impl HiddenLayer for ClaudeCodeLayer {
+impl HiddenNode for ClaudeCodeNode {
     type Input = DiscordMessage;
     type Output = DiscordNotification;
 
