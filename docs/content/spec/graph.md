@@ -23,26 +23,26 @@ Creates a new DirectedGraphBuilder. `name` is used as the span name in traces.
 ### `add_input`
 
 ```rust
-pub fn add_input<L: InputNode>(self, layer: L) -> Self
+pub fn add_input<L: InputNode>(self, node: L) -> Self
 ```
 
-Adds an Input Layer.
+Adds an Input Node.
 
 ### `add_hidden`
 
 ```rust
-pub fn add_hidden<L: HiddenNode>(self, layer: L) -> Self
+pub fn add_hidden<L: HiddenNode>(self, node: L) -> Self
 ```
 
-Adds a Hidden Layer.
+Adds a Hidden Node.
 
 ### `add_output`
 
 ```rust
-pub fn add_output<L: OutputNode>(self, layer: L) -> Self
+pub fn add_output<L: OutputNode>(self, node: L) -> Self
 ```
 
-Adds an Output Layer.
+Adds an Output Node.
 
 ### `add_edge`
 

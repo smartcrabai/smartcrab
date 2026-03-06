@@ -70,7 +70,7 @@ flowchart TD
     A[Hidden Node A] -->|"AnalysisOutput"| Cond{"Condition closure<br/>Fn(&AnalysisOutput) → &str"}
     Cond -->|"needs_ai"| B[Hidden Node B<br/>Claude Code invocation]
     Cond -->|"simple"| C[Hidden Node C<br/>Normal processing]
-    B --> D[Output Layer]
+    B --> D[Output Node D]
     C --> D
 {% end %}
 

@@ -24,7 +24,7 @@ The SmartCrab CLI provides a Rails-like developer experience. Developers work wi
 crab
 ├── new <project-name>       # Generate a new project
 ├── generate (g)             # Code generators
-│   ├── layer <name>         # Generate a Layer
+│   ├── node <name>          # Generate a Node
 │   ├── dto <name>           # Generate a DTO
 │   └── dag <name>           # Generate a DAG definition
 └── run                      # Run the application
@@ -126,7 +126,7 @@ timeout_secs = 300
 
 ## Node Generator Design
 
-`crab generate layer <name>` generates Node boilerplate.
+`crab generate node <name>` generates Node boilerplate.
 
 ### Generated Targets
 
@@ -165,9 +165,9 @@ impl HiddenNode for /*{ name | pascal_case }*/ {
 ### Specifying Input Node Subtypes
 
 ```bash
-crab generate layer webhook_receiver --type input --input-type http
-crab generate layer daily_check --type input --input-type cron
-crab generate layer discord_listener --type input --input-type chat
+crab generate node webhook_receiver --type input --input-type http
+crab generate node daily_check --type input --input-type cron
+crab generate node discord_listener --type input --input-type chat
 ```
 
 `--input-type` generates boilerplate tailored to the specified subtype.
@@ -175,7 +175,7 @@ crab generate layer discord_listener --type input --input-type chat
 ### Specifying Output Node Subtypes
 
 ```bash
-crab generate layer discord_notifier --type output --output-type discord
+crab generate node discord_notifier --type output --output-type discord
 ```
 
 Specifying `--output-type discord` generates a Node that already includes the boilerplate needed for sending to a Discord Webhook (a `webhook_url` field and message sending logic).
@@ -240,7 +240,7 @@ Code generator templates are embedded in the binary (via the `include_str!` macr
 The generator not only creates new files but also automatically adds `pub mod` declarations to the corresponding `mod.rs`.
 
 ```bash
-$ crab generate layer data_analyzer --type hidden
+$ crab generate node data_analyzer --type hidden
 
 Created: src/node/hidden/data_analyzer.rs
 Updated: src/node/hidden/mod.rs  (added: pub mod data_analyzer;)

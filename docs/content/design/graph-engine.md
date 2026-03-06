@@ -55,7 +55,7 @@ let graph = DirectedGraphBuilder::new("my_pipeline")
 
 ### Design Principles
 
-- **Type erasure**: `add_input` / `add_hidden` / `add_output` accept the respective Node traits and store them internally as `Box<dyn Layer>`. This allows Layers of different types to coexist in the same Graph
+- **Type erasure**: `add_input` / `add_hidden` / `add_output` accept the respective Node traits and store them internally as `Box<dyn Node>`. This allows Nodes of different types to coexist in the same Graph
 - **Name-based references**: Edges reference Nodes by the Layer's `name()`. A design decision to avoid type parameter explosion
 - **Deferred validation**: Type consistency and graph structure validation are performed all at once during `build()`
 
@@ -193,7 +193,7 @@ stateDiagram-v2
     Building --> [*]: build() fails (validation error)
     Ready --> Running: run()
     Running --> Running: Node executing
-    Running --> Completed: All Layers complete
+    Running --> Completed: All Nodes complete
     Running --> Failed: Node returned an error
     Running --> ShuttingDown: Shutdown signal received
     ShuttingDown --> Failed: Stop after current Node completes
@@ -206,7 +206,7 @@ stateDiagram-v2
 When SIGTERM / SIGINT is received via `tokio::signal`:
 
 1. Wait for the currently running Node to complete (no mid-execution interruption)
-2. Do not execute subsequent Layers
+2. Do not execute subsequent Nodes
 3. Close OpenTelemetry spans and flush traces
 4. Exit with exit code 0
 

@@ -93,14 +93,14 @@ Next steps:
   crab run            # Run the application
 ```
 
-## `crab generate layer`
+## `crab generate node`
 
-Layer のボイラープレートコードを生成する。エイリアス: `crab g layer`
+Node のボイラープレートコードを生成する。エイリアス: `crab g node`
 
 ### 構文
 
 ```
-crab generate layer <name> --type <layer-type> [OPTIONS]
+crab generate node <name> --type <node-type> [OPTIONS]
 ```
 
 ### 引数
@@ -142,19 +142,19 @@ crab generate layer <name> --type <layer-type> [OPTIONS]
 ### 実行例
 
 ```bash
-$ crab generate layer data_analyzer --type hidden
+$ crab generate node data_analyzer --type hidden
   Created: src/node/hidden/data_analyzer.rs
   Updated: src/node/hidden/mod.rs
   Created: src/dto/data_analyzer.rs
   Updated: src/dto/mod.rs
 
-$ crab generate layer webhook --type input --input-type http
+$ crab generate node webhook --type input --input-type http
   Created: src/node/input/webhook.rs
   Updated: src/node/input/mod.rs
   Created: src/dto/webhook.rs
   Updated: src/dto/mod.rs
 
-$ crab generate layer discord_notifier --type output --output-type discord
+$ crab generate node discord_notifier --type output --output-type discord
   Created: src/node/output/discord_notifier.rs
   Updated: src/node/output/mod.rs
   Created: src/dto/discord_notifier.rs

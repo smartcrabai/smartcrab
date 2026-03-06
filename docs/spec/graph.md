@@ -183,15 +183,15 @@ let graph = DirectedGraphBuilder::new("ai_routing")
 use smartcrab::prelude::*;
 
 let graph = DirectedGraphBuilder::new("feedback_loop")
-    .add_input(SourceNode)
-    .add_hidden(ProcessNode)
-    .add_hidden(FeedbackNode)
-    .add_output(ExitNode)
-    .add_edge("Source", "Process")
-    .add_edge("Process", "Feedback")
-    .add_edge("Feedback", "Feedback")  // 自己ループ
-    .add_edge("Feedback", "Exit")
-    .add_exit_condition("Feedback", |output| {
+    .add_input(SourceNode::new())
+    .add_hidden(ProcessNode::new())
+    .add_hidden(FeedbackNode::new())
+    .add_output(ExitNode::new())
+    .add_edge("SourceNode", "ProcessNode")
+    .add_edge("ProcessNode", "FeedbackNode")
+    .add_edge("FeedbackNode", "FeedbackNode")  // 自己ループ
+    .add_edge("FeedbackNode", "ExitNode")
+    .add_exit_condition("FeedbackNode", |output| {
         if output.downcast_ref::<FeedbackOutput>().unwrap().should_continue {
             Some("continue".to_owned())
         } else {

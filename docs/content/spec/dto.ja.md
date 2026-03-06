@@ -53,10 +53,10 @@ DTO はそれを生成する Node の名前に基づいて命名する。
 
 | パターン | 説明 | 例 |
 |---------|------|-----|
-| `<LayerName>Input` | Node の入力 DTO | `AnalyzerInput` |
-| `<LayerName>Output` | Node の出力 DTO | `AnalyzerOutput` |
+| `<NodeName>Input` | Node の入力 DTO | `AnalyzerInput` |
+| `<NodeName>Output` | Node の出力 DTO | `AnalyzerOutput` |
 
-Layer の `Input` 関連型は前段 Node の `Output` DTO と一致する。このため、隣接する Node 間で同一の DTO 型を共有することが一般的である。
+Node の `Input` 関連型は前段 Node の `Output` DTO と一致する。このため、隣接する Node 間で同一の DTO 型を共有することが一般的である。
 
 ```
 FetchLayer::Output = FetchOutput

@@ -46,9 +46,9 @@ SmartCrab は「ツール → AI」パラダイムを実現する Rust フレー
 | **Input Layer** | 外部からのイベントを受けて DTO を生成する Layer。chat / cron / http のサブタイプを持つ |
 | **Hidden Layer** | DTO を受け取り、変換・加工して DTO を返す中間処理 Layer。Claude Code 呼び出し可能 |
 | **Output Layer** | DTO を受け取り、最終的な副作用（通知、保存等）を実行する Layer。Claude Code 呼び出し可能 |
-| **DTO** | Data Transfer Object。Layer 間のデータ受け渡しに使う型安全な Rust 構造体 |
-| **DirectedGraph** | 有向グラフ。Layer の実行順序と条件分岐を定義する。サイクルもサポート |
-| **Node** | グラフ内のノード。1 つの Node に対応する |
+| **DTO** | Data Transfer Object。Node 間のデータ受け渡しに使う型安全な Rust 構造体 |
+| **DirectedGraph** | 有向グラフ。Node の実行順序と条件分岐を定義する。サイクルもサポート |
+| **Node** | グラフ内の処理単位。Layer の実装に対応し、Input / Hidden / Output の 3 種がある |
 | **Edge** | グラフ内のエッジ。Node 間の遷移を表す。条件付きエッジはクロージャで分岐判定を行う |
 | **DirectedGraphBuilder** | DirectedGraph をビルダーパターンで構築するための API |
 | **Claude Code** | Anthropic の AI コーディングツール。Hidden/Output Node から子プロセスとして実行可能 |

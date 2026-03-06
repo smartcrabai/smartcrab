@@ -102,7 +102,7 @@ classDiagram
     DirectedGraph --> Dto : transfers
 {% end %}
 
-- **Layer**: 処理の最小単位。Input / Hidden / Output の 3 種
+- **Node**: 処理の最小単位。Input / Hidden / Output の 3 種
 - **DTO**: Node 間のデータ受け渡しに使う型安全な構造体
 - **Graph**: Node の実行順序と条件分岐を定義するグラフ
 
