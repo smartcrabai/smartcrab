@@ -84,7 +84,7 @@ impl GraphToMcpTool for DirectedGraph {
 /// into `to_mcp_tool`/`add_graph_tool` and dropped. This stub preserves only the name and
 /// description for metadata purposes and is not intended for execution.
 fn rebuild_graph_ref(graph: &DirectedGraph) -> DirectedGraph {
-    // We need to build a minimal valid graph. Since we can't clone layers/edges,
+    // We need to build a minimal valid graph. Since we can't clone nodes/edges,
     // we create a stub that preserves name/description.
     use crate::graph::DirectedGraphBuilder;
     use crate::node::{InputNode, Node};

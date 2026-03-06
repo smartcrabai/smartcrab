@@ -162,8 +162,8 @@ impl DirectedGraph {
                 info!(node = %node_name, "executing node");
 
                 match node {
-                    AnyNode::Input(layer) => {
-                        let output = layer.run_dyn(trigger_data.as_ref()).await.map_err(|e| {
+                    AnyNode::Input(node) => {
+                        let output = node.run_dyn(trigger_data.as_ref()).await.map_err(|e| {
                             SmartCrabError::Graph(GraphError::NodeFailed {
                                 name: node_name.clone(),
                                 source: Box::new(e),
@@ -172,9 +172,9 @@ impl DirectedGraph {
                         outputs.insert(node_name.clone(), output);
                         completed.insert(node_name.clone());
                     }
-                    AnyNode::Hidden(layer) => {
+                    AnyNode::Hidden(node) => {
                         let input = self.resolve_input(node_name, &outputs)?;
-                        let output = layer.run_dyn(input.as_ref()).await.map_err(|e| {
+                        let output = node.run_dyn(input.as_ref()).await.map_err(|e| {
                             SmartCrabError::Graph(GraphError::NodeFailed {
                                 name: node_name.clone(),
                                 source: Box::new(e),
@@ -183,9 +183,9 @@ impl DirectedGraph {
                         outputs.insert(node_name.clone(), output);
                         completed.insert(node_name.clone());
                     }
-                    AnyNode::Output(layer) => {
+                    AnyNode::Output(node) => {
                         let input = self.resolve_input(node_name, &outputs)?;
-                        layer.run_dyn(input.as_ref()).await.map_err(|e| {
+                        node.run_dyn(input.as_ref()).await.map_err(|e| {
                             SmartCrabError::Graph(GraphError::NodeFailed {
                                 name: node_name.clone(),
                                 source: Box::new(e),
