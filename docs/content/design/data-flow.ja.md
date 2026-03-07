@@ -35,35 +35,15 @@ flowchart LR
 
 ## Node のシグネチャ設計
 
-各 Node はジェネリクスで入出力の DTO 型を指定する。
+各 Node は関連型で入出力の DTO 型を指定する。トレイトの完全な定義は [Node Spec](/ja/spec/node) を参照。
 
-```rust
-// Input Layer: 入力なし → DTO を生成
-#[async_trait]
-pub trait InputNode: Send + Sync {
-    type Output: Dto;
-    async fn run(&self) -> Result<Self::Output>;
-}
-
-// Hidden Layer: DTO を受け取り → DTO を返す
-#[async_trait]
-pub trait HiddenNode: Send + Sync {
-    type Input: Dto;
-    type Output: Dto;
-    async fn run(&self, input: Self::Input) -> Result<Self::Output>;
-}
-
-// Output Layer: DTO を受け取り → 副作用を実行
-#[async_trait]
-pub trait OutputNode: Send + Sync {
-    type Input: Dto;
-    async fn run(&self, input: Self::Input) -> Result<()>;
-}
-```
+- **InputNode**: 入力なし → DTO を生成
+- **HiddenNode**: DTO を受け取り → DTO を返す
+- **OutputNode**: DTO を受け取り → 副作用を実行
 
 ## 条件分岐におけるデータフロー
 
-条件付きエッジでは、先行 Node の出力 DTO を参照して分岐先を決定する。クロージャはDTO の参照を受け取り、分岐先の識別子を返す。
+条件付きエッジでは、先行 Node の出力 DTO を参照して分岐先を決定する。クロージャは DTO の参照を受け取り、分岐先の識別子を返す。
 
 {% mermaid() %}
 flowchart TD
@@ -73,13 +53,6 @@ flowchart TD
     B --> D[Output Layer]
     C --> D
 {% end %}
-
-### 条件クロージャのシグネチャ
-
-```rust
-// 条件クロージャは DTO の参照を受け取り、分岐先のエッジラベルを返す
-Fn(&dyn Dto) -> &str
-```
 
 条件クロージャが返す文字列は `add_conditional_edge` で定義した分岐先マップのキーに対応する。
 
@@ -132,14 +105,5 @@ flowchart TD
 - Graph ビルド時のエッジの型整合性チェック（隣接 Node の Output 型と Input 型の一致）
 - 条件分岐の網羅性チェック（全分岐先が存在するか）
 - Graph の構造検証（循環検出、到達不能ノード検出）
-
-```
-コンパイル時                     実行時（Graph ビルド時）
-┌─────────────────────┐      ┌──────────────────────────┐
-│ Node の型パラメータ  │      │ エッジの型整合性           │
-│ Dto の derive 要件    │      │ 条件分岐の網羅性           │
-│ Send + Sync 境界     │      │ Graph 構造検証（循環、到達性） │
-└─────────────────────┘      └──────────────────────────┘
-```
 
 型パラメータによる静的チェックで可能な範囲の安全性をコンパイル時に保証し、Graph の構造に関する検証は `build()` 時に実行時チェックとして行う。

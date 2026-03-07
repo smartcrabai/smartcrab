@@ -114,15 +114,15 @@ SmartCrab は 1 プロセスで複数の Graph を同時実行する。tokio ラ
 flowchart TB
     subgraph Process["SmartCrab Process"]
         subgraph Runtime["tokio Runtime"]
-            subgraph Task1["tokio::spawn - Graph 1 (HTTP)"]
+            subgraph Task1["Graph 1 (HTTP)"]
                 L1[Input: HTTP] --> L2[Hidden: Parse]
                 L2 --> L3[Output: Respond]
             end
-            subgraph Task2["tokio::spawn - Graph 2 (Cron)"]
+            subgraph Task2["Graph 2 (Cron)"]
                 L4[Input: Cron] --> L5[Hidden: Check]
                 L5 --> L6[Output: Notify]
             end
-            subgraph Task3["tokio::spawn - Graph 3 (Chat)"]
+            subgraph Task3["Graph 3 (Chat)"]
                 L7[Input: Chat] --> L8[Hidden: Analyze]
                 L8 --> L9[Output: Reply]
             end
@@ -130,10 +130,10 @@ flowchart TB
     end
 {% end %}
 
-- 各 Graph は `tokio::spawn` で独立したタスクとして実行される
+- 各 Graph は独立した非同期タスクとして実行される
 - Graph 内の Node は Graph が定義する順序で逐次実行される（並列エッジがある場合は並列実行）
-- Claude Code の呼び出しは `tokio::process::Command` で非同期に実行される
-- グレースフルシャットダウンは `tokio::signal` でシグナル（SIGTERM / SIGINT）を受けて全 Graph に伝播する
+- Claude Code の呼び出しは子プロセスとして非同期に実行される
+- グレースフルシャットダウンはシグナル（SIGTERM / SIGINT）を受けて全 Graph に伝播する
 
 ## オブザーバビリティ
 
@@ -169,15 +169,4 @@ OTLP 互換の任意のバックエンド（Jaeger、Grafana Tempo、Datadog な
 
 ### Docker 構成
 
-マルチステージビルドにより最小限のプロダクションイメージを生成する。
-
-```
-Stage 1: chef      — cargo-chef インストール
-Stage 2: planner   — recipe.json 生成（依存キャッシュ用）
-Stage 3: builder   — 依存ビルド → アプリケーションビルド
-Stage 4: runtime   — distroless イメージに静的バイナリのみコピー
-```
-
-- ベースイメージ: `gcr.io/distroless/static-debian12:nonroot`
-- ビルドキャッシュ: cargo registry / git / target ディレクトリをマウントキャッシュ
-- リリース最適化: `codegen-units = 1`, `lto = true`, `strip = true`
+`crab new` が生成する Dockerfile は、`gcr.io/distroless/static-debian12:nonroot` をベースとした最小限のプロダクションイメージを作成するマルチステージビルド構成になっている。

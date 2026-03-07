@@ -105,7 +105,7 @@ flowchart TD
     C --> D
 {% end %}
 
-In the above case, Node B and Node C are executed in parallel via `tokio::join!`. Node D executes only after both B and C have completed.
+In the above case, Node B and Node C are executed in parallel. Node D executes only after both B and C have completed.
 
 ## Conditional Branching Implementation Design
 
@@ -153,16 +153,7 @@ The following validations are performed at `build()` time. If any validation fai
 
 ### Cycle Detection
 
-Cycles are detected using depth-first search (DFS).
-
-```
-Detection algorithm: DFS + visit state tracking
-  - White: unvisited
-  - Gray: in progress (ancestor)
-  - Black: exploration complete
-
-If a Gray → Gray edge is found, a cycle exists
-```
+Cycles are detected using depth-first search (DFS) at `build()` time.
 
 ### Unreachable Node Detection
 
@@ -170,7 +161,7 @@ Nodes that cannot be reached from input nodes (nodes with in-degree 0) are detec
 
 ### Type Consistency Check
 
-For two Nodes connected by an edge, the `Output` type of the preceding Node and the `Input` type of the succeeding Node are verified to match. Since types are erased, this is a runtime check using `TypeId`.
+For two Nodes connected by an edge, the `Output` type of the preceding Node and the `Input` type of the succeeding Node are verified to match at `build()` time.
 
 ### Validation Error Types
 
@@ -203,11 +194,11 @@ stateDiagram-v2
 
 ### Graceful Shutdown
 
-When SIGTERM / SIGINT is received via `tokio::signal`:
+When SIGTERM / SIGINT is received:
 
 1. Wait for the currently running Node to complete (no mid-execution interruption)
 2. Do not execute subsequent Nodes
 3. Close OpenTelemetry spans and flush traces
 4. Exit with exit code 0
 
-When multiple Graphs are running concurrently, the shutdown signal propagates to all Graphs via a `tokio::sync::broadcast` channel.
+When multiple Graphs are running concurrently, the shutdown signal propagates to all Graphs.

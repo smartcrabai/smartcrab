@@ -51,7 +51,7 @@ crab new <project-name> [OPTIONS]
 │   │   │   └── mod.rs
 │   │   └── output/
 │   │       └── mod.rs
-│   └── dag/
+│   └── graph/
 │       └── mod.rs
 └── tests/
     └── integration/
@@ -258,6 +258,53 @@ crab generate graph <name>
 $ crab generate graph api_pipeline
   Created: src/graph/api_pipeline.rs
   Updated: src/graph/mod.rs
+```
+
+## `crab viz`
+
+Graph 定義をダイアグラムとして可視化する。エイリアス: `crab viz`
+
+### 構文
+
+```
+crab viz [graph] [OPTIONS]
+```
+
+### 引数
+
+| 引数 | 必須 | 説明 |
+|------|------|------|
+| `[graph]` | No | 可視化する Graph 名（省略時は全 Graph） |
+
+### オプション
+
+| オプション | デフォルト | 説明 |
+|-----------|-----------|------|
+| `--format <mermaid\|dot\|ascii>` | `mermaid` | 出力フォーマット |
+| `--output <path>` | stdout | 出力ファイルパス |
+| `--no-types` | false | 型アノテーションを非表示 |
+| `--show-order` | false | 実行順序番号を表示 |
+
+### 終了コード
+
+| コード | 意味 |
+|--------|------|
+| 0 | 成功 |
+| 1 | Graph が見つからない |
+| 2 | SmartCrab プロジェクトのルートディレクトリではない |
+
+### 実行例
+
+```bash
+$ crab viz api_pipeline --format mermaid
+flowchart TD
+    HttpInput --> DataAnalyzer
+    DataAnalyzer -->|needs_ai| AiProcessor
+    DataAnalyzer -->|simple| SimpleProcessor
+    AiProcessor --> SlackNotifier
+    SimpleProcessor --> SlackNotifier
+
+$ crab viz --format dot --output graph.dot
 ```
 
 ## `crab run`

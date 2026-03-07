@@ -25,7 +25,7 @@ sequenceDiagram
     participant P as claude Process
 
     L->>CC: ClaudeCode::new().prompt(&prompt)
-    CC->>P: tokio::process::Command::new("claude")
+    CC->>P: spawn claude subprocess
     CC->>P: Write prompt to stdin
     P-->>CC: Read response from stdout
     CC-->>L: Result<String>
@@ -58,105 +58,18 @@ async fn run(&self, input: Self::Input) -> Result<()> {
 }
 ```
 
-## Execution Model via `tokio::process::Command`
+## Builder API
 
-### Argument Construction
-
-```rust
-use tokio::process::Command;
-
-pub struct ClaudeCode {
-    timeout: Duration,
-    allowed_tools: Vec<String>,
-    system_prompt: Option<String>,
-    max_turns: Option<u32>,
-    output_format: OutputFormat,
-}
-
-impl ClaudeCode {
-    pub fn new() -> Self {
-        Self {
-            timeout: Duration::from_secs(300),
-            allowed_tools: vec![],
-            system_prompt: None,
-            max_turns: None,
-            output_format: OutputFormat::Json,
-        }
-    }
-
-    pub fn with_timeout(mut self, timeout: Duration) -> Self {
-        self.timeout = timeout;
-        self
-    }
-
-    pub fn with_allowed_tools(mut self, tools: &[&str]) -> Self {
-        self.allowed_tools = tools.iter().map(|s| s.to_string()).collect();
-        self
-    }
-
-    pub fn with_system_prompt(mut self, prompt: impl Into<String>) -> Self {
-        self.system_prompt = Some(prompt.into());
-        self
-    }
-
-    pub fn with_max_turns(mut self, max_turns: u32) -> Self {
-        self.max_turns = Some(max_turns);
-        self
-    }
-
-    pub async fn prompt(&self, prompt: &str) -> Result<String> {
-        let mut cmd = Command::new("claude");
-        cmd.arg("--print");
-        cmd.arg("--output-format").arg(self.output_format.as_str());
-
-        if let Some(ref system) = self.system_prompt {
-            cmd.arg("--system-prompt").arg(system);
-        }
-        for tool in &self.allowed_tools {
-            cmd.arg("--allowedTools").arg(tool);
-        }
-        if let Some(max_turns) = self.max_turns {
-            cmd.arg("--max-turns").arg(max_turns.to_string());
-        }
-
-        cmd.stdin(std::process::Stdio::piped());
-        cmd.stdout(std::process::Stdio::piped());
-        cmd.stderr(std::process::Stdio::piped());
-
-        let child = cmd.spawn()?;
-        // ... stdin/stdout handling (see below)
-    }
-}
-```
-
-### stdin / stdout Handling
+`ClaudeCode` uses a builder pattern to configure the invocation:
 
 ```rust
-let mut child = cmd.spawn()?;
-
-// Write prompt to stdin
-if let Some(mut stdin) = child.stdin.take() {
-    stdin.write_all(prompt.as_bytes()).await?;
-    drop(stdin); // Send EOF
-}
-
-// Read stdout with timeout
-let output = tokio::time::timeout(
-    self.timeout,
-    child.wait_with_output(),
-).await
-    .map_err(|_| SmartCrabError::ClaudeCodeTimeout {
-        timeout: self.timeout,
-    })??;
-
-if !output.status.success() {
-    return Err(SmartCrabError::ClaudeCodeFailed {
-        exit_code: output.status.code(),
-        stderr: String::from_utf8_lossy(&output.stderr).to_string(),
-    });
-}
-
-Ok(String::from_utf8(output.stdout)?)
+ClaudeCode::new()
+    .with_timeout(Duration::from_secs(60))
+    .with_system_prompt("You are a helpful assistant.")
+    .with_allowed_tools(&["write", "edit"])
+    .with_max_turns(3)
+    .prompt(&prompt)
+    .await?
 ```
 
 ## Data Exchange
@@ -223,39 +136,7 @@ flowchart TD
 
 ### Mocking Approach
 
-Abstract the Claude Code invocation so it can be replaced with a mock during testing.
-
-```rust
-#[async_trait]
-pub trait ClaudeCodeExecutor: Send + Sync {
-    async fn execute(&self, prompt: &str) -> Result<String>;
-}
-
-// Production implementation
-pub struct RealClaudeCode { /* ... */ }
-
-#[async_trait]
-impl ClaudeCodeExecutor for RealClaudeCode {
-    async fn execute(&self, prompt: &str) -> Result<String> {
-        // Actually execute claude via tokio::process::Command
-    }
-}
-
-// Test implementation
-pub struct MockClaudeCode {
-    responses: HashMap<String, String>,
-}
-
-#[async_trait]
-impl ClaudeCodeExecutor for MockClaudeCode {
-    async fn execute(&self, prompt: &str) -> Result<String> {
-        // Return a pre-configured response
-        self.responses.get(prompt)
-            .cloned()
-            .ok_or(SmartCrabError::MockNotFound)
-    }
-}
-```
+Abstract the Claude Code invocation so it can be replaced with a mock during testing. The `ClaudeCodeExecutor` trait allows injecting either the real subprocess implementation or a test mock.
 
 ### Test Levels
 

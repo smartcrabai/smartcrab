@@ -35,35 +35,15 @@ flowchart LR
 
 ## Node Signature Design
 
-Each Node specifies its input and output DTO types via generics.
+Each Node specifies its input and output DTO types via associated types. See [Node Spec](/spec/node) for the full trait definitions.
 
-```rust
-// Input Layer: no input → produces a DTO
-#[async_trait]
-pub trait InputNode: Send + Sync {
-    type Output: Dto;
-    async fn run(&self) -> Result<Self::Output>;
-}
-
-// Hidden Layer: receives a DTO → returns a DTO
-#[async_trait]
-pub trait HiddenNode: Send + Sync {
-    type Input: Dto;
-    type Output: Dto;
-    async fn run(&self, input: Self::Input) -> Result<Self::Output>;
-}
-
-// Output Layer: receives a DTO → performs side effects
-#[async_trait]
-pub trait OutputNode: Send + Sync {
-    type Input: Dto;
-    async fn run(&self, input: Self::Input) -> Result<()>;
-}
-```
+- **InputNode**: no input → produces a DTO
+- **HiddenNode**: receives a DTO → returns a DTO
+- **OutputNode**: receives a DTO → performs side effects
 
 ## Data Flow in Conditional Branching
 
-In conditional edges, the output DTO of the preceding Node is inspected to determine the branch target. The closure receives a reference to the DTO and returns the identifier of the branch target.
+In conditional edges, the output DTO of the preceding Node is inspected to determine the branch target. The condition closure receives a reference to the DTO and returns the identifier of the branch target.
 
 {% mermaid() %}
 flowchart TD
@@ -73,13 +53,6 @@ flowchart TD
     B --> D[Output Node D]
     C --> D
 {% end %}
-
-### Condition Closure Signature
-
-```rust
-// The condition closure receives a reference to the DTO and returns the edge label of the branch target
-Fn(&dyn Dto) -> &str
-```
 
 The string returned by the condition closure corresponds to a key in the branch map defined by `add_conditional_edge`.
 
@@ -132,14 +105,5 @@ flowchart TD
 - Edge type consistency check at Graph build time (matching Output type of one Node with Input type of the next)
 - Exhaustiveness check for conditional branches (all branch targets exist)
 - Graph structure validation (cycle detection, unreachable node detection)
-
-```
-Compile time                     Runtime (at Graph build time)
-┌─────────────────────┐      ┌──────────────────────────┐
-│ Node type parameters│      │ Edge type consistency     │
-│ Dto derive bounds    │      │ Conditional branch coverage│
-│ Send + Sync bounds   │      │ Graph structure (cycles, reachability) │
-└─────────────────────┘      └──────────────────────────┘
-```
 
 Static checks via type parameters guarantee safety at compile time where possible. Validation related to the Graph's structure is performed as a runtime check at `build()` time.

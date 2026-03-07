@@ -51,7 +51,7 @@ crab new <project-name> [OPTIONS]
 │   │   │   └── mod.rs
 │   │   └── output/
 │   │       └── mod.rs
-│   └── dag/
+│   └── graph/
 │       └── mod.rs
 └── tests/
     └── integration/
@@ -258,6 +258,53 @@ crab generate graph <name>
 $ crab generate graph api_pipeline
   Created: src/graph/api_pipeline.rs
   Updated: src/graph/mod.rs
+```
+
+## `crab viz`
+
+Visualizes Graph definitions as a diagram. Alias: `crab viz`
+
+### Syntax
+
+```
+crab viz [graph] [OPTIONS]
+```
+
+### Arguments
+
+| Argument | Required | Description |
+|------|------|------|
+| `[graph]` | No | Graph name to visualize (all Graphs if omitted) |
+
+### Options
+
+| Option | Default | Description |
+|-----------|-----------|------|
+| `--format <mermaid\|dot\|ascii>` | `mermaid` | Output format |
+| `--output <path>` | stdout | Output file path |
+| `--no-types` | false | Hide type annotations |
+| `--show-order` | false | Show execution order numbers |
+
+### Exit Codes
+
+| Code | Meaning |
+|--------|------|
+| 0 | Success |
+| 1 | Graph not found |
+| 2 | Not in a SmartCrab project root directory |
+
+### Example
+
+```bash
+$ crab viz api_pipeline --format mermaid
+flowchart TD
+    HttpInput --> DataAnalyzer
+    DataAnalyzer -->|needs_ai| AiProcessor
+    DataAnalyzer -->|simple| SimpleProcessor
+    AiProcessor --> SlackNotifier
+    SimpleProcessor --> SlackNotifier
+
+$ crab viz --format dot --output graph.dot
 ```
 
 ## `crab run`

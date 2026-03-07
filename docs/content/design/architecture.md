@@ -114,15 +114,15 @@ SmartCrab runs multiple Graphs simultaneously in a single process. Each Graph op
 flowchart TB
     subgraph Process["SmartCrab Process"]
         subgraph Runtime["tokio Runtime"]
-            subgraph Task1["tokio::spawn - Graph 1 (HTTP)"]
+            subgraph Task1["Graph 1 (HTTP)"]
                 L1[Input: HTTP] --> L2[Hidden: Parse]
                 L2 --> L3[Output: Respond]
             end
-            subgraph Task2["tokio::spawn - Graph 2 (Cron)"]
+            subgraph Task2["Graph 2 (Cron)"]
                 L4[Input: Cron] --> L5[Hidden: Check]
                 L5 --> L6[Output: Notify]
             end
-            subgraph Task3["tokio::spawn - Graph 3 (Chat)"]
+            subgraph Task3["Graph 3 (Chat)"]
                 L7[Input: Chat] --> L8[Hidden: Analyze]
                 L8 --> L9[Output: Reply]
             end
@@ -130,10 +130,10 @@ flowchart TB
     end
 {% end %}
 
-- Each Graph runs as an independent task via `tokio::spawn`
+- Each Graph runs as an independent async task
 - Layers within a Graph are executed sequentially in the order defined by the Graph (parallel edges run in parallel)
-- Claude Code invocations are executed asynchronously via `tokio::process::Command`
-- Graceful shutdown propagates to all Graphs upon receiving SIGTERM / SIGINT via `tokio::signal`
+- Claude Code invocations are executed asynchronously as child processes
+- Graceful shutdown propagates to all Graphs upon receiving SIGTERM / SIGINT
 
 ## Observability
 
@@ -169,15 +169,4 @@ Any OTLP-compatible backend (Jaeger, Grafana Tempo, Datadog, etc.) can receive t
 
 ### Docker Configuration
 
-A multi-stage build produces a minimal production image.
-
-```
-Stage 1: chef      — Install cargo-chef
-Stage 2: planner   — Generate recipe.json (for dependency caching)
-Stage 3: builder   — Build dependencies → build application
-Stage 4: runtime   — Copy static binary only into distroless image
-```
-
-- Base image: `gcr.io/distroless/static-debian12:nonroot`
-- Build cache: Mount cache for cargo registry / git / target directories
-- Release optimizations: `codegen-units = 1`, `lto = true`, `strip = true`
+`crab new` generates a Dockerfile for a multi-stage build that produces a minimal production image based on `gcr.io/distroless/static-debian12:nonroot`.
