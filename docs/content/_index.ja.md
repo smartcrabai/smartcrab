@@ -2,6 +2,7 @@
 title = "SmartCrab Documentation"
 sort_by = "weight"
 weight = 1
+template = "section.html"
 +++
 
 <div style="text-align: center; margin: 2rem 0 3rem;">
