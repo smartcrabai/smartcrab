@@ -64,7 +64,7 @@ errata_section = "修正と更新"
 
 
 [extra]
-enable_custom_css = false
+enable_custom_css = true
 footer_html = "Powered by <a href='https://www.getzola.org'>Zola</a> and <a href='https://github.com/hahwul/goyo'>Goyo</a>"
 edit_url = "https://github.com/smartcrabai/smartcrab/edit/main/docs/content"
 

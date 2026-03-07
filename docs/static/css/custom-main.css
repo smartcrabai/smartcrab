@@ -1,0 +1,5 @@
+/* Root index page: add horizontal padding */
+main.prose.mx-auto {
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
