@@ -4,6 +4,10 @@ sort_by = "weight"
 weight = 1
 +++
 
+<div style="text-align: center; margin: 2rem 0 3rem;">
+  <img src="cover.jpg" alt="SmartCrab" style="max-width: 100%; border-radius: 12px; box-shadow: 0 4px 32px rgba(0,0,0,0.4);">
+</div>
+
 SmartCrab は「ツール → AI」パラダイムを実現する Rust フレームワークです。非 AI 処理の結果に基づいて AI（Claude Code）を起動するかどうかを Graph の条件分岐で判断します。
 
 ## ドキュメントの読み方
