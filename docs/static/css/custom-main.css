@@ -3,3 +3,21 @@ main.prose.mx-auto {
   padding-left: 2rem;
   padding-right: 2rem;
 }
+
+/* Cover image */
+.cover-image-wrapper {
+  text-align: center;
+  margin: 2rem 0 3rem;
+}
+
+.cover-image-wrapper img {
+  max-width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.4);
+}
+
+@media (min-width: 768px) {
+  .cover-image-wrapper img {
+    max-width: 70%;
+  }
+}
