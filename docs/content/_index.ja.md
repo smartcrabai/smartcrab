@@ -6,7 +6,7 @@ template = "section.html"
 +++
 
 <div class="cover-image-wrapper">
-  <img src="cover.jpg" alt="SmartCrab">
+  <img src="../cover.jpg" alt="SmartCrab">
 </div>
 
 SmartCrab は「ツール → AI」パラダイムを実現する Rust フレームワークです。非 AI 処理の結果に基づいて AI（Claude Code）を起動するかどうかを Graph の条件分岐で判断します。
