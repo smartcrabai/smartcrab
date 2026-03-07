@@ -5,8 +5,8 @@ weight = 1
 template = "section.html"
 +++
 
-<div style="text-align: center; margin: 2rem 0 3rem;">
-  <img src="cover.jpg" alt="SmartCrab" style="max-width: 100%; border-radius: 12px; box-shadow: 0 4px 32px rgba(0,0,0,0.4);">
+<div class="cover-image-wrapper">
+  <img src="cover.jpg" alt="SmartCrab">
 </div>
 
 SmartCrab は「ツール → AI」パラダイムを実現する Rust フレームワークです。非 AI 処理の結果に基づいて AI（Claude Code）を起動するかどうかを Graph の条件分岐で判断します。
