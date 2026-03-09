@@ -1,4 +1,5 @@
 [workspace]
+exclude = ["testcrab"]
 members = ["crates/smartcrab", "crates/smartcrab-cli"]
 resolver = "3"
 
