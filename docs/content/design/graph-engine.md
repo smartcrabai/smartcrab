@@ -12,7 +12,7 @@ SmartCrab's Graph (directed graph) is a graph structure that defines the executi
 - **Edge**: Represents a transition between Nodes. There are two kinds: unconditional edges and conditional edges
 
 {% mermaid() %}
-flowchart LR
+flowchart TD
     subgraph Graph
         A["Node A<br/>(Input Node)"]
         B["Node B<br/>(Hidden Node)"]

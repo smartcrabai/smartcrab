@@ -9,7 +9,7 @@ weight = 2
 The data flow in SmartCrab follows the pattern: Input → DTO → Hidden → DTO → Output. Data transfer between each Node is mediated by type-safe DTOs.
 
 {% mermaid() %}
-flowchart LR
+flowchart TD
     subgraph Input["Input Layer"]
         I[chat / cron / http]
     end
