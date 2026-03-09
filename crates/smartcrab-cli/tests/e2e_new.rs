@@ -262,6 +262,29 @@ fn generated_project_passes_cargo_check() {
     );
 }
 
+#[test]
+fn generated_project_runs_and_fails_without_discord_token() {
+    let (_tmp, project) = generate_project("run-check");
+
+    let output = std::process::Command::new("cargo")
+        .args(["run"])
+        .env_remove("DISCORD_TOKEN")
+        .current_dir(&project)
+        .output()
+        .expect("failed to run cargo run");
+
+    assert!(
+        !output.status.success(),
+        "expected cargo run to fail without DISCORD_TOKEN, but it succeeded"
+    );
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("DISCORD_TOKEN not set"),
+        "expected DISCORD_TOKEN error in stderr, got:\n{stderr}"
+    );
+}
+
 // -----------------------------------------------------------------------
 // Helpers
 // -----------------------------------------------------------------------

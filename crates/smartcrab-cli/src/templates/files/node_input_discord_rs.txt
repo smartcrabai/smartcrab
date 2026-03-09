@@ -1,5 +1,6 @@
-use smartcrab::chat::discord::DiscordMessage;
 use smartcrab::prelude::*;
+
+use crate::dto::discord::DiscordMessage;
 
 /// Input node that receives Discord messages (mentions and DMs).
 pub struct DiscordInput;
