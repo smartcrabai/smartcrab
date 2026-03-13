@@ -5,7 +5,7 @@ pub mod viz;
 use std::io;
 use std::path::PathBuf;
 
-/// Walk up from the current directory to find a SmartCrab project root.
+/// Walk up from the current directory to find a `SmartCrab` project root.
 /// A project root is identified by the presence of a `Cargo.toml` that
 /// contains `[package]` (i.e. not just a workspace manifest without members).
 pub fn ensure_smartcrab_project() -> io::Result<PathBuf> {

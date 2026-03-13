@@ -33,7 +33,7 @@ struct Document {
 struct Ingest;
 
 impl Node for Ingest {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Ingest"
     }
 }
@@ -56,7 +56,7 @@ impl InputNode for Ingest {
 struct Validate;
 
 impl Node for Validate {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Validate"
     }
 }
@@ -80,7 +80,7 @@ impl HiddenNode for Validate {
 struct Enrich;
 
 impl Node for Enrich {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Enrich"
     }
 }
@@ -90,7 +90,9 @@ impl HiddenNode for Enrich {
     type Input = Document;
     type Output = Document;
     async fn run(&self, mut input: Document) -> Result<Document> {
-        input.score = input.body.split_whitespace().count() as f64 * 1.5;
+        let word_count = u32::try_from(input.body.split_whitespace().count()).unwrap_or(u32::MAX);
+        input.score = f64::from(word_count) * 1.5;
+
         println!("🔧 Enriched: score={}", input.score);
         Ok(input)
     }
@@ -99,7 +101,7 @@ impl HiddenNode for Enrich {
 struct IndexOutput;
 
 impl Node for IndexOutput {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "IndexOutput"
     }
 }
@@ -121,7 +123,7 @@ impl OutputNode for IndexOutput {
 struct Quarantine;
 
 impl Node for Quarantine {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Quarantine"
     }
 }
@@ -140,7 +142,7 @@ impl OutputNode for Quarantine {
 // ---------------------------------------------------------------------------
 
 #[tokio::main]
-async fn main() {
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let graph = DirectedGraphBuilder::new("complex_pipeline")
         .description("Complex document processing with validation, branching, and enrichment")
         .trigger(TriggerKind::Startup)
@@ -162,8 +164,8 @@ async fn main() {
             ],
         )
         .add_edge("Enrich", "IndexOutput")
-        .build()
-        .expect("failed to build graph");
+        .build()?;
 
-    graph.run().await.expect("graph execution failed");
+    graph.run().await?;
+    Ok(())
 }

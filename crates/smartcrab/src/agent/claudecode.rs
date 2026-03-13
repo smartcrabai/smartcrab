@@ -20,6 +20,7 @@ pub struct ClaudeCode {
 }
 
 impl ClaudeCode {
+    #[must_use]
     pub fn new() -> Self {
         Self {
             timeout: Duration::from_secs(300),
@@ -29,27 +30,36 @@ impl ClaudeCode {
         }
     }
 
+    #[must_use]
     pub fn with_timeout(mut self, timeout: Duration) -> Self {
         self.timeout = timeout;
         self
     }
 
+    #[must_use]
     pub fn with_allowed_tools(mut self, tools: &[&str]) -> Self {
         self.allowed_tools = tools.iter().map(|s| (*s).to_owned()).collect();
         self
     }
 
+    #[must_use]
     pub fn with_system_prompt(mut self, prompt: impl Into<String>) -> Self {
         self.system_prompt = Some(prompt.into());
         self
     }
 
+    #[must_use]
     pub fn with_max_turns(mut self, max_turns: u32) -> Self {
         self.max_turns = Some(max_turns);
         self
     }
 
     /// Execute the Claude Code CLI with the given prompt.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the `claude` CLI is not found, if the process times
+    /// out, if it exits with a non-zero status code, or if any I/O error occurs.
     #[instrument(skip(self, prompt), fields(timeout = ?self.timeout))]
     pub async fn prompt(&self, prompt: &str) -> Result<String> {
         let mut cmd = Command::new("claude");
@@ -162,9 +172,10 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_mock_claude_code() {
+    async fn test_mock_claude_code() -> Result<()> {
         let mock = MockClaudeCode::new("test response");
-        let result = mock.execute("hello").await.unwrap();
+        let result = mock.execute("hello").await?;
         assert_eq!(result, "test response");
+        Ok(())
     }
 }

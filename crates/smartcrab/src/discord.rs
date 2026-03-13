@@ -38,7 +38,7 @@ impl DiscordGateway {
 
 #[async_trait]
 impl ChatGateway for DiscordGateway {
-    fn platform(&self) -> &str {
+    fn platform(&self) -> &'static str {
         "discord"
     }
 

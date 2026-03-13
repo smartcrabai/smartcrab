@@ -1,6 +1,6 @@
 //! # Multi-Graph Runtime
 //!
-//! Demonstrates running multiple independent DirectedGraphs concurrently
+//! Demonstrates running multiple independent `DirectedGraph`s concurrently
 //! using the Runtime.
 //!
 //! ```text
@@ -38,7 +38,7 @@ struct Task {
 struct HealthChecker;
 
 impl Node for HealthChecker {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "HealthChecker"
     }
 }
@@ -59,7 +59,7 @@ impl InputNode for HealthChecker {
 struct HealthReporter;
 
 impl Node for HealthReporter {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "HealthReporter"
     }
 }
@@ -85,7 +85,7 @@ impl OutputNode for HealthReporter {
 struct TaskPoller;
 
 impl Node for TaskPoller {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "TaskPoller"
     }
 }
@@ -107,7 +107,7 @@ impl InputNode for TaskPoller {
 struct TaskExecutor;
 
 impl Node for TaskExecutor {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "TaskExecutor"
     }
 }
@@ -126,7 +126,7 @@ impl HiddenNode for TaskExecutor {
 struct TaskReporter;
 
 impl Node for TaskReporter {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "TaskReporter"
     }
 }
@@ -145,15 +145,14 @@ impl OutputNode for TaskReporter {
 // ---------------------------------------------------------------------------
 
 #[tokio::main]
-async fn main() {
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let health_graph = DirectedGraphBuilder::new("health_check")
         .description("Periodic health check pipeline")
         .trigger(TriggerKind::Startup)
         .add_input(HealthChecker)
         .add_output(HealthReporter)
         .add_edge("HealthChecker", "HealthReporter")
-        .build()
-        .expect("failed to build health graph");
+        .build()?;
 
     let task_graph = DirectedGraphBuilder::new("task_processing")
         .description("Task polling and execution pipeline")
@@ -163,10 +162,10 @@ async fn main() {
         .add_output(TaskReporter)
         .add_edge("TaskPoller", "TaskExecutor")
         .add_edge("TaskExecutor", "TaskReporter")
-        .build()
-        .expect("failed to build task graph");
+        .build()?;
 
     let runtime = Runtime::new().add_graph(health_graph).add_graph(task_graph);
 
-    runtime.run().await.expect("runtime execution failed");
+    runtime.run().await?;
+    Ok(())
 }

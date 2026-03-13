@@ -35,7 +35,7 @@ struct ChatReply {
 struct MessageInput;
 
 impl Node for MessageInput {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "MessageInput"
     }
 }
@@ -53,7 +53,7 @@ impl InputNode for MessageInput {
 struct AgentProcessor;
 
 impl Node for AgentProcessor {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "AgentProcessor"
     }
 }
@@ -79,7 +79,7 @@ struct MessageOutput {
 }
 
 impl Node for MessageOutput {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "MessageOutput"
     }
 }
@@ -101,7 +101,7 @@ impl OutputNode for MessageOutput {
 // ---------------------------------------------------------------------------
 
 #[tokio::main]
-async fn main() {
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -109,7 +109,7 @@ async fn main() {
         )
         .init();
 
-    let token = std::env::var("DISCORD_TOKEN").expect("DISCORD_TOKEN is not set");
+    let token = std::env::var("DISCORD_TOKEN")?;
     let client = DiscordClient::new(&token);
 
     let graph = DirectedGraphBuilder::new("chat_pipeline")
@@ -123,15 +123,11 @@ async fn main() {
         .add_output(MessageOutput { client })
         .add_edge("MessageInput", "AgentProcessor")
         .add_edge("AgentProcessor", "MessageOutput")
-        .build()
-        .expect("failed to build graph");
+        .build()?;
 
     println!("🤖 Starting Discord bot (mention or DM to trigger)");
     println!("   Press Ctrl-C to stop");
 
-    Runtime::new()
-        .add_graph(graph)
-        .run()
-        .await
-        .expect("runtime failed");
+    Runtime::new().add_graph(graph).run().await?;
+    Ok(())
 }

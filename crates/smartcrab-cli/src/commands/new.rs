@@ -23,7 +23,7 @@ pub fn run(name: &str, local_path: Option<&str>, output_dir: Option<&str>) -> io
 
     let ctx = TemplateContext {
         name: name.to_owned(),
-        local_path: local_path.map(|s| s.to_owned()),
+        local_path: local_path.map(str::to_owned),
     };
 
     let files = render_all(&ctx);

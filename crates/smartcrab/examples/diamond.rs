@@ -31,7 +31,7 @@ struct Text {
 struct TextInput;
 
 impl Node for TextInput {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "TextInput"
     }
 }
@@ -50,7 +50,7 @@ impl InputNode for TextInput {
 struct UpperCase;
 
 impl Node for UpperCase {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "UpperCase"
     }
 }
@@ -69,7 +69,7 @@ impl HiddenNode for UpperCase {
 struct Reverse;
 
 impl Node for Reverse {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Reverse"
     }
 }
@@ -88,7 +88,7 @@ impl HiddenNode for Reverse {
 struct Merger;
 
 impl Node for Merger {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Merger"
     }
 }
@@ -106,7 +106,7 @@ impl HiddenNode for Merger {
 struct Display;
 
 impl Node for Display {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Display"
     }
 }
@@ -125,7 +125,7 @@ impl OutputNode for Display {
 // ---------------------------------------------------------------------------
 
 #[tokio::main]
-async fn main() {
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let graph = DirectedGraphBuilder::new("diamond")
         .description("Diamond-shaped graph with parallel processing paths")
         .trigger(TriggerKind::Startup)
@@ -139,8 +139,8 @@ async fn main() {
         .add_edge("UpperCase", "Merger")
         .add_edge("Reverse", "Merger")
         .add_edge("Merger", "Display")
-        .build()
-        .expect("failed to build graph");
+        .build()?;
 
-    graph.run().await.expect("graph execution failed");
+    graph.run().await?;
+    Ok(())
 }

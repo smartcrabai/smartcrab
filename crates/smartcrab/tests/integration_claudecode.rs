@@ -11,7 +11,7 @@ use smartcrab::agent::AgentExecutor;
 use smartcrab::agent::claudecode::ClaudeCode;
 
 #[tokio::test]
-#[ignore]
+#[ignore = "requires claude CLI installed and authenticated"]
 async fn test_claude_code_simple_prompt() {
     let cc = ClaudeCode::new()
         .with_timeout(Duration::from_secs(30))
@@ -20,7 +20,7 @@ async fn test_claude_code_simple_prompt() {
     let response = cc
         .execute("Reply with exactly: PONG")
         .await
-        .expect("claude CLI should succeed");
+        .unwrap_or_else(|e| panic!("claude CLI should succeed: {e}"));
 
     assert!(
         response.contains("PONG"),
@@ -29,7 +29,7 @@ async fn test_claude_code_simple_prompt() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "requires claude CLI installed and authenticated"]
 async fn test_claude_code_with_system_prompt() {
     let cc = ClaudeCode::new()
         .with_timeout(Duration::from_secs(30))
@@ -39,7 +39,7 @@ async fn test_claude_code_with_system_prompt() {
     let response = cc
         .execute("What is 2 + 3?")
         .await
-        .expect("claude CLI should succeed");
+        .unwrap_or_else(|e| panic!("claude CLI should succeed: {e}"));
 
     assert!(
         response.contains('5'),
@@ -48,7 +48,7 @@ async fn test_claude_code_with_system_prompt() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "requires claude CLI installed and authenticated"]
 async fn test_claude_code_json_response() {
     let cc = ClaudeCode::new()
         .with_timeout(Duration::from_secs(30))
@@ -60,16 +60,16 @@ async fn test_claude_code_json_response() {
     let response = cc
         .execute(r#"Return a JSON object with keys "status" (value "ok") and "count" (value 42)."#)
         .await
-        .expect("claude CLI should succeed");
+        .unwrap_or_else(|e| panic!("claude CLI should succeed: {e}"));
 
-    let parsed: serde_json::Value =
-        serde_json::from_str(response.trim()).expect("response should be valid JSON");
+    let parsed: serde_json::Value = serde_json::from_str(response.trim())
+        .unwrap_or_else(|e| panic!("response should be valid JSON: {e}"));
     assert_eq!(parsed["status"], "ok");
     assert_eq!(parsed["count"], 42);
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "requires claude CLI installed and authenticated"]
 async fn test_claude_code_timeout() {
     let cc = ClaudeCode::new().with_timeout(Duration::from_millis(1));
 

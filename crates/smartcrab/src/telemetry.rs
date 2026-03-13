@@ -11,6 +11,11 @@ use crate::error::{Result, SmartCrabError};
 /// - An OTLP span exporter (gRPC/tonic)
 /// - A human-readable fmt layer (with target, level, file, line number)
 /// - An env-filter controlled by `RUST_LOG`
+///
+/// # Errors
+///
+/// Returns an error if the OTLP exporter fails to initialize or if the global
+/// tracing subscriber cannot be set.
 pub fn init() -> Result<()> {
     let otlp_exporter = SpanExporter::builder()
         .with_tonic()

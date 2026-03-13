@@ -26,6 +26,11 @@ pub trait DtoObject: Debug + Send + Sync + 'static {
     fn as_any(&self) -> &dyn Any;
     fn clone_box(&self) -> Box<dyn DtoObject>;
     fn dto_type_name(&self) -> &'static str;
+    /// Serializes this DTO to a JSON string.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`serde_json::Error`] if the value cannot be serialized.
     fn serialize_json(&self) -> serde_json::Result<String>;
 }
 
@@ -81,8 +86,8 @@ mod tests {
             count: 42,
         };
         let boxed: Box<dyn DtoObject> = Box::new(dto.clone());
-        let downcasted = boxed.as_any().downcast_ref::<TestDto>().unwrap();
-        assert_eq!(downcasted, &dto);
+        let downcasted = boxed.as_any().downcast_ref::<TestDto>();
+        assert_eq!(downcasted, Some(&dto));
     }
 
     #[test]
@@ -93,8 +98,8 @@ mod tests {
         };
         let boxed: Box<dyn DtoObject> = Box::new(dto.clone());
         let cloned = boxed.clone_box();
-        let downcasted = cloned.as_any().downcast_ref::<TestDto>().unwrap();
-        assert_eq!(downcasted, &dto);
+        let downcasted = cloned.as_any().downcast_ref::<TestDto>();
+        assert_eq!(downcasted, Some(&dto));
     }
 
     #[test]
@@ -108,14 +113,15 @@ mod tests {
     }
 
     #[test]
-    fn test_dto_object_serialize_json() {
+    fn test_dto_object_serialize_json() -> serde_json::Result<()> {
         let dto = TestDto {
             message: "hello".into(),
             count: 42,
         };
         let boxed: Box<dyn DtoObject> = Box::new(dto);
-        let json = boxed.serialize_json().unwrap();
+        let json = boxed.serialize_json()?;
         assert!(json.contains("hello"));
         assert!(json.contains("42"));
+        Ok(())
     }
 }

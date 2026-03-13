@@ -27,7 +27,7 @@ pub trait ChatGateway: Send + Sync + 'static {
     async fn run(&self, graphs: Vec<Arc<DirectedGraph>>) -> Result<()>;
 }
 
-/// Mock implementation of ChatGateway for testing.
+/// Mock implementation of `ChatGateway` for testing.
 pub struct MockChatGateway {
     platform_name: String,
 }
@@ -54,7 +54,7 @@ impl ChatGateway for MockChatGateway {
     }
 }
 
-/// Mock implementation of ChatClient for testing.
+/// Mock implementation of `ChatClient` for testing.
 pub struct MockChatClient {
     messages: Arc<Mutex<Vec<(String, String)>>>,
 }
@@ -68,23 +68,26 @@ impl Default for MockChatClient {
 }
 
 impl MockChatClient {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
     /// Returns a list of all messages sent via this client as (channel, content) pairs.
+    ///
+    /// Returns an empty list if the internal mutex is poisoned.
+    #[must_use]
     pub fn sent_messages(&self) -> Vec<(String, String)> {
-        self.messages.lock().unwrap().clone()
+        self.messages.lock().map(|g| g.clone()).unwrap_or_default()
     }
 }
 
 #[async_trait]
 impl ChatClient for MockChatClient {
     async fn send_message(&self, channel: &str, content: &str) -> Result<()> {
-        self.messages
-            .lock()
-            .unwrap()
-            .push((channel.to_string(), content.to_string()));
+        if let Ok(mut guard) = self.messages.lock() {
+            guard.push((channel.to_string(), content.to_string()));
+        }
         Ok(())
     }
 }

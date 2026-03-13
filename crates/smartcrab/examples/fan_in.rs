@@ -30,7 +30,7 @@ struct DataPoint {
 struct ApiSource;
 
 impl Node for ApiSource {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "ApiSource"
     }
 }
@@ -50,7 +50,7 @@ impl InputNode for ApiSource {
 struct DbSource;
 
 impl Node for DbSource {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "DbSource"
     }
 }
@@ -70,7 +70,7 @@ impl InputNode for DbSource {
 struct Aggregator;
 
 impl Node for Aggregator {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Aggregator"
     }
 }
@@ -91,7 +91,7 @@ impl HiddenNode for Aggregator {
 struct Dashboard;
 
 impl Node for Dashboard {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Dashboard"
     }
 }
@@ -110,7 +110,7 @@ impl OutputNode for Dashboard {
 // ---------------------------------------------------------------------------
 
 #[tokio::main]
-async fn main() {
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let graph = DirectedGraphBuilder::new("fan_in")
         .description("Multiple data sources converge into a single aggregator")
         .trigger(TriggerKind::Startup)
@@ -121,8 +121,8 @@ async fn main() {
         .add_edge("ApiSource", "Aggregator")
         .add_edge("DbSource", "Aggregator")
         .add_edge("Aggregator", "Dashboard")
-        .build()
-        .expect("failed to build graph");
+        .build()?;
 
-    graph.run().await.expect("graph execution failed");
+    graph.run().await?;
+    Ok(())
 }

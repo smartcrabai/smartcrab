@@ -8,7 +8,7 @@ pub struct CronInput {
 }
 
 impl Node for CronInput {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "CronInput"
     }
 }

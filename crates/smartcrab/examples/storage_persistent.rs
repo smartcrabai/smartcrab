@@ -41,7 +41,7 @@ struct RecordDeployment {
 }
 
 impl Node for RecordDeployment {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "RecordDeployment"
     }
 }
@@ -76,7 +76,7 @@ struct UpdateHistory {
 }
 
 impl Node for UpdateHistory {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "UpdateHistory"
     }
 }
@@ -109,7 +109,7 @@ struct PrintReport {
 }
 
 impl Node for PrintReport {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "PrintReport"
     }
 }
@@ -138,17 +138,13 @@ impl OutputNode for PrintReport {
 // ---------------------------------------------------------------------------
 
 #[tokio::main]
-async fn main() {
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let storage_path = std::env::temp_dir().join("smartcrab_deploy.json");
 
     // --- First run: write data ---
     println!("=== First run (writing data) ===");
     {
-        let storage: Arc<dyn Storage> = Arc::new(
-            FileStorage::open(&storage_path)
-                .await
-                .expect("failed to open storage"),
-        );
+        let storage: Arc<dyn Storage> = Arc::new(FileStorage::open(&storage_path).await?);
 
         let graph = DirectedGraphBuilder::new("storage_persistent")
             .description("Record a deployment to FileStorage")
@@ -164,30 +160,24 @@ async fn main() {
             })
             .add_edge("RecordDeployment", "UpdateHistory")
             .add_edge("UpdateHistory", "PrintReport")
-            .build()
-            .expect("failed to build graph");
+            .build()?;
 
-        graph.run().await.expect("graph execution failed");
+        graph.run().await?;
     }
     // storage is dropped here — file is already flushed on every write
 
     // --- Second run: reopen and verify persistence ---
     println!("\n=== Second run (verifying persistence after storage drop) ===");
     {
-        let storage = FileStorage::open(&storage_path)
-            .await
-            .expect("failed to reopen storage");
+        let storage = FileStorage::open(&storage_path).await?;
 
-        let count = storage.get("history:count").await.expect("get failed");
+        let count = storage.get("history:count").await?;
         println!(
             "history:count = {}",
             count.as_deref().unwrap_or("<missing>")
         );
 
-        let deployment: Option<Deployment> = storage
-            .get_typed("deploy:deploy-001")
-            .await
-            .expect("get_typed failed");
+        let deployment: Option<Deployment> = storage.get_typed("deploy:deploy-001").await?;
         match deployment {
             Some(d) => println!("deploy:deploy-001 = {} ({})", d.version, d.environment),
             None => println!("deploy:deploy-001 = <missing>"),
@@ -197,4 +187,5 @@ async fn main() {
     // --- Cleanup ---
     tokio::fs::remove_file(&storage_path).await.ok();
     println!("\nCleaned up {}", storage_path.display());
+    Ok(())
 }

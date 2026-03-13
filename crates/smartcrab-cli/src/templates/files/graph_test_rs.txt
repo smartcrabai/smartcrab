@@ -26,7 +26,7 @@ struct DiscordNotification {
 struct MockDiscordInput;
 
 impl Node for MockDiscordInput {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "DiscordInput"
     }
 }
@@ -50,7 +50,7 @@ impl InputNode for MockDiscordInput {
 struct MockClaudeCodeNode;
 
 impl Node for MockClaudeCodeNode {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "ClaudeCodeNode"
     }
 }
@@ -71,7 +71,7 @@ impl HiddenNode for MockClaudeCodeNode {
 struct MockDiscordOutput;
 
 impl Node for MockDiscordOutput {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "DiscordOutput"
     }
 }
@@ -90,7 +90,7 @@ impl OutputNode for MockDiscordOutput {
 struct MockCronInput;
 
 impl Node for MockCronInput {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "CronInput"
     }
 }
@@ -143,7 +143,7 @@ fn test_discord_pipeline_type_safety() {
     // Verify that the graph builder rejects type mismatches
     struct WrongOutput;
     impl Node for WrongOutput {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "WrongOutput"
         }
     }

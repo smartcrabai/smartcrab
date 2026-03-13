@@ -5,8 +5,8 @@
 //! - `DISCORD_TEST_CHANNEL_ID` — Channel ID where the bot can post
 //!
 //! Run with:
-//!   DISCORD_BOT_TOKEN=xxx DISCORD_TEST_CHANNEL_ID=yyy \
-//!     cargo test -p smartcrab --test integration_discord -- --ignored
+//!   `DISCORD_BOT_TOKEN=xxx` `DISCORD_TEST_CHANNEL_ID=yyy` \
+//!     cargo test -p smartcrab --test `integration_discord` -- --ignored
 
 use smartcrab::chat::discord::{DiscordClient, DiscordNotification};
 use smartcrab::chat::{ChatClient, MockChatClient};
@@ -22,18 +22,18 @@ fn make_client() -> (DiscordClient, String) {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "requires DISCORD_BOT_TOKEN and DISCORD_TEST_CHANNEL_ID env vars"]
 async fn test_send_message() {
     let (client, channel_id) = make_client();
 
     client
         .send_message(&channel_id, "smartcrab integration test: send_message")
         .await
-        .expect("send_message should succeed");
+        .unwrap_or_else(|e| panic!("send_message should succeed: {e}"));
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "requires DISCORD_BOT_TOKEN and DISCORD_TEST_CHANNEL_ID env vars"]
 async fn test_send_notification() {
     let (client, channel_id) = make_client();
 
@@ -45,11 +45,11 @@ async fn test_send_notification() {
     client
         .send_notification(&notification)
         .await
-        .expect("send_notification should succeed");
+        .unwrap_or_else(|e| panic!("send_notification should succeed: {e}"));
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "requires DISCORD_BOT_TOKEN env var"]
 async fn test_send_message_invalid_token() {
     let client = DiscordClient::new("invalid-token");
 
@@ -57,8 +57,10 @@ async fn test_send_message_invalid_token() {
         .send_message("000000000000000000", "should fail")
         .await;
 
-    assert!(result.is_err(), "Expected error with invalid token");
-    let err = result.unwrap_err().to_string();
+    let Err(e) = result else {
+        panic!("Expected error with invalid token but got Ok");
+    };
+    let err = e.to_string();
     assert!(
         err.contains("Discord API error"),
         "Expected Discord API error, got: {err}"
@@ -66,7 +68,7 @@ async fn test_send_message_invalid_token() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "requires DISCORD_BOT_TOKEN env var"]
 async fn test_send_message_invalid_channel() {
     let token = require_env("DISCORD_BOT_TOKEN");
     let client = DiscordClient::new(token);
@@ -85,11 +87,11 @@ async fn test_mock_send_message_records_messages() {
     client
         .send_message("channel-1", "hello")
         .await
-        .expect("mock send_message should succeed");
+        .unwrap_or_else(|e| panic!("mock send_message should succeed: {e}"));
     client
         .send_message("channel-2", "world")
         .await
-        .expect("mock send_message should succeed");
+        .unwrap_or_else(|e| panic!("mock send_message should succeed: {e}"));
 
     let msgs = client.sent_messages();
     assert_eq!(msgs.len(), 2);

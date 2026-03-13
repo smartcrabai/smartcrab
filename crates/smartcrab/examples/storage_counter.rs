@@ -31,7 +31,7 @@ struct ReadCount {
 }
 
 impl Node for ReadCount {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "ReadCount"
     }
 }
@@ -56,7 +56,7 @@ struct IncrementCount {
 }
 
 impl Node for IncrementCount {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "IncrementCount"
     }
 }
@@ -75,7 +75,7 @@ impl HiddenNode for IncrementCount {
 struct PrintCount;
 
 impl Node for PrintCount {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "PrintCount"
     }
 }
@@ -94,7 +94,7 @@ impl OutputNode for PrintCount {
 // ---------------------------------------------------------------------------
 
 #[tokio::main]
-async fn main() {
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let storage: Arc<dyn Storage> = Arc::new(InMemoryStorage::new());
 
     let graph = DirectedGraphBuilder::new("storage_counter")
@@ -109,10 +109,10 @@ async fn main() {
         .add_output(PrintCount)
         .add_edge("ReadCount", "IncrementCount")
         .add_edge("IncrementCount", "PrintCount")
-        .build()
-        .expect("failed to build graph");
+        .build()?;
 
     for _ in 0..3 {
-        graph.run().await.expect("graph execution failed");
+        graph.run().await?;
     }
+    Ok(())
 }

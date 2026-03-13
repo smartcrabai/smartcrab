@@ -10,8 +10,8 @@ fn smartcrab_cmd() -> assert_cmd::Command {
 // -----------------------------------------------------------------------
 
 #[test]
-fn run_rejects_outside_project() {
-    let tmp = TempDir::new().unwrap();
+fn run_rejects_outside_project() -> Result<(), Box<dyn std::error::Error>> {
+    let tmp = TempDir::new()?;
 
     smartcrab_cmd()
         .args(["run"])
@@ -20,11 +20,12 @@ fn run_rejects_outside_project() {
         .failure()
         .code(1)
         .stderr(predicate::str::contains("Not a SmartCrab project"));
+    Ok(())
 }
 
 #[test]
-fn run_accepts_release_flag() {
-    let tmp = TempDir::new().unwrap();
+fn run_accepts_release_flag() -> Result<(), Box<dyn std::error::Error>> {
+    let tmp = TempDir::new()?;
 
     // Should fail because not a SmartCrab project, but the --release flag should be accepted
     smartcrab_cmd()
@@ -34,4 +35,5 @@ fn run_accepts_release_flag() {
         .failure()
         .code(1)
         .stderr(predicate::str::contains("Not a SmartCrab project"));
+    Ok(())
 }

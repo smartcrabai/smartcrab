@@ -6,6 +6,9 @@ name = "smartcrab"
 repository.workspace = true
 version.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 async-trait = "0.1"
 chrono = "0.4.44"

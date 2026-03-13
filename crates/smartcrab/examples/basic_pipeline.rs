@@ -1,6 +1,6 @@
 //! # Basic Pipeline
 //!
-//! The simplest DirectedGraph: Input → Hidden → Output.
+//! The simplest `DirectedGraph`: Input → Hidden → Output.
 //!
 //! ```text
 //! [Greeter] → [Formatter] → [Printer]
@@ -28,7 +28,7 @@ struct Greeting {
 struct Greeter;
 
 impl Node for Greeter {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Greeter"
     }
 }
@@ -47,7 +47,7 @@ impl InputNode for Greeter {
 struct Formatter;
 
 impl Node for Formatter {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Formatter"
     }
 }
@@ -66,7 +66,7 @@ impl HiddenNode for Formatter {
 struct Printer;
 
 impl Node for Printer {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Printer"
     }
 }
@@ -85,7 +85,7 @@ impl OutputNode for Printer {
 // ---------------------------------------------------------------------------
 
 #[tokio::main]
-async fn main() {
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let graph = DirectedGraphBuilder::new("basic_pipeline")
         .description("A simple linear pipeline: Greeter → Formatter → Printer")
         .trigger(TriggerKind::Startup)
@@ -94,8 +94,8 @@ async fn main() {
         .add_output(Printer)
         .add_edge("Greeter", "Formatter")
         .add_edge("Formatter", "Printer")
-        .build()
-        .expect("failed to build graph");
+        .build()?;
 
-    graph.run().await.expect("graph execution failed");
+    graph.run().await?;
+    Ok(())
 }
