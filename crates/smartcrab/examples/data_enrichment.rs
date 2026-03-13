@@ -34,7 +34,7 @@ struct UserProfile {
 struct FetchData;
 
 impl Node for FetchData {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "FetchData"
     }
 }
@@ -59,7 +59,7 @@ impl InputNode for FetchData {
 struct ValidateProfile;
 
 impl Node for ValidateProfile {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "ValidateProfile"
     }
 }
@@ -83,7 +83,7 @@ impl HiddenNode for ValidateProfile {
 struct EnrichProfile;
 
 impl Node for EnrichProfile {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "EnrichProfile"
     }
 }
@@ -104,7 +104,7 @@ impl HiddenNode for EnrichProfile {
 struct TransformProfile;
 
 impl Node for TransformProfile {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "TransformProfile"
     }
 }
@@ -114,11 +114,12 @@ impl HiddenNode for TransformProfile {
     type Input = UserProfile;
     type Output = UserProfile;
     async fn run(&self, mut input: UserProfile) -> Result<UserProfile> {
-        let base = if input.verified { 80.0 } else { 40.0 };
-        let bonus = input.enrichments.len() as f64 * 5.0;
-        input.score = Some(base + bonus);
+        let base = if input.verified { 80.0_f64 } else { 40.0_f64 };
+        let bonus = f64::from(u32::try_from(input.enrichments.len()).unwrap_or(u32::MAX)) * 5.0;
+        let score = base + bonus;
+        input.score = Some(score);
         input.name = input.name.to_uppercase();
-        println!("🔄 Transformed: score={:.1}", input.score.unwrap());
+        println!("🔄 Transformed: score={score:.1}");
         Ok(input)
     }
 }
@@ -126,7 +127,7 @@ impl HiddenNode for TransformProfile {
 struct StoreProfile;
 
 impl Node for StoreProfile {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "StoreProfile"
     }
 }
@@ -151,7 +152,7 @@ impl OutputNode for StoreProfile {
 // ---------------------------------------------------------------------------
 
 #[tokio::main]
-async fn main() {
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let graph = DirectedGraphBuilder::new("data_enrichment")
         .description("Multi-stage user profile enrichment pipeline")
         .trigger(TriggerKind::Startup)
@@ -164,8 +165,8 @@ async fn main() {
         .add_edge("ValidateProfile", "EnrichProfile")
         .add_edge("EnrichProfile", "TransformProfile")
         .add_edge("TransformProfile", "StoreProfile")
-        .build()
-        .expect("failed to build graph");
+        .build()?;
 
-    graph.run().await.expect("graph execution failed");
+    graph.run().await?;
+    Ok(())
 }

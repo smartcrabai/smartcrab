@@ -14,7 +14,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Create a new SmartCrab project
+    /// Create a new `SmartCrab` project
     New {
         /// Project name
         name: String,
@@ -27,7 +27,7 @@ enum Commands {
         #[arg(long)]
         path: Option<String>,
     },
-    /// Build and run the SmartCrab project
+    /// Build and run the `SmartCrab` project
     Run {
         /// Build in release mode
         #[arg(long)]

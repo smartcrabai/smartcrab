@@ -6,7 +6,7 @@ use crate::dto::discord::DiscordNotification;
 pub struct DiscordOutput;
 
 impl Node for DiscordOutput {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "DiscordOutput"
     }
 }

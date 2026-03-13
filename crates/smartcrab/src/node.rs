@@ -7,7 +7,7 @@ use crate::error::Result;
 
 /// Base trait for all nodes.
 pub trait Node: Send + Sync + 'static {
-    fn name(&self) -> &str;
+    fn name(&self) -> &'static str;
 }
 
 /// A node that produces data from an external source.
@@ -163,7 +163,8 @@ pub enum AnyNode {
 }
 
 impl AnyNode {
-    pub fn name(&self) -> &str {
+    #[must_use]
+    pub fn name(&self) -> &'static str {
         match self {
             AnyNode::Input(l) => l.name(),
             AnyNode::Hidden(l) => l.name(),
@@ -172,6 +173,7 @@ impl AnyNode {
     }
 
     /// Returns the `TypeId` of the trigger data (if Input node).
+    #[must_use]
     pub fn trigger_data_type_id(&self) -> Option<TypeId> {
         match self {
             AnyNode::Input(l) => Some(l.trigger_data_type_id()),
@@ -180,6 +182,7 @@ impl AnyNode {
     }
 
     /// Returns the trigger data type name (if Input node).
+    #[must_use]
     pub fn trigger_data_type_name(&self) -> Option<&'static str> {
         match self {
             AnyNode::Input(l) => Some(l.trigger_data_type_name()),
@@ -188,6 +191,7 @@ impl AnyNode {
     }
 
     /// Returns the `TypeId` of the output DTO (if any).
+    #[must_use]
     pub fn output_type_id(&self) -> Option<TypeId> {
         match self {
             AnyNode::Input(l) => Some(l.output_type_id()),
@@ -197,6 +201,7 @@ impl AnyNode {
     }
 
     /// Returns the output type name (if any).
+    #[must_use]
     pub fn output_type_name(&self) -> Option<&'static str> {
         match self {
             AnyNode::Input(l) => Some(l.output_type_name()),
@@ -206,6 +211,7 @@ impl AnyNode {
     }
 
     /// Returns the `TypeId` of the input DTO (if any).
+    #[must_use]
     pub fn input_type_id(&self) -> Option<TypeId> {
         match self {
             AnyNode::Input(_) => None,
@@ -215,6 +221,7 @@ impl AnyNode {
     }
 
     /// Returns the input type name (if any).
+    #[must_use]
     pub fn input_type_name(&self) -> Option<&'static str> {
         match self {
             AnyNode::Input(_) => None,
@@ -243,7 +250,7 @@ mod tests {
     struct MockInputNode;
 
     impl Node for MockInputNode {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "MockInputNode"
         }
     }
@@ -262,7 +269,7 @@ mod tests {
     struct MockHiddenNode;
 
     impl Node for MockHiddenNode {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "MockHiddenNode"
         }
     }
@@ -281,7 +288,7 @@ mod tests {
     struct MockOutputNode;
 
     impl Node for MockOutputNode {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "MockOutputNode"
         }
     }
@@ -295,34 +302,42 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_input_node_dyn() {
+    async fn test_input_node_dyn() -> Result<()> {
         let node = MockInputNode;
         let trigger: Box<dyn DtoObject> = Box::new(());
-        let output = node.run_dyn(trigger.as_ref()).await.unwrap();
-        let concrete = output.as_any().downcast_ref::<MockOutput>().unwrap();
+        let output = node.run_dyn(trigger.as_ref()).await?;
+        let concrete = output
+            .as_any()
+            .downcast_ref::<MockOutput>()
+            .ok_or_else(|| crate::error::SmartCrabError::Other("downcast failed".into()))?;
         assert_eq!(concrete.result, "from input");
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_hidden_node_dyn() {
+    async fn test_hidden_node_dyn() -> Result<()> {
         let node = MockHiddenNode;
         let input = MockOutput {
             result: "hello".into(),
         };
         let boxed: Box<dyn DtoObject> = Box::new(input);
-        let output = node.run_dyn(boxed.as_ref()).await.unwrap();
-        let concrete = output.as_any().downcast_ref::<MockInput>().unwrap();
+        let output = node.run_dyn(boxed.as_ref()).await?;
+        let concrete = output
+            .as_any()
+            .downcast_ref::<MockInput>()
+            .ok_or_else(|| crate::error::SmartCrabError::Other("downcast failed".into()))?;
         assert_eq!(concrete.value, "hello");
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_output_node_dyn() {
+    async fn test_output_node_dyn() -> Result<()> {
         let node = MockOutputNode;
         let input = MockInput {
             value: "test".into(),
         };
         let boxed: Box<dyn DtoObject> = Box::new(input);
-        node.run_dyn(boxed.as_ref()).await.unwrap();
+        node.run_dyn(boxed.as_ref()).await
     }
 
     #[test]

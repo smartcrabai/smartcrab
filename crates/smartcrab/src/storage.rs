@@ -24,7 +24,7 @@ pub trait Storage: Send + Sync {
 ///
 /// Automatically implemented for every type that implements [`Storage`],
 /// including `Arc<dyn Storage>`.
-#[allow(async_fn_in_trait)]
+#[expect(async_fn_in_trait)]
 pub trait StorageExt: Storage {
     async fn get_typed<T: DeserializeOwned + Send>(&self, key: &str) -> Result<Option<T>> {
         match self.get(key).await? {
@@ -81,6 +81,7 @@ pub struct InMemoryStorage {
 }
 
 impl InMemoryStorage {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
@@ -122,6 +123,11 @@ pub struct FileStorage {
 
 impl FileStorage {
     /// Open (or create) the storage file at `path`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the file exists but cannot be read or parsed, or if
+    /// any I/O error occurs during opening.
     pub async fn open(path: impl AsRef<Path>) -> Result<Self> {
         let path = path.as_ref().to_owned();
         let data = match tokio::fs::read_to_string(&path).await {
@@ -196,38 +202,40 @@ mod tests {
 
     use super::*;
 
-    async fn run_basic_storage_tests(storage: &impl Storage) {
+    async fn run_basic_storage_tests(
+        storage: &impl Storage,
+    ) -> std::result::Result<(), Box<dyn std::error::Error>> {
         // set / get
-        storage.set("key1", "value1".to_owned()).await.unwrap();
-        assert_eq!(
-            storage.get("key1").await.unwrap(),
-            Some("value1".to_owned())
-        );
+        storage.set("key1", "value1".to_owned()).await?;
+        assert_eq!(storage.get("key1").await?, Some("value1".to_owned()));
 
         // missing key returns None
-        assert_eq!(storage.get("missing").await.unwrap(), None);
+        assert_eq!(storage.get("missing").await?, None);
 
         // delete existing key returns true
-        assert!(storage.delete("key1").await.unwrap());
-        assert_eq!(storage.get("key1").await.unwrap(), None);
+        assert!(storage.delete("key1").await?);
+        assert_eq!(storage.get("key1").await?, None);
 
         // delete missing key returns false
-        assert!(!storage.delete("key1").await.unwrap());
+        assert!(!storage.delete("key1").await?);
 
         // prefix filtering
-        storage.set("ns:a", "1".to_owned()).await.unwrap();
-        storage.set("ns:b", "2".to_owned()).await.unwrap();
-        storage.set("other:c", "3".to_owned()).await.unwrap();
+        storage.set("ns:a", "1".to_owned()).await?;
+        storage.set("ns:b", "2".to_owned()).await?;
+        storage.set("other:c", "3".to_owned()).await?;
 
-        let mut prefixed = storage.keys(Some("ns:")).await.unwrap();
+        let mut prefixed = storage.keys(Some("ns:")).await?;
         prefixed.sort();
         assert_eq!(prefixed, vec!["ns:a", "ns:b"]);
 
-        let all = storage.keys(None).await.unwrap();
+        let all = storage.keys(None).await?;
         assert_eq!(all.len(), 3);
+        Ok(())
     }
 
-    async fn run_typed_storage_tests(storage: &impl StorageExt) {
+    async fn run_typed_storage_tests(
+        storage: &impl StorageExt,
+    ) -> std::result::Result<(), Box<dyn std::error::Error>> {
         #[derive(Debug, PartialEq, Serialize, Deserialize)]
         struct Payload {
             count: u32,
@@ -238,9 +246,9 @@ mod tests {
             count: 42,
             name: "hello".to_owned(),
         };
-        storage.set_typed("typed", &val).await.unwrap();
+        storage.set_typed("typed", &val).await?;
 
-        let got: Option<Payload> = storage.get_typed("typed").await.unwrap();
+        let got: Option<Payload> = storage.get_typed("typed").await?;
         assert_eq!(
             got,
             Some(Payload {
@@ -249,70 +257,76 @@ mod tests {
             })
         );
 
-        let missing: Option<Payload> = storage.get_typed("no_such_key").await.unwrap();
+        let missing: Option<Payload> = storage.get_typed("no_such_key").await?;
         assert_eq!(missing, None);
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_in_memory_basic() {
+    async fn test_in_memory_basic() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let s = InMemoryStorage::new();
-        run_basic_storage_tests(&s).await;
+        run_basic_storage_tests(&s).await
     }
 
     #[tokio::test]
-    async fn test_in_memory_typed() {
+    async fn test_in_memory_typed() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let s = InMemoryStorage::new();
-        run_typed_storage_tests(&s).await;
+        run_typed_storage_tests(&s).await
     }
 
     #[tokio::test]
-    async fn test_file_storage_basic() {
-        let dir = tempfile::tempdir().unwrap();
+    async fn test_file_storage_basic() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        let dir = tempfile::tempdir()?;
         let path = dir.path().join("storage.json");
-        let s = FileStorage::open(&path).await.unwrap();
-        run_basic_storage_tests(&s).await;
+        let s = FileStorage::open(&path).await?;
+        run_basic_storage_tests(&s).await
     }
 
     #[tokio::test]
-    async fn test_file_storage_typed() {
-        let dir = tempfile::tempdir().unwrap();
+    async fn test_file_storage_typed() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        let dir = tempfile::tempdir()?;
         let path = dir.path().join("typed.json");
-        let s = FileStorage::open(&path).await.unwrap();
-        run_typed_storage_tests(&s).await;
+        let s = FileStorage::open(&path).await?;
+        run_typed_storage_tests(&s).await
     }
 
     #[tokio::test]
-    async fn test_file_storage_persistence() {
-        let dir = tempfile::tempdir().unwrap();
+    async fn test_file_storage_persistence() -> std::result::Result<(), Box<dyn std::error::Error>>
+    {
+        let dir = tempfile::tempdir()?;
         let path = dir.path().join("persist.json");
 
         {
-            let s = FileStorage::open(&path).await.unwrap();
-            s.set("greeting", "hello".to_owned()).await.unwrap();
-            s.set("count", "42".to_owned()).await.unwrap();
+            let s = FileStorage::open(&path).await?;
+            s.set("greeting", "hello".to_owned()).await?;
+            s.set("count", "42".to_owned()).await?;
         }
 
         {
-            let s = FileStorage::open(&path).await.unwrap();
-            assert_eq!(s.get("greeting").await.unwrap(), Some("hello".to_owned()));
-            assert_eq!(s.get("count").await.unwrap(), Some("42".to_owned()));
+            let s = FileStorage::open(&path).await?;
+            assert_eq!(s.get("greeting").await?, Some("hello".to_owned()));
+            assert_eq!(s.get("count").await?, Some("42".to_owned()));
         }
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_arc_dyn_storage_delegates() {
+    async fn test_arc_dyn_storage_delegates() -> std::result::Result<(), Box<dyn std::error::Error>>
+    {
         let storage: Arc<dyn Storage> = Arc::new(InMemoryStorage::new());
-        storage.set("k", "v".to_owned()).await.unwrap();
-        assert_eq!(storage.get("k").await.unwrap(), Some("v".to_owned()));
-        assert!(storage.delete("k").await.unwrap());
-        assert_eq!(storage.get("k").await.unwrap(), None);
+        storage.set("k", "v".to_owned()).await?;
+        assert_eq!(storage.get("k").await?, Some("v".to_owned()));
+        assert!(storage.delete("k").await?);
+        assert_eq!(storage.get("k").await?, None);
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_arc_dyn_storage_ext() {
+    async fn test_arc_dyn_storage_ext() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let storage: Arc<dyn Storage> = Arc::new(InMemoryStorage::new());
-        storage.set_typed("num", &99u32).await.unwrap();
-        let v: Option<u32> = storage.get_typed("num").await.unwrap();
+        storage.set_typed("num", &99u32).await?;
+        let v: Option<u32> = storage.get_typed("num").await?;
         assert_eq!(v, Some(99u32));
+        Ok(())
     }
 }

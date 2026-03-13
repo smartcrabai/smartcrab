@@ -1,3 +1,4 @@
+use std::fmt::Write as _;
 use std::io;
 use std::path::Path;
 
@@ -338,7 +339,7 @@ fn render_mermaid(graph: &ParsedGraph, no_types: bool, show_order: bool) -> Stri
             label = format!("#{} {label}", idx + 1);
         }
         if !no_types {
-            label.push_str(&format!("<br/>{kind}"));
+            let _ = write!(label, "<br/>{kind}");
         }
 
         let shape = match node.kind {
@@ -355,13 +356,10 @@ fn render_mermaid(graph: &ParsedGraph, no_types: bool, show_order: bool) -> Stri
     for edge in &graph.edges {
         match &edge.label {
             Some(label) => {
-                out.push_str(&format!(
-                    "    {} -->|\"{}\"| {}\n",
-                    edge.from, label, edge.to
-                ));
+                let _ = writeln!(out, "    {} -->|\"{}\"| {}", edge.from, label, edge.to);
             }
             None => {
-                out.push_str(&format!("    {} --> {}\n", edge.from, edge.to));
+                let _ = writeln!(out, "    {} --> {}", edge.from, edge.to);
             }
         }
     }
@@ -384,7 +382,7 @@ fn render_dot(graph: &ParsedGraph, no_types: bool, show_order: bool) -> String {
             label = format!("#{} {label}", idx + 1);
         }
         if !no_types {
-            label.push_str(&format!("\\n({kind})"));
+            let _ = write!(label, "\\n({kind})");
         }
 
         let shape = match node.kind {
@@ -393,10 +391,7 @@ fn render_dot(graph: &ParsedGraph, no_types: bool, show_order: bool) -> String {
             NodeKind::Output => "hexagon",
         };
 
-        out.push_str(&format!(
-            "    {} [shape={shape}, label=\"{label}\"];\n",
-            node.name
-        ));
+        let _ = writeln!(out, "    {} [shape={shape}, label=\"{label}\"];", node.name);
     }
 
     out.push('\n');
@@ -404,13 +399,14 @@ fn render_dot(graph: &ParsedGraph, no_types: bool, show_order: bool) -> String {
     for edge in &graph.edges {
         match &edge.label {
             Some(label) => {
-                out.push_str(&format!(
-                    "    {} -> {} [label=\"{}\"];\n",
+                let _ = writeln!(
+                    out,
+                    "    {} -> {} [label=\"{}\"];",
                     edge.from, edge.to, label
-                ));
+                );
             }
             None => {
-                out.push_str(&format!("    {} -> {};\n", edge.from, edge.to));
+                let _ = writeln!(out, "    {} -> {};", edge.from, edge.to);
             }
         }
     }
@@ -481,13 +477,13 @@ fn render_ascii(graph: &ParsedGraph, no_types: bool, show_order: bool) -> String
 
             let mid = box_width / 2;
             let pad = " ".repeat(mid);
-            out.push_str(&format!("{pad}\u{2502}\n"));
+            let _ = writeln!(out, "{pad}\u{2502}");
             if let Some(labels) = labels {
                 for label in labels {
-                    out.push_str(&format!("{pad}\u{2502} {label}\n"));
+                    let _ = writeln!(out, "{pad}\u{2502} {label}");
                 }
             }
-            out.push_str(&format!("{pad}\u{25BC}\n"));
+            let _ = writeln!(out, "{pad}\u{25BC}");
         }
     }
 
@@ -559,15 +555,16 @@ pub fn build() -> std::result::Result<DirectedGraph, GraphError> {
     }
 
     #[test]
-    fn test_parse_graph_source() {
-        let graph = parse_graph_source(SAMPLE_GRAPH).unwrap();
+    fn test_parse_graph_source() -> Result<(), String> {
+        let graph = parse_graph_source(SAMPLE_GRAPH).ok_or("parse_graph_source returned None")?;
         assert_eq!(graph.name, "my_pipeline");
         assert_eq!(graph.nodes.len(), 3);
         assert_eq!(graph.edges.len(), 2);
+        Ok(())
     }
 
     #[test]
-    fn test_parse_graph_with_constructor() {
+    fn test_parse_graph_with_constructor() -> Result<(), String> {
         let content = r#"
 DirectedGraphBuilder::new("test")
     .add_input(SourceNode)
@@ -577,14 +574,15 @@ DirectedGraphBuilder::new("test")
     .add_edge("ClaudeCodeNode", "DiscordOutput")
     .build()
 "#;
-        let graph = parse_graph_source(content).unwrap();
+        let graph = parse_graph_source(content).ok_or("parse_graph_source returned None")?;
         assert_eq!(graph.nodes.len(), 3);
         assert_eq!(graph.nodes[1].name, "ClaudeCodeNode");
+        Ok(())
     }
 
     #[test]
-    fn test_render_mermaid() {
-        let graph = parse_graph_source(SAMPLE_GRAPH).unwrap();
+    fn test_render_mermaid() -> Result<(), String> {
+        let graph = parse_graph_source(SAMPLE_GRAPH).ok_or("parse_graph_source returned None")?;
         let output = render_mermaid(&graph, false, false);
         assert!(output.starts_with("flowchart TD\n"));
         assert!(output.contains("DiscordInput"));
@@ -592,36 +590,40 @@ DirectedGraphBuilder::new("test")
         assert!(output.contains("JsonResponder"));
         assert!(output.contains("DiscordInput --> DataProcessor"));
         assert!(output.contains("DataProcessor --> JsonResponder"));
+        Ok(())
     }
 
     #[test]
-    fn test_render_dot() {
-        let graph = parse_graph_source(SAMPLE_GRAPH).unwrap();
+    fn test_render_dot() -> Result<(), String> {
+        let graph = parse_graph_source(SAMPLE_GRAPH).ok_or("parse_graph_source returned None")?;
         let output = render_dot(&graph, false, false);
         assert!(output.starts_with("digraph \"my_pipeline\""));
         assert!(output.contains("DiscordInput"));
         assert!(output.contains("shape=box, style=rounded")); // Input
         assert!(output.contains("shape=hexagon")); // Output
+        Ok(())
     }
 
     #[test]
-    fn test_render_ascii() {
-        let graph = parse_graph_source(SAMPLE_GRAPH).unwrap();
+    fn test_render_ascii() -> Result<(), String> {
+        let graph = parse_graph_source(SAMPLE_GRAPH).ok_or("parse_graph_source returned None")?;
         let output = render_ascii(&graph, false, false);
         assert!(output.contains("DiscordInput"));
         assert!(output.contains("DataProcessor"));
         assert!(output.contains("JsonResponder"));
         assert!(output.contains("\u{2502}")); // │
         assert!(output.contains("\u{25BC}")); // ▼
+        Ok(())
     }
 
     #[test]
-    fn test_render_show_order() {
-        let graph = parse_graph_source(SAMPLE_GRAPH).unwrap();
+    fn test_render_show_order() -> Result<(), String> {
+        let graph = parse_graph_source(SAMPLE_GRAPH).ok_or("parse_graph_source returned None")?;
         let output = render_mermaid(&graph, false, true);
         assert!(output.contains("#1"));
         assert!(output.contains("#2"));
         assert!(output.contains("#3"));
+        Ok(())
     }
 
     #[test]

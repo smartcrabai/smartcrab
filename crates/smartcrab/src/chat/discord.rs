@@ -25,6 +25,7 @@ impl DiscordMessage {
     /// Extract the actual message content, stripping the bot mention prefix.
     ///
     /// Handles both `<@BOT_ID>` and `<@!BOT_ID>` (nickname mention) formats.
+    #[must_use]
     pub fn stripped_content(&self, bot_id: &str) -> String {
         let mention = format!("<@{bot_id}>");
         let mention_nick = format!("<@!{bot_id}>");
@@ -54,6 +55,11 @@ impl DiscordClient {
     }
 
     /// Send a notification (convenience wrapper around [`ChatClient::send_message`]).
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the HTTP request fails or the Discord API returns an
+    /// error status code.
     pub async fn send_notification(&self, notification: &DiscordNotification) -> Result<()> {
         self.send_message(&notification.channel_id, &notification.content)
             .await

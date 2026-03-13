@@ -6,7 +6,7 @@ use crate::dto::discord::DiscordMessage;
 pub struct DiscordInput;
 
 impl Node for DiscordInput {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "DiscordInput"
     }
 }

@@ -30,7 +30,7 @@ struct Record {
 struct DataSource;
 
 impl Node for DataSource {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "DataSource"
     }
 }
@@ -51,7 +51,7 @@ impl InputNode for DataSource {
 struct Normalizer;
 
 impl Node for Normalizer {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Normalizer"
     }
 }
@@ -69,7 +69,7 @@ impl HiddenNode for Normalizer {
 struct Enricher;
 
 impl Node for Enricher {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Enricher"
     }
 }
@@ -88,7 +88,7 @@ impl HiddenNode for Enricher {
 struct Scorer;
 
 impl Node for Scorer {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Scorer"
     }
 }
@@ -107,7 +107,7 @@ impl HiddenNode for Scorer {
 struct Reporter;
 
 impl Node for Reporter {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Reporter"
     }
 }
@@ -129,7 +129,7 @@ impl OutputNode for Reporter {
 // ---------------------------------------------------------------------------
 
 #[tokio::main]
-async fn main() {
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let graph = DirectedGraphBuilder::new("multi_transform")
         .description("Multi-stage data transformation pipeline")
         .trigger(TriggerKind::Startup)
@@ -142,8 +142,8 @@ async fn main() {
         .add_edge("Normalizer", "Enricher")
         .add_edge("Enricher", "Scorer")
         .add_edge("Scorer", "Reporter")
-        .build()
-        .expect("failed to build graph");
+        .build()?;
 
-    graph.run().await.expect("graph execution failed");
+    graph.run().await?;
+    Ok(())
 }

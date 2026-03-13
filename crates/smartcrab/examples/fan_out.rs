@@ -31,7 +31,7 @@ struct Event {
 struct EventSource;
 
 impl Node for EventSource {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "EventSource"
     }
 }
@@ -51,7 +51,7 @@ impl InputNode for EventSource {
 struct ConsoleOutput;
 
 impl Node for ConsoleOutput {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "ConsoleOutput"
     }
 }
@@ -68,7 +68,7 @@ impl OutputNode for ConsoleOutput {
 struct FileOutput;
 
 impl Node for FileOutput {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "FileOutput"
     }
 }
@@ -85,7 +85,7 @@ impl OutputNode for FileOutput {
 struct MetricsOutput;
 
 impl Node for MetricsOutput {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "MetricsOutput"
     }
 }
@@ -104,7 +104,7 @@ impl OutputNode for MetricsOutput {
 // ---------------------------------------------------------------------------
 
 #[tokio::main]
-async fn main() {
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let graph = DirectedGraphBuilder::new("fan_out")
         .description("Single event source fans out to multiple outputs")
         .trigger(TriggerKind::Startup)
@@ -115,8 +115,8 @@ async fn main() {
         .add_edge("EventSource", "ConsoleOutput")
         .add_edge("EventSource", "FileOutput")
         .add_edge("EventSource", "MetricsOutput")
-        .build()
-        .expect("failed to build graph");
+        .build()?;
 
-    graph.run().await.expect("graph execution failed");
+    graph.run().await?;
+    Ok(())
 }

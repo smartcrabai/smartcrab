@@ -13,7 +13,7 @@ impl TemplateContext {
 
     fn smartcrab_dep(&self) -> String {
         match &self.local_path {
-            Some(path) => format!("smartcrab = {{ path = \"{}\" }}", path),
+            Some(path) => format!("smartcrab = {{ path = \"{path}\" }}"),
             None => "smartcrab = { git = \"https://github.com/takumi3488/smartcrab\" }".to_owned(),
         }
     }

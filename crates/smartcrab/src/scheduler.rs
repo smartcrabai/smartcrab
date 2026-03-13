@@ -18,6 +18,10 @@ struct CronEntry {
 ///
 /// Uses `tokio::time::interval(60s)` to tick every minute, then checks which
 /// graphs should fire based on their cron expressions.
+///
+/// # Errors
+///
+/// Returns an error if any graph has an invalid cron expression.
 pub async fn run_cron_graphs(graphs: Vec<Arc<DirectedGraph>>) -> Result<()> {
     if graphs.is_empty() {
         // Nothing to schedule — block forever so tokio::select! doesn't exit.
@@ -101,7 +105,7 @@ mod tests {
 
     struct TestIn;
     impl Node for TestIn {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "TestIn"
         }
     }
@@ -116,7 +120,7 @@ mod tests {
 
     struct TestOut;
     impl Node for TestOut {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "TestOut"
         }
     }
@@ -136,7 +140,7 @@ mod tests {
     }
 
     #[test]
-    fn test_invalid_cron_schedule() {
+    fn test_invalid_cron_schedule() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let graph = Arc::new(
             DirectedGraphBuilder::new("bad_cron")
                 .trigger(TriggerKind::Cron {
@@ -145,11 +149,12 @@ mod tests {
                 .add_input(TestIn)
                 .add_output(TestOut)
                 .add_edge("TestIn", "TestOut")
-                .build()
-                .unwrap(),
+                .build()?,
         );
 
-        let rt = tokio::runtime::Runtime::new().unwrap();
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_time()
+            .build()?;
         let result = rt.block_on(async {
             tokio::time::timeout(Duration::from_millis(100), run_cron_graphs(vec![graph])).await
         });
@@ -157,7 +162,8 @@ mod tests {
         // Should get the CronSchedule error before timeout.
         match result {
             Ok(Err(SmartCrabError::CronSchedule(_))) => {} // expected
-            other => panic!("expected CronSchedule error, got: {:?}", other),
+            other => panic!("expected CronSchedule error, got: {other:?}"),
         }
+        Ok(())
     }
 }

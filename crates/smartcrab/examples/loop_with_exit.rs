@@ -33,7 +33,7 @@ struct Counter {
 struct Seed;
 
 impl Node for Seed {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Seed"
     }
 }
@@ -53,7 +53,7 @@ struct Accumulator {
 }
 
 impl Node for Accumulator {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Accumulator"
     }
 }
@@ -76,7 +76,7 @@ impl HiddenNode for Accumulator {
 struct ResultPrinter;
 
 impl Node for ResultPrinter {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "ResultPrinter"
     }
 }
@@ -95,7 +95,7 @@ impl OutputNode for ResultPrinter {
 // ---------------------------------------------------------------------------
 
 #[tokio::main]
-async fn main() {
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let graph = DirectedGraphBuilder::new("loop_with_exit")
         .description("Accumulates values in a loop until threshold is reached")
         .trigger(TriggerKind::Startup)
@@ -115,8 +115,8 @@ async fn main() {
             }
             Some("continue".into()) // keep looping
         })
-        .build()
-        .expect("failed to build graph");
+        .build()?;
 
-    graph.run().await.expect("graph execution failed");
+    graph.run().await?;
+    Ok(())
 }

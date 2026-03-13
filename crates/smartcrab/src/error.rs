@@ -26,7 +26,7 @@ pub enum StorageError {
     },
 }
 
-/// Top-level error type for SmartCrab.
+/// Top-level error type for `SmartCrab`.
 #[derive(Debug, thiserror::Error)]
 pub enum SmartCrabError {
     #[error("Graph error: {0}")]

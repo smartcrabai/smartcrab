@@ -23,7 +23,7 @@ mod basic_pipeline {
 
     pub struct Greeter;
     impl Node for Greeter {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "Greeter"
         }
     }
@@ -40,7 +40,7 @@ mod basic_pipeline {
 
     pub struct Formatter;
     impl Node for Formatter {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "Formatter"
         }
     }
@@ -57,7 +57,7 @@ mod basic_pipeline {
 
     pub struct Printer;
     impl Node for Printer {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "Printer"
         }
     }
@@ -99,7 +99,7 @@ mod conditional_branch {
 
     pub struct Sensor;
     impl Node for Sensor {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "Sensor"
         }
     }
@@ -117,7 +117,7 @@ mod conditional_branch {
 
     pub struct Classifier;
     impl Node for Classifier {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "Classifier"
         }
     }
@@ -137,7 +137,7 @@ mod conditional_branch {
 
     pub struct Celebrate;
     impl Node for Celebrate {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "Celebrate"
         }
     }
@@ -152,7 +152,7 @@ mod conditional_branch {
 
     pub struct Alert;
     impl Node for Alert {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "Alert"
         }
     }
@@ -168,7 +168,7 @@ mod conditional_branch {
 
     pub struct Logger;
     impl Node for Logger {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "Logger"
         }
     }
@@ -225,7 +225,7 @@ mod diamond {
 
     pub struct TextInput;
     impl Node for TextInput {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "TextInput"
         }
     }
@@ -242,7 +242,7 @@ mod diamond {
 
     pub struct UpperCase;
     impl Node for UpperCase {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "UpperCase"
         }
     }
@@ -259,7 +259,7 @@ mod diamond {
 
     pub struct Reverse;
     impl Node for Reverse {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "Reverse"
         }
     }
@@ -276,7 +276,7 @@ mod diamond {
 
     pub struct Merger;
     impl Node for Merger {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "Merger"
         }
     }
@@ -292,7 +292,7 @@ mod diamond {
 
     pub struct Display;
     impl Node for Display {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "Display"
         }
     }
@@ -341,7 +341,7 @@ mod chat_pipeline {
 
     pub struct MessageInput;
     impl Node for MessageInput {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "MessageInput"
         }
     }
@@ -357,7 +357,7 @@ mod chat_pipeline {
 
     pub struct AgentProcessor;
     impl Node for AgentProcessor {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "AgentProcessor"
         }
     }
@@ -381,7 +381,7 @@ mod chat_pipeline {
         pub client: Option<DiscordClient>,
     }
     impl Node for MessageOutput {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "MessageOutput"
         }
     }
@@ -436,7 +436,7 @@ mod cron_pipeline {
 
     pub struct ScheduledPoller;
     impl Node for ScheduledPoller {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "ScheduledPoller"
         }
     }
@@ -460,7 +460,7 @@ mod cron_pipeline {
 
     pub struct ReportBuilder;
     impl Node for ReportBuilder {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "ReportBuilder"
         }
     }
@@ -481,7 +481,7 @@ mod cron_pipeline {
 
     pub struct NotificationSender;
     impl Node for NotificationSender {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "NotificationSender"
         }
     }
@@ -514,7 +514,7 @@ mod cron_pipeline {
 // ===========================================================================
 
 #[tokio::main]
-async fn main() {
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -533,18 +533,19 @@ async fn main() {
     println!();
 
     let runtime = Runtime::new()
-        .add_graph(basic_pipeline::build().expect("failed to build basic_pipeline"))
-        .add_graph(conditional_branch::build().expect("failed to build conditional_branch"))
-        .add_graph(diamond::build().expect("failed to build diamond"))
-        .add_graph(chat_pipeline::build().expect("failed to build chat_pipeline"))
-        .add_graph(cron_pipeline::build().expect("failed to build cron_pipeline"));
+        .add_graph(basic_pipeline::build()?)
+        .add_graph(conditional_branch::build()?)
+        .add_graph(diamond::build()?)
+        .add_graph(chat_pipeline::build()?)
+        .add_graph(cron_pipeline::build()?);
 
     // Note: runtime.run() blocks indefinitely here because cron_pipeline runs
     // on a recurring schedule. In practice this line only returns on a
     // shutdown signal (SIGINT / SIGTERM). The success message below is
     // therefore only reached if the runtime is shut down gracefully.
-    runtime.run().await.expect("runtime execution failed");
+    runtime.run().await?;
 
     println!();
     println!("✅ All graphs completed successfully!");
+    Ok(())
 }

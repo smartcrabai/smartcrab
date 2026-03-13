@@ -30,7 +30,7 @@ struct SensorData {
 struct Sensor;
 
 impl Node for Sensor {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Sensor"
     }
 }
@@ -50,7 +50,7 @@ impl InputNode for Sensor {
 struct Classifier;
 
 impl Node for Classifier {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Classifier"
     }
 }
@@ -72,7 +72,7 @@ impl HiddenNode for Classifier {
 struct Celebrate;
 
 impl Node for Celebrate {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Celebrate"
     }
 }
@@ -89,7 +89,7 @@ impl OutputNode for Celebrate {
 struct Alert;
 
 impl Node for Alert {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Alert"
     }
 }
@@ -107,7 +107,7 @@ impl HiddenNode for Alert {
 struct Logger;
 
 impl Node for Logger {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Logger"
     }
 }
@@ -129,7 +129,7 @@ impl OutputNode for Logger {
 // ---------------------------------------------------------------------------
 
 #[tokio::main]
-async fn main() {
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let graph = DirectedGraphBuilder::new("conditional_branch")
         .description("Routes sensor data based on temperature classification")
         .trigger(TriggerKind::Startup)
@@ -151,8 +151,8 @@ async fn main() {
             ],
         )
         .add_edge("Alert", "Logger")
-        .build()
-        .expect("failed to build graph");
+        .build()?;
 
-    graph.run().await.expect("graph execution failed");
+    graph.run().await?;
+    Ok(())
 }

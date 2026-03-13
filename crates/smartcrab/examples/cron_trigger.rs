@@ -37,7 +37,7 @@ struct Report {
 struct ScheduledPoller;
 
 impl Node for ScheduledPoller {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "ScheduledPoller"
     }
 }
@@ -64,7 +64,7 @@ impl InputNode for ScheduledPoller {
 struct ReportBuilder;
 
 impl Node for ReportBuilder {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "ReportBuilder"
     }
 }
@@ -87,7 +87,7 @@ impl HiddenNode for ReportBuilder {
 struct NotificationSender;
 
 impl Node for NotificationSender {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "NotificationSender"
     }
 }
@@ -107,7 +107,7 @@ impl OutputNode for NotificationSender {
 // ---------------------------------------------------------------------------
 
 #[tokio::main]
-async fn main() {
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let graph = DirectedGraphBuilder::new("cron_pipeline")
         .description("Cron-triggered pipeline: poll → build report → notify")
         .trigger(TriggerKind::Cron {
@@ -118,12 +118,11 @@ async fn main() {
         .add_output(NotificationSender)
         .add_edge("ScheduledPoller", "ReportBuilder")
         .add_edge("ReportBuilder", "NotificationSender")
-        .build()
-        .expect("failed to build graph");
+        .build()?;
 
-    println!(
-        "Trigger: {:?}",
-        graph.trigger_kind().expect("trigger must be set")
-    );
-    graph.run().await.expect("graph execution failed");
+    if let Some(trigger) = graph.trigger_kind() {
+        println!("Trigger: {trigger:?}");
+    }
+    graph.run().await?;
+    Ok(())
 }

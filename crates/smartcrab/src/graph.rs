@@ -10,7 +10,7 @@ use crate::storage::Storage;
 
 type ConditionFn = Box<dyn Fn(&dyn DtoObject) -> Option<String> + Send + Sync>;
 
-/// Specifies when and how a DirectedGraph is triggered.
+/// Specifies when and how a `DirectedGraph` is triggered.
 #[derive(Debug, Clone)]
 pub enum TriggerKind {
     /// Triggered once at application startup.
@@ -23,7 +23,7 @@ pub enum TriggerKind {
     /// `token` is the platform bot token. If `None`, falls back to the
     /// Runtime-level token or the `DISCORD_TOKEN` environment variable.
     Chat {
-        /// Platform identifier for routing to the correct ChatGateway.
+        /// Platform identifier for routing to the correct `ChatGateway`.
         /// `None` defaults to the first registered gateway.
         platform: Option<String>,
         triggers: Vec<String>,
@@ -35,6 +35,7 @@ pub enum TriggerKind {
 
 impl TriggerKind {
     /// Create a Chat trigger. Routes to the first registered gateway by default.
+    #[must_use]
     pub fn chat(triggers: Vec<String>, token: Option<String>) -> Self {
         TriggerKind::Chat {
             platform: None,
@@ -44,6 +45,7 @@ impl TriggerKind {
     }
 
     /// Create a Discord-specific Chat trigger.
+    #[must_use]
     pub fn discord(triggers: Vec<String>, token: Option<String>) -> Self {
         TriggerKind::Chat {
             platform: Some("discord".into()),
@@ -86,30 +88,37 @@ pub struct EdgeInfo {
 }
 
 impl DirectedGraph {
+    #[must_use]
     pub fn name(&self) -> &str {
         &self.name
     }
 
+    #[must_use]
     pub fn description(&self) -> Option<&str> {
         self.description.as_deref()
     }
 
+    #[must_use]
     pub fn nodes(&self) -> &HashMap<String, AnyNode> {
         &self.nodes
     }
 
+    #[must_use]
     pub fn execution_order(&self) -> &[String] {
         &self.execution_order
     }
 
+    #[must_use]
     pub fn trigger_kind(&self) -> Option<&TriggerKind> {
         self.trigger_kind.as_ref()
     }
 
+    #[must_use]
     pub fn storage(&self) -> Option<&Arc<dyn Storage>> {
         self.storage.as_ref()
     }
 
+    #[must_use]
     pub fn edge_infos(&self) -> Vec<EdgeInfo> {
         let mut infos = Vec::new();
         for edge in &self.edges {
@@ -137,12 +146,26 @@ impl DirectedGraph {
     }
 
     /// Run the graph with a unit trigger (backward-compatible shortcut).
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any node in the graph fails during execution.
     #[instrument(skip(self), fields(graph = %self.name))]
     pub async fn run(&self) -> Result<()> {
         self.run_with_trigger(Box::new(())).await
     }
 
-    /// Run the graph, passing `trigger_data` to the InputNode.
+    /// Run the graph, passing `trigger_data` to the `InputNode`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any node in the graph fails during execution or if
+    /// a node is unreachable.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a node name present in the execution order is not found in the
+    /// nodes map (which should never happen for a correctly built graph).
     #[instrument(skip(self, trigger_data), fields(graph = %self.name))]
     pub async fn run_with_trigger(&self, trigger_data: Box<dyn DtoObject>) -> Result<()> {
         let mut outputs: HashMap<String, Box<dyn DtoObject>> = HashMap::new();
@@ -157,7 +180,11 @@ impl DirectedGraph {
             }
 
             for node_name in &executables {
-                let node = self.nodes.get(node_name).expect("node must exist");
+                let Some(node) = self.nodes.get(node_name) else {
+                    return Err(SmartCrabError::Graph(GraphError::UnreachableNode {
+                        name: node_name.clone(),
+                    }));
+                };
 
                 info!(node = %node_name, "executing node");
 
@@ -195,9 +222,7 @@ impl DirectedGraph {
                     }
                 }
 
-                if let Some(exit_branch) = self.check_exit_conditions(node_name, &outputs)
-                    && exit_branch.is_none()
-                {
+                if self.check_exit_conditions(node_name, &outputs) {
                     info!(graph = %self.name, "exit condition triggered, terminating");
                     return Ok(());
                 }
@@ -215,7 +240,7 @@ impl DirectedGraph {
     ) -> Vec<String> {
         let mut executables = Vec::new();
 
-        for (node_name, _node) in self.nodes.iter() {
+        for node_name in self.nodes.keys() {
             if completed.contains(node_name) {
                 continue;
             }
@@ -255,9 +280,7 @@ impl DirectedGraph {
                         return false;
                     }
                 }
-                Edge::Exit { from, .. } if outputs.contains_key(from) => {
-                    continue;
-                }
+                Edge::Exit { from, .. } if outputs.contains_key(from) => {}
                 _ => {}
             }
         }
@@ -289,16 +312,16 @@ impl DirectedGraph {
         &self,
         node_name: &str,
         outputs: &HashMap<String, Box<dyn DtoObject>>,
-    ) -> Option<Option<String>> {
+    ) -> bool {
         for edge in &self.edges {
             if let Edge::Exit { from, condition } = edge
                 && from == node_name
                 && let Some(output) = outputs.get(from)
             {
-                return Some(condition(output.as_ref()));
+                return condition(output.as_ref()).is_none();
             }
         }
-        None
+        false
     }
 
     fn resolve_input(
@@ -359,21 +382,25 @@ impl DirectedGraphBuilder {
         }
     }
 
+    #[must_use]
     pub fn description(mut self, desc: impl Into<String>) -> Self {
         self.description = Some(desc.into());
         self
     }
 
+    #[must_use]
     pub fn trigger(mut self, kind: TriggerKind) -> Self {
         self.trigger_kind = Some(kind);
         self
     }
 
+    #[must_use]
     pub fn storage(mut self, storage: Arc<dyn Storage>) -> Self {
         self.storage = Some(storage);
         self
     }
 
+    #[must_use]
     pub fn add_input<L: InputNode>(mut self, node: L) -> Self {
         let name = node.name().to_owned();
         self.insertion_order.push(name.clone());
@@ -381,6 +408,7 @@ impl DirectedGraphBuilder {
         self
     }
 
+    #[must_use]
     pub fn add_hidden<L: HiddenNode>(mut self, node: L) -> Self {
         let name = node.name().to_owned();
         self.insertion_order.push(name.clone());
@@ -388,6 +416,7 @@ impl DirectedGraphBuilder {
         self
     }
 
+    #[must_use]
     pub fn add_output<L: OutputNode>(mut self, node: L) -> Self {
         let name = node.name().to_owned();
         self.insertion_order.push(name.clone());
@@ -395,6 +424,7 @@ impl DirectedGraphBuilder {
         self
     }
 
+    #[must_use]
     pub fn add_edge(mut self, from: &str, to: &str) -> Self {
         self.edges.push(Edge::Unconditional {
             from: from.to_owned(),
@@ -403,6 +433,7 @@ impl DirectedGraphBuilder {
         self
     }
 
+    #[must_use]
     pub fn add_conditional_edge<F, I>(mut self, from: &str, condition: F, branches: I) -> Self
     where
         F: Fn(&dyn DtoObject) -> Option<String> + Send + Sync + 'static,
@@ -416,6 +447,7 @@ impl DirectedGraphBuilder {
         self
     }
 
+    #[must_use]
     pub fn add_exit_condition<F>(mut self, from: &str, condition: F) -> Self
     where
         F: Fn(&dyn DtoObject) -> Option<String> + Send + Sync + 'static,
@@ -427,6 +459,12 @@ impl DirectedGraphBuilder {
         self
     }
 
+    /// Build the `DirectedGraph`.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`GraphError`] if the graph configuration is invalid (e.g.,
+    /// duplicate node names, missing input node, type mismatches on edges).
     pub fn build(self) -> std::result::Result<DirectedGraph, GraphError> {
         self.validate()?;
 
@@ -564,7 +602,7 @@ mod tests {
 
     struct SourceNode;
     impl Node for SourceNode {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "Source"
         }
     }
@@ -581,7 +619,7 @@ mod tests {
 
     struct TransformNode;
     impl Node for TransformNode {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "Transform"
         }
     }
@@ -598,7 +636,7 @@ mod tests {
 
     struct SinkNode;
     impl Node for SinkNode {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "Sink"
         }
     }
@@ -612,7 +650,7 @@ mod tests {
 
     struct BadSinkNode;
     impl Node for BadSinkNode {
-        fn name(&self) -> &str {
+        fn name(&self) -> &'static str {
             "BadSink"
         }
     }
@@ -625,16 +663,16 @@ mod tests {
     }
 
     #[test]
-    fn test_valid_graph_builds() {
+    fn test_valid_graph_builds() -> std::result::Result<(), GraphError> {
         let graph = DirectedGraphBuilder::new("test")
             .add_input(SourceNode)
             .add_hidden(TransformNode)
             .add_output(SinkNode)
             .add_edge("Source", "Transform")
             .add_edge("Transform", "Sink")
-            .build();
-        assert!(graph.is_ok());
-        assert_eq!(graph.unwrap().name(), "test");
+            .build()?;
+        assert_eq!(graph.name(), "test");
+        Ok(())
     }
 
     #[test]
@@ -681,22 +719,22 @@ mod tests {
     }
 
     #[test]
-    fn test_trigger_kind_startup() {
+    fn test_trigger_kind_startup() -> std::result::Result<(), GraphError> {
         let graph = DirectedGraphBuilder::new("test")
             .add_input(SourceNode)
             .trigger(TriggerKind::Startup)
-            .build()
-            .unwrap();
+            .build()?;
         assert!(matches!(graph.trigger_kind(), Some(TriggerKind::Startup)));
+        Ok(())
     }
 
     #[test]
-    fn test_trigger_kind_default_none() {
+    fn test_trigger_kind_default_none() -> std::result::Result<(), GraphError> {
         let graph = DirectedGraphBuilder::new("test")
             .add_input(SourceNode)
-            .build()
-            .unwrap();
+            .build()?;
         assert!(graph.trigger_kind().is_none());
+        Ok(())
     }
 
     #[test]
@@ -730,7 +768,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_graph_execution() {
+    async fn test_graph_execution() -> Result<()> {
         let graph = DirectedGraphBuilder::new("exec_test")
             .add_input(SourceNode)
             .add_hidden(TransformNode)
@@ -738,28 +776,26 @@ mod tests {
             .add_edge("Source", "Transform")
             .add_edge("Transform", "Sink")
             .build()
-            .unwrap();
-        let result = graph.run().await;
-        assert!(result.is_ok());
+            .map_err(SmartCrabError::Graph)?;
+        graph.run().await
     }
 
     #[tokio::test]
-    async fn test_run_with_trigger() {
+    async fn test_run_with_trigger() -> Result<()> {
         let graph = DirectedGraphBuilder::new("trigger_test")
             .add_input(SourceNode)
             .add_output(SinkNode)
             .add_edge("Source", "Sink")
             .build()
-            .unwrap();
-        let result = graph.run_with_trigger(Box::new(())).await;
-        assert!(result.is_ok());
+            .map_err(SmartCrabError::Graph)?;
+        graph.run_with_trigger(Box::new(())).await
     }
 
     #[tokio::test]
-    async fn test_cycle_graph_execution() {
+    async fn test_cycle_graph_execution() -> Result<()> {
         struct CycleSource;
         impl Node for CycleSource {
-            fn name(&self) -> &str {
+            fn name(&self) -> &'static str {
                 "Source"
             }
         }
@@ -778,7 +814,7 @@ mod tests {
             executed: std::sync::Arc<std::sync::atomic::AtomicBool>,
         }
         impl Node for LoopNode {
-            fn name(&self) -> &str {
+            fn name(&self) -> &'static str {
                 "Loop"
             }
         }
@@ -797,7 +833,7 @@ mod tests {
 
         struct ExitNode;
         impl Node for ExitNode {
-            fn name(&self) -> &str {
+            fn name(&self) -> &'static str {
                 "Exit"
             }
         }
@@ -823,20 +859,20 @@ mod tests {
             .add_edge("Loop", "Exit")
             .add_exit_condition("Loop", |_| None)
             .build()
-            .unwrap();
-        let result = graph.run().await;
-        assert!(result.is_ok());
+            .map_err(SmartCrabError::Graph)?;
+        graph.run().await?;
         assert!(
             loop_executed.load(std::sync::atomic::Ordering::SeqCst),
             "Loop node must execute"
         );
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_exit_condition_terminates() {
+    async fn test_exit_condition_terminates() -> Result<()> {
         struct CountSource;
         impl Node for CountSource {
-            fn name(&self) -> &str {
+            fn name(&self) -> &'static str {
                 "Source"
             }
         }
@@ -861,22 +897,20 @@ mod tests {
                 None
             })
             .build()
-            .unwrap();
+            .map_err(SmartCrabError::Graph)?;
 
-        let result = graph.run().await;
-        assert!(result.is_ok());
+        graph.run().await?;
         assert!(exit_triggered.load(std::sync::atomic::Ordering::SeqCst));
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_graph_storage_attach_and_access() {
-        let storage: Arc<dyn Storage> = Arc::new(InMemoryStorage::new());
-
+    async fn test_graph_storage_attach_and_access() -> Result<()> {
         struct WriteNode {
             storage: Arc<dyn Storage>,
         }
         impl Node for WriteNode {
-            fn name(&self) -> &str {
+            fn name(&self) -> &'static str {
                 "Write"
             }
         }
@@ -887,13 +921,14 @@ mod tests {
             async fn run(&self, _: ()) -> Result<MsgA> {
                 self.storage
                     .set("result", "stored_value".to_owned())
-                    .await
-                    .unwrap();
+                    .await?;
                 Ok(MsgA {
                     text: "written".into(),
                 })
             }
         }
+
+        let storage: Arc<dyn Storage> = Arc::new(InMemoryStorage::new());
 
         let graph = DirectedGraphBuilder::new("storage_test")
             .storage(storage.clone())
@@ -901,35 +936,36 @@ mod tests {
                 storage: storage.clone(),
             })
             .build()
-            .unwrap();
+            .map_err(SmartCrabError::Graph)?;
 
-        graph.run().await.unwrap();
+        graph.run().await?;
 
         assert!(graph.storage().is_some());
         assert_eq!(
-            storage.get("result").await.unwrap(),
+            storage.get("result").await?,
             Some("stored_value".to_owned())
         );
 
         // Typed access via Arc<dyn Storage>
-        storage.set_typed("typed_key", &42u32).await.unwrap();
-        let v: Option<u32> = storage.get_typed("typed_key").await.unwrap();
+        storage.set_typed("typed_key", &42u32).await?;
+        let v: Option<u32> = storage.get_typed("typed_key").await?;
         assert_eq!(v, Some(42u32));
+        Ok(())
     }
 
     #[test]
-    fn test_graph_no_storage_by_default() {
+    fn test_graph_no_storage_by_default() -> std::result::Result<(), GraphError> {
         let graph = DirectedGraphBuilder::new("test")
             .add_input(SourceNode)
-            .build()
-            .unwrap();
+            .build()?;
         assert!(graph.storage().is_none());
+        Ok(())
     }
 
     /// Conditional branch: the bypassed branch must never execute, and the graph
     /// must complete without an "Unreachable node" error.
     #[tokio::test]
-    async fn test_conditional_branch_skips_inactive_node() {
+    async fn test_conditional_branch_skips_inactive_node() -> Result<()> {
         #[derive(Debug, Clone, Serialize, Deserialize)]
         struct Flag {
             value: bool,
@@ -937,7 +973,7 @@ mod tests {
 
         struct FlagSource;
         impl Node for FlagSource {
-            fn name(&self) -> &str {
+            fn name(&self) -> &'static str {
                 "FlagSource"
             }
         }
@@ -950,12 +986,9 @@ mod tests {
             }
         }
 
-        let true_executed = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
-        let false_executed = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
-
         struct TrueSink(std::sync::Arc<std::sync::atomic::AtomicBool>);
         impl Node for TrueSink {
-            fn name(&self) -> &str {
+            fn name(&self) -> &'static str {
                 "TrueSink"
             }
         }
@@ -970,7 +1003,7 @@ mod tests {
 
         struct FalseSink(std::sync::Arc<std::sync::atomic::AtomicBool>);
         impl Node for FalseSink {
-            fn name(&self) -> &str {
+            fn name(&self) -> &'static str {
                 "FalseSink"
             }
         }
@@ -982,6 +1015,9 @@ mod tests {
                 Ok(())
             }
         }
+
+        let true_executed = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let false_executed = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
 
         let graph = DirectedGraphBuilder::new("cond_test")
             .add_input(FlagSource)
@@ -999,10 +1035,9 @@ mod tests {
                 ],
             )
             .build()
-            .unwrap();
+            .map_err(SmartCrabError::Graph)?;
 
-        let result = graph.run().await;
-        assert!(result.is_ok(), "graph should complete without error");
+        graph.run().await?;
         assert!(
             !true_executed.load(std::sync::atomic::Ordering::SeqCst),
             "TrueSink must NOT execute when condition is false"
@@ -1011,5 +1046,6 @@ mod tests {
             false_executed.load(std::sync::atomic::Ordering::SeqCst),
             "FalseSink must execute when condition is false"
         );
+        Ok(())
     }
 }

@@ -45,7 +45,7 @@ struct GenerateTasks {
 }
 
 impl Node for GenerateTasks {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "GenerateTasks"
     }
 }
@@ -87,7 +87,7 @@ struct ProcessTask {
 }
 
 impl Node for ProcessTask {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "ProcessTask"
     }
 }
@@ -127,7 +127,7 @@ struct Summarize {
 }
 
 impl Node for Summarize {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Summarize"
     }
 }
@@ -160,7 +160,7 @@ impl OutputNode for Summarize {
 // ---------------------------------------------------------------------------
 
 #[tokio::main]
-async fn main() {
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let storage: Arc<dyn Storage> = Arc::new(InMemoryStorage::new());
 
     let graph = DirectedGraphBuilder::new("storage_typed")
@@ -177,8 +177,8 @@ async fn main() {
         })
         .add_edge("GenerateTasks", "ProcessTask")
         .add_edge("ProcessTask", "Summarize")
-        .build()
-        .expect("failed to build graph");
+        .build()?;
 
-    graph.run().await.expect("graph execution failed");
+    graph.run().await?;
+    Ok(())
 }
