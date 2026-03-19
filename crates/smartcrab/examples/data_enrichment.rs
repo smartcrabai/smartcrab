@@ -4,7 +4,7 @@
 //! transforms, and stores data.
 //!
 //! ```text
-//! [FetchData] → [Validate] → [Enrich] → [Transform] → [Store]
+//! [FetchData] -> [Validate] -> [Enrich] -> [Transform] -> [Store]
 //! ```
 //!
 //! Run: `cargo run -p smartcrab --example data_enrichment`
@@ -44,7 +44,7 @@ impl InputNode for FetchData {
     type TriggerData = ();
     type Output = UserProfile;
     async fn run(&self, _: ()) -> Result<UserProfile> {
-        println!("📡 Fetching user profile...");
+        println!("[fetch] Fetching user profile...");
         Ok(UserProfile {
             id: 42,
             name: "Alice Smith".into(),
@@ -73,7 +73,7 @@ impl HiddenNode for ValidateProfile {
         let has_name = !input.name.is_empty();
         input.verified = has_email && has_name;
         println!(
-            "✅ Validation: email={}, name={}, verified={}",
+            "[validate] Validation: email={}, name={}, verified={}",
             has_email, has_name, input.verified
         );
         Ok(input)
@@ -96,7 +96,7 @@ impl HiddenNode for EnrichProfile {
         input.enrichments.push("geo:US".into());
         input.enrichments.push("segment:enterprise".into());
         input.enrichments.push("source:api".into());
-        println!("🔧 Enriched with {} tags", input.enrichments.len());
+        println!("[enrich] Enriched with {} tags", input.enrichments.len());
         Ok(input)
     }
 }
@@ -118,7 +118,7 @@ impl HiddenNode for TransformProfile {
         let bonus = input.enrichments.len() as f64 * 5.0;
         input.score = Some(base + bonus);
         input.name = input.name.to_uppercase();
-        println!("🔄 Transformed: score={:.1}", input.score.unwrap());
+        println!("[transform] Transformed: score={:.1}", input.score.unwrap());
         Ok(input)
     }
 }
@@ -136,7 +136,7 @@ impl OutputNode for StoreProfile {
     type Input = UserProfile;
     async fn run(&self, input: UserProfile) -> Result<()> {
         println!(
-            "💾 Stored: id={}, name={}, score={:.1}, enrichments={:?}",
+            "[store] Stored: id={}, name={}, score={:.1}, enrichments={:?}",
             input.id,
             input.name,
             input.score.unwrap_or(0.0),

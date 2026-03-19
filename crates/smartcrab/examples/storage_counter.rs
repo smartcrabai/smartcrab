@@ -4,7 +4,7 @@
 //! layers and accumulating state across multiple graph runs.
 //!
 //! ```text
-//! [ReadCount] → [IncrementCount] → [PrintCount]
+//! [ReadCount] -> [IncrementCount] -> [PrintCount]
 //! ```
 //!
 //! Run: `cargo run -p smartcrab --example storage_counter`

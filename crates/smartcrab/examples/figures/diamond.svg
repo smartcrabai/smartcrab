@@ -13,14 +13,14 @@
 <g id="node1" class="node">
 <title>TextInput</title>
 <path fill="none" stroke="black" d="M124.75,-277.1C124.75,-277.1 69.75,-277.1 69.75,-277.1 63.75,-277.1 57.75,-271.1 57.75,-265.1 57.75,-265.1 57.75,-252.6 57.75,-252.6 57.75,-246.6 63.75,-240.6 69.75,-240.6 69.75,-240.6 124.75,-240.6 124.75,-240.6 130.75,-240.6 136.75,-246.6 136.75,-252.6 136.75,-252.6 136.75,-265.1 136.75,-265.1 136.75,-271.1 130.75,-277.1 124.75,-277.1"/>
-<text xml:space="preserve" text-anchor="middle" x="97.25" y="-261.7" font-family="sans-serif" font-size="12.00">📥 TextInput</text>
+<text xml:space="preserve" text-anchor="middle" x="97.25" y="-261.7" font-family="sans-serif" font-size="12.00">[In] TextInput</text>
 <text xml:space="preserve" text-anchor="middle" x="97.25" y="-245.95" font-family="sans-serif" font-size="12.00">(Input)</text>
 </g>
 <!-- UpperCase -->
 <g id="node2" class="node">
 <title>UpperCase</title>
 <polygon fill="none" stroke="black" points="92.5,-204.6 0,-204.6 0,-168.1 92.5,-168.1 92.5,-204.6"/>
-<text xml:space="preserve" text-anchor="middle" x="46.25" y="-189.2" font-family="sans-serif" font-size="12.00">⚙️ UpperCase</text>
+<text xml:space="preserve" text-anchor="middle" x="46.25" y="-189.2" font-family="sans-serif" font-size="12.00">[Hidden] UpperCase</text>
 <text xml:space="preserve" text-anchor="middle" x="46.25" y="-173.45" font-family="sans-serif" font-size="12.00">(Hidden)</text>
 </g>
 <!-- TextInput&#45;&gt;UpperCase -->
@@ -33,7 +33,7 @@
 <g id="node3" class="node">
 <title>Reverse</title>
 <polygon fill="none" stroke="black" points="186.25,-204.6 110.25,-204.6 110.25,-168.1 186.25,-168.1 186.25,-204.6"/>
-<text xml:space="preserve" text-anchor="middle" x="148.25" y="-189.2" font-family="sans-serif" font-size="12.00">⚙️ Reverse</text>
+<text xml:space="preserve" text-anchor="middle" x="148.25" y="-189.2" font-family="sans-serif" font-size="12.00">[Hidden] Reverse</text>
 <text xml:space="preserve" text-anchor="middle" x="148.25" y="-173.45" font-family="sans-serif" font-size="12.00">(Hidden)</text>
 </g>
 <!-- TextInput&#45;&gt;Reverse -->
@@ -46,7 +46,7 @@
 <g id="node4" class="node">
 <title>Merger</title>
 <polygon fill="none" stroke="black" points="131.5,-132.1 63,-132.1 63,-95.6 131.5,-95.6 131.5,-132.1"/>
-<text xml:space="preserve" text-anchor="middle" x="97.25" y="-116.7" font-family="sans-serif" font-size="12.00">⚙️ Merger</text>
+<text xml:space="preserve" text-anchor="middle" x="97.25" y="-116.7" font-family="sans-serif" font-size="12.00">[Hidden] Merger</text>
 <text xml:space="preserve" text-anchor="middle" x="97.25" y="-100.95" font-family="sans-serif" font-size="12.00">(Hidden)</text>
 </g>
 <!-- UpperCase&#45;&gt;Merger -->
@@ -65,7 +65,7 @@
 <g id="node5" class="node">
 <title>Display</title>
 <polygon fill="none" stroke="black" points="155.63,-29.8 126.44,-59.6 68.06,-59.6 38.87,-29.8 68.06,0 126.44,0 155.63,-29.8"/>
-<text xml:space="preserve" text-anchor="middle" x="97.25" y="-32.65" font-family="sans-serif" font-size="12.00">📤 Display</text>
+<text xml:space="preserve" text-anchor="middle" x="97.25" y="-32.65" font-family="sans-serif" font-size="12.00">[Out] Display</text>
 <text xml:space="preserve" text-anchor="middle" x="97.25" y="-16.9" font-family="sans-serif" font-size="12.00">(Output)</text>
 </g>
 <!-- Merger&#45;&gt;Display -->

@@ -5,7 +5,7 @@
 //! that activates this graph periodically.
 //!
 //! ```text
-//! [ScheduledPoller] → [ReportBuilder] → [NotificationSender]
+//! [ScheduledPoller] -> [ReportBuilder] -> [NotificationSender]
 //! ```
 //!
 //! Run: `cargo run -p smartcrab --example cron_trigger`
@@ -52,7 +52,7 @@ impl InputNode for ScheduledPoller {
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
             .as_secs();
-        println!("⏰ Cron fired at t={now}");
+        println!("[cron] Cron fired at t={now}");
         Ok(Snapshot {
             timestamp_secs: now,
             metric: "cpu_usage".into(),
@@ -74,7 +74,7 @@ impl HiddenNode for ReportBuilder {
     type Input = Snapshot;
     type Output = Report;
     async fn run(&self, input: Snapshot) -> Result<Report> {
-        println!("📊 Building report for metric={}", input.metric);
+        println!("[report] Building report for metric={}", input.metric);
         Ok(Report {
             summary: format!(
                 "[t={}] {}: {:.1}",
@@ -97,7 +97,7 @@ impl OutputNode for NotificationSender {
     type Input = Report;
     async fn run(&self, input: Report) -> Result<()> {
         // In production: post to Discord / Slack / etc.
-        println!("📢 Sending notification: {}", input.summary);
+        println!("[notify] Sending notification: {}", input.summary);
         Ok(())
     }
 }
@@ -109,7 +109,7 @@ impl OutputNode for NotificationSender {
 #[tokio::main]
 async fn main() {
     let graph = DirectedGraphBuilder::new("cron_pipeline")
-        .description("Cron-triggered pipeline: poll → build report → notify")
+        .description("Cron-triggered pipeline: poll -> build report -> notify")
         .trigger(TriggerKind::Cron {
             schedule: "0 * * * * * *".into(),
         })

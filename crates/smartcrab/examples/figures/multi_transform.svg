@@ -13,14 +13,14 @@
 <g id="node1" class="node">
 <title>DataSource</title>
 <path fill="none" stroke="black" d="M98.65,-349.6C98.65,-349.6 27.9,-349.6 27.9,-349.6 21.9,-349.6 15.9,-343.6 15.9,-337.6 15.9,-337.6 15.9,-325.1 15.9,-325.1 15.9,-319.1 21.9,-313.1 27.9,-313.1 27.9,-313.1 98.65,-313.1 98.65,-313.1 104.65,-313.1 110.65,-319.1 110.65,-325.1 110.65,-325.1 110.65,-337.6 110.65,-337.6 110.65,-343.6 104.65,-349.6 98.65,-349.6"/>
-<text xml:space="preserve" text-anchor="middle" x="63.28" y="-334.2" font-family="sans-serif" font-size="12.00">📥 DataSource</text>
+<text xml:space="preserve" text-anchor="middle" x="63.28" y="-334.2" font-family="sans-serif" font-size="12.00">[In] DataSource</text>
 <text xml:space="preserve" text-anchor="middle" x="63.28" y="-318.45" font-family="sans-serif" font-size="12.00">(Input)</text>
 </g>
 <!-- Normalizer -->
 <g id="node2" class="node">
 <title>Normalizer</title>
 <polygon fill="none" stroke="black" points="108.03,-277.1 18.53,-277.1 18.53,-240.6 108.03,-240.6 108.03,-277.1"/>
-<text xml:space="preserve" text-anchor="middle" x="63.28" y="-261.7" font-family="sans-serif" font-size="12.00">⚙️ Normalizer</text>
+<text xml:space="preserve" text-anchor="middle" x="63.28" y="-261.7" font-family="sans-serif" font-size="12.00">[Hidden] Normalizer</text>
 <text xml:space="preserve" text-anchor="middle" x="63.28" y="-245.95" font-family="sans-serif" font-size="12.00">(Hidden)</text>
 </g>
 <!-- DataSource&#45;&gt;Normalizer -->
@@ -33,7 +33,7 @@
 <g id="node3" class="node">
 <title>Enricher</title>
 <polygon fill="none" stroke="black" points="101.28,-204.6 25.28,-204.6 25.28,-168.1 101.28,-168.1 101.28,-204.6"/>
-<text xml:space="preserve" text-anchor="middle" x="63.28" y="-189.2" font-family="sans-serif" font-size="12.00">⚙️ Enricher</text>
+<text xml:space="preserve" text-anchor="middle" x="63.28" y="-189.2" font-family="sans-serif" font-size="12.00">[Hidden] Enricher</text>
 <text xml:space="preserve" text-anchor="middle" x="63.28" y="-173.45" font-family="sans-serif" font-size="12.00">(Hidden)</text>
 </g>
 <!-- Normalizer&#45;&gt;Enricher -->
@@ -46,7 +46,7 @@
 <g id="node4" class="node">
 <title>Scorer</title>
 <polygon fill="none" stroke="black" points="96.4,-132.1 30.15,-132.1 30.15,-95.6 96.4,-95.6 96.4,-132.1"/>
-<text xml:space="preserve" text-anchor="middle" x="63.28" y="-116.7" font-family="sans-serif" font-size="12.00">⚙️ Scorer</text>
+<text xml:space="preserve" text-anchor="middle" x="63.28" y="-116.7" font-family="sans-serif" font-size="12.00">[Hidden] Scorer</text>
 <text xml:space="preserve" text-anchor="middle" x="63.28" y="-100.95" font-family="sans-serif" font-size="12.00">(Hidden)</text>
 </g>
 <!-- Enricher&#45;&gt;Scorer -->
@@ -59,7 +59,7 @@
 <g id="node5" class="node">
 <title>Reporter</title>
 <polygon fill="none" stroke="black" points="126.56,-29.8 94.92,-59.6 31.64,-59.6 0,-29.8 31.64,0 94.92,0 126.56,-29.8"/>
-<text xml:space="preserve" text-anchor="middle" x="63.28" y="-32.65" font-family="sans-serif" font-size="12.00">📤 Reporter</text>
+<text xml:space="preserve" text-anchor="middle" x="63.28" y="-32.65" font-family="sans-serif" font-size="12.00">[Out] Reporter</text>
 <text xml:space="preserve" text-anchor="middle" x="63.28" y="-16.9" font-family="sans-serif" font-size="12.00">(Output)</text>
 </g>
 <!-- Scorer&#45;&gt;Reporter -->

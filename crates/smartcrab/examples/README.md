@@ -15,7 +15,7 @@ cargo run -p smartcrab --example <example_name>
 
 **File:** [`basic_pipeline.rs`](./basic_pipeline.rs)
 
-The simplest graph — a linear Input → Hidden → Output chain.
+The simplest graph -- a linear Input -> Hidden -> Output chain.
 
 ![basic_pipeline](./figures/basic_pipeline.svg)
 
@@ -95,7 +95,7 @@ Combines conditional branching and multi-stage processing in a single graph.
 
 **File:** [`chatbot.rs`](./chatbot.rs)
 
-Simulates an AI chatbot pipeline: message reception → agent processing → response delivery.
+Simulates an AI chatbot pipeline: message reception -> agent processing -> response delivery.
 
 ![chatbot](./figures/chatbot.svg)
 
@@ -127,6 +127,6 @@ The SVG figures were generated using [Graphviz](https://graphviz.org/) DOT forma
 matching the output style of `smartcrab viz --format dot`.
 
 Node shapes:
-- **Rounded box** — Input node
-- **Box** — Hidden node
-- **Hexagon** — Output node
+- **Rounded box** -- Input node
+- **Box** -- Hidden node
+- **Hexagon** -- Output node

@@ -5,7 +5,7 @@
 //! and confirms all data is still present.
 //!
 //! ```text
-//! [RecordDeployment] → [UpdateHistory] → [PrintReport]
+//! [RecordDeployment] -> [UpdateHistory] -> [PrintReport]
 //! ```
 //!
 //! Run: `cargo run -p smartcrab --example storage_persistent`
@@ -169,7 +169,7 @@ async fn main() {
 
         graph.run().await.expect("graph execution failed");
     }
-    // storage is dropped here — file is already flushed on every write
+    // storage is dropped here -- file is already flushed on every write
 
     // --- Second run: reopen and verify persistence ---
     println!("\n=== Second run (verifying persistence after storage drop) ===");

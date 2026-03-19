@@ -13,14 +13,14 @@
 <g id="node1" class="node">
 <title>Seed</title>
 <path fill="none" stroke="black" d="M100.01,-228.1C100.01,-228.1 64.51,-228.1 64.51,-228.1 58.51,-228.1 52.51,-222.1 52.51,-216.1 52.51,-216.1 52.51,-203.6 52.51,-203.6 52.51,-197.6 58.51,-191.6 64.51,-191.6 64.51,-191.6 100.01,-191.6 100.01,-191.6 106.01,-191.6 112.01,-197.6 112.01,-203.6 112.01,-203.6 112.01,-216.1 112.01,-216.1 112.01,-222.1 106.01,-228.1 100.01,-228.1"/>
-<text xml:space="preserve" text-anchor="middle" x="82.26" y="-212.7" font-family="sans-serif" font-size="12.00">📥 Seed</text>
+<text xml:space="preserve" text-anchor="middle" x="82.26" y="-212.7" font-family="sans-serif" font-size="12.00">[In] Seed</text>
 <text xml:space="preserve" text-anchor="middle" x="82.26" y="-196.95" font-family="sans-serif" font-size="12.00">(Input)</text>
 </g>
 <!-- Accumulator -->
 <g id="node2" class="node">
 <title>Accumulator</title>
 <polygon fill="none" stroke="black" points="130.76,-154.6 33.76,-154.6 33.76,-118.1 130.76,-118.1 130.76,-154.6"/>
-<text xml:space="preserve" text-anchor="middle" x="82.26" y="-139.2" font-family="sans-serif" font-size="12.00">⚙️ Accumulator</text>
+<text xml:space="preserve" text-anchor="middle" x="82.26" y="-139.2" font-family="sans-serif" font-size="12.00">[Hidden] Accumulator</text>
 <text xml:space="preserve" text-anchor="middle" x="82.26" y="-123.45" font-family="sans-serif" font-size="12.00">(Hidden)</text>
 </g>
 <!-- Seed&#45;&gt;Accumulator -->
@@ -40,7 +40,7 @@
 <g id="node3" class="node">
 <title>ResultPrinter</title>
 <polygon fill="none" stroke="black" points="164.52,-29.8 123.39,-59.6 41.13,-59.6 0,-29.8 41.13,0 123.39,0 164.52,-29.8"/>
-<text xml:space="preserve" text-anchor="middle" x="82.26" y="-32.65" font-family="sans-serif" font-size="12.00">📤 ResultPrinter</text>
+<text xml:space="preserve" text-anchor="middle" x="82.26" y="-32.65" font-family="sans-serif" font-size="12.00">[Out] ResultPrinter</text>
 <text xml:space="preserve" text-anchor="middle" x="82.26" y="-16.9" font-family="sans-serif" font-size="12.00">(Output)</text>
 </g>
 <!-- Accumulator&#45;&gt;ResultPrinter -->
@@ -49,7 +49,7 @@
 <path fill="none" stroke="black" d="M82.26,-117.62C82.26,-104.87 82.26,-87.15 82.26,-71.05"/>
 <polygon fill="black" stroke="black" points="85.76,-71.21 82.26,-61.21 78.76,-71.21 85.76,-71.21"/>
 <text xml:space="preserve" text-anchor="middle" x="105.51" y="-90.6" font-family="sans-serif" font-size="10.00">exit</text>
-<text xml:space="preserve" text-anchor="middle" x="105.51" y="-79.35" font-family="sans-serif" font-size="10.00">(sum ≥ 10)</text>
+<text xml:space="preserve" text-anchor="middle" x="105.51" y="-79.35" font-family="sans-serif" font-size="10.00">(sum &gt;= 10)</text>
 </g>
 </g>
 </svg>

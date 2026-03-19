@@ -611,8 +611,8 @@ DirectedGraphBuilder::new("test")
         assert!(output.contains("DiscordInput"));
         assert!(output.contains("DataProcessor"));
         assert!(output.contains("JsonResponder"));
-        assert!(output.contains("\u{2502}")); // │
-        assert!(output.contains("\u{25BC}")); // ▼
+        assert!(output.contains("\u{2502}")); // box-drawing vertical bar
+        assert!(output.contains("\u{25BC}")); // downward-pointing arrow
     }
 
     #[test]

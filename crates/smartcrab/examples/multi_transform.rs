@@ -3,7 +3,7 @@
 //! A pipeline with multiple hidden layers chained together.
 //!
 //! ```text
-//! [DataSource] → [Normalizer] → [Enricher] → [Scorer] → [Reporter]
+//! [DataSource] -> [Normalizer] -> [Enricher] -> [Scorer] -> [Reporter]
 //! ```
 //!
 //! Run: `cargo run -p smartcrab --example multi_transform`

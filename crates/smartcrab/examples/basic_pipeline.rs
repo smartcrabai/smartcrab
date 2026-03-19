@@ -1,9 +1,9 @@
 //! # Basic Pipeline
 //!
-//! The simplest DirectedGraph: Input → Hidden → Output.
+//! The simplest DirectedGraph: Input -> Hidden -> Output.
 //!
 //! ```text
-//! [Greeter] → [Formatter] → [Printer]
+//! [Greeter] -> [Formatter] -> [Printer]
 //! ```
 //!
 //! Run: `cargo run -p smartcrab --example basic_pipeline`
@@ -58,7 +58,7 @@ impl HiddenNode for Formatter {
     type Output = Greeting;
     async fn run(&self, input: Greeting) -> Result<Greeting> {
         Ok(Greeting {
-            message: format!("✨ {} ✨", input.message),
+            message: format!("** {} **", input.message),
         })
     }
 }
@@ -87,7 +87,7 @@ impl OutputNode for Printer {
 #[tokio::main]
 async fn main() {
     let graph = DirectedGraphBuilder::new("basic_pipeline")
-        .description("A simple linear pipeline: Greeter → Formatter → Printer")
+        .description("A simple linear pipeline: Greeter -> Formatter -> Printer")
         .trigger(TriggerKind::Startup)
         .add_input(Greeter)
         .add_hidden(Formatter)

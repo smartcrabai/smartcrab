@@ -4,9 +4,9 @@
 //! hidden layers, then converges into a merge point before the output.
 //!
 //! ```text
-//!              ┌→ [UpperCase] ─┐
-//! [TextInput] ─┤               ├→ [Merger] → [Display]
-//!              └→ [Reverse]   ─┘
+//!              +-> [UpperCase] -+
+//! [TextInput] -+               +-> [Merger] -> [Display]
+//!              +-> [Reverse]  -+
 //! ```
 //!
 //! Run: `cargo run -p smartcrab --example diamond`
@@ -98,7 +98,7 @@ impl HiddenNode for Merger {
     type Input = Text;
     type Output = Text;
     async fn run(&self, input: Text) -> Result<Text> {
-        println!("🔀 Merging: {}", input.content);
+        println!("[merge] Merging: {}", input.content);
         Ok(input)
     }
 }
@@ -115,7 +115,7 @@ impl Node for Display {
 impl OutputNode for Display {
     type Input = Text;
     async fn run(&self, input: Text) -> Result<()> {
-        println!("📄 Result: {}", input.content);
+        println!("[display] Result: {}", input.content);
         Ok(())
     }
 }

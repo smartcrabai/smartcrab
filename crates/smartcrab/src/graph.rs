@@ -277,7 +277,7 @@ impl DirectedGraph {
 
         // If this node is only reachable via conditional edges and none of them selected
         // it (we would have returned `true` above), all sources have resolved to other
-        // branches — this node will never be activated.
+        // branches -- this node will never be activated.
         if has_conditional_dep && !has_unconditional_dep {
             return false;
         }

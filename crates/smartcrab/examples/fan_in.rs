@@ -3,8 +3,8 @@
 //! Multiple independent input sources converge into a single processing node.
 //!
 //! ```text
-//! [ApiSource]  ──→ [Aggregator] → [Dashboard]
-//! [DbSource]   ──→
+//! [ApiSource]  --> [Aggregator] -> [Dashboard]
+//! [DbSource]   -->
 //! ```
 //!
 //! Run: `cargo run -p smartcrab --example fan_in`
@@ -80,7 +80,7 @@ impl HiddenNode for Aggregator {
     type Input = DataPoint;
     type Output = DataPoint;
     async fn run(&self, input: DataPoint) -> Result<DataPoint> {
-        println!("📥 Aggregating from {}: {}", input.source, input.value);
+        println!("[aggregate] Aggregating from {}: {}", input.source, input.value);
         Ok(DataPoint {
             source: format!("aggregated({})", input.source),
             value: input.value,
@@ -100,7 +100,7 @@ impl Node for Dashboard {
 impl OutputNode for Dashboard {
     type Input = DataPoint;
     async fn run(&self, input: DataPoint) -> Result<()> {
-        println!("📊 Dashboard: {} = {}", input.source, input.value);
+        println!("[dashboard] Dashboard: {} = {}", input.source, input.value);
         Ok(())
     }
 }

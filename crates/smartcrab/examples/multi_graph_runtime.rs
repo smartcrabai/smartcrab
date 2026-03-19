@@ -4,8 +4,8 @@
 //! using the Runtime.
 //!
 //! ```text
-//! Graph 1: [HealthChecker] → [HealthReporter]
-//! Graph 2: [TaskPoller] → [TaskExecutor] → [TaskReporter]
+//! Graph 1: [HealthChecker] -> [HealthReporter]
+//! Graph 2: [TaskPoller] -> [TaskExecutor] -> [TaskReporter]
 //! ```
 //!
 //! Run: `cargo run -p smartcrab --example multi_graph_runtime`
@@ -48,7 +48,7 @@ impl InputNode for HealthChecker {
     type TriggerData = ();
     type Output = HealthStatus;
     async fn run(&self, _: ()) -> Result<HealthStatus> {
-        println!("🏥 Checking service health...");
+        println!("[health] Checking service health...");
         Ok(HealthStatus {
             service: "api-gateway".into(),
             healthy: true,
@@ -68,7 +68,7 @@ impl Node for HealthReporter {
 impl OutputNode for HealthReporter {
     type Input = HealthStatus;
     async fn run(&self, input: HealthStatus) -> Result<()> {
-        let icon = if input.healthy { "✅" } else { "❌" };
+        let icon = if input.healthy { "[UP]" } else { "[DOWN]" };
         println!(
             "{icon} Health: {} is {}",
             input.service,
@@ -95,7 +95,7 @@ impl InputNode for TaskPoller {
     type TriggerData = ();
     type Output = Task;
     async fn run(&self, _: ()) -> Result<Task> {
-        println!("📋 Polling for tasks...");
+        println!("[poll] Polling for tasks...");
         Ok(Task {
             id: 1,
             name: "deploy-v2".into(),
@@ -117,7 +117,7 @@ impl HiddenNode for TaskExecutor {
     type Input = Task;
     type Output = Task;
     async fn run(&self, mut input: Task) -> Result<Task> {
-        println!("⚡ Executing task: {}", input.name);
+        println!("[execute] Executing task: {}", input.name);
         input.status = "completed".into();
         Ok(input)
     }
@@ -135,7 +135,7 @@ impl Node for TaskReporter {
 impl OutputNode for TaskReporter {
     type Input = Task;
     async fn run(&self, input: Task) -> Result<()> {
-        println!("📊 Task #{} ({}): {}", input.id, input.name, input.status);
+        println!("[report] Task #{} ({}): {}", input.id, input.name, input.status);
         Ok(())
     }
 }

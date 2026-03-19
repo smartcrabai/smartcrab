@@ -98,8 +98,8 @@ impl Runtime {
         }
 
         // Route each chat graph to the appropriate gateway.
-        // platform == Some(p) → find gateway where gw.platform() == p
-        // platform == None    → use the first gateway
+        // platform == Some(p) -> find gateway where gw.platform() == p
+        // platform == None    -> use the first gateway
         let mut gateway_graphs: HashMap<usize, Vec<Arc<DirectedGraph>>> = HashMap::new();
         for graph in &chat_graphs {
             let platform = if let Some(TriggerKind::Chat { platform, .. }) = graph.trigger_kind() {
@@ -172,7 +172,7 @@ impl Runtime {
         if !has_long_running {
             return startup_result;
         }
-        // Startup failed — propagate before running long-running tasks.
+        // Startup failed -- propagate before running long-running tasks.
         startup_result?;
 
         // Wait for long-running tasks or shutdown signal.

@@ -4,7 +4,7 @@
 //! for namespace-based key enumeration.
 //!
 //! ```text
-//! [GenerateTasks] → [ProcessTask] → [Summarize]
+//! [GenerateTasks] -> [ProcessTask] -> [Summarize]
 //! ```
 //!
 //! Run: `cargo run -p smartcrab --example storage_typed`

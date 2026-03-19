@@ -23,14 +23,14 @@
 <g id="node1" class="node">
 <title>HealthChecker</title>
 <path fill="none" stroke="black" d="M151.62,-243.71C151.62,-243.71 64.38,-243.71 64.38,-243.71 58.38,-243.71 52.38,-237.71 52.38,-231.71 52.38,-231.71 52.38,-219.21 52.38,-219.21 52.38,-213.21 58.38,-207.21 64.38,-207.21 64.38,-207.21 151.62,-207.21 151.62,-207.21 157.62,-207.21 163.62,-213.21 163.62,-219.21 163.62,-219.21 163.62,-231.71 163.62,-231.71 163.62,-237.71 157.62,-243.71 151.62,-243.71"/>
-<text xml:space="preserve" text-anchor="middle" x="108" y="-228.31" font-family="sans-serif" font-size="12.00">📥 HealthChecker</text>
+<text xml:space="preserve" text-anchor="middle" x="108" y="-228.31" font-family="sans-serif" font-size="12.00">[In] HealthChecker</text>
 <text xml:space="preserve" text-anchor="middle" x="108" y="-212.56" font-family="sans-serif" font-size="12.00">(Input)</text>
 </g>
 <!-- HealthReporter -->
 <g id="node2" class="node">
 <title>HealthReporter</title>
 <polygon fill="none" stroke="black" points="200.06,-141.41 154.03,-171.21 61.97,-171.21 15.94,-141.41 61.97,-111.6 154.03,-111.6 200.06,-141.41"/>
-<text xml:space="preserve" text-anchor="middle" x="108" y="-144.26" font-family="sans-serif" font-size="12.00">📤 HealthReporter</text>
+<text xml:space="preserve" text-anchor="middle" x="108" y="-144.26" font-family="sans-serif" font-size="12.00">[Out] HealthReporter</text>
 <text xml:space="preserve" text-anchor="middle" x="108" y="-128.51" font-family="sans-serif" font-size="12.00">(Output)</text>
 </g>
 <!-- HealthChecker&#45;&gt;HealthReporter -->
@@ -43,14 +43,14 @@
 <g id="node3" class="node">
 <title>TaskPoller</title>
 <path fill="none" stroke="black" d="M338.62,-243.71C338.62,-243.71 275.38,-243.71 275.38,-243.71 269.38,-243.71 263.38,-237.71 263.38,-231.71 263.38,-231.71 263.38,-219.21 263.38,-219.21 263.38,-213.21 269.38,-207.21 275.38,-207.21 275.38,-207.21 338.62,-207.21 338.62,-207.21 344.62,-207.21 350.62,-213.21 350.62,-219.21 350.62,-219.21 350.62,-231.71 350.62,-231.71 350.62,-237.71 344.62,-243.71 338.62,-243.71"/>
-<text xml:space="preserve" text-anchor="middle" x="307" y="-228.31" font-family="sans-serif" font-size="12.00">📥 TaskPoller</text>
+<text xml:space="preserve" text-anchor="middle" x="307" y="-228.31" font-family="sans-serif" font-size="12.00">[In] TaskPoller</text>
 <text xml:space="preserve" text-anchor="middle" x="307" y="-212.56" font-family="sans-serif" font-size="12.00">(Input)</text>
 </g>
 <!-- TaskExecutor -->
 <g id="node4" class="node">
 <title>TaskExecutor</title>
 <polygon fill="none" stroke="black" points="358.5,-159.66 255.5,-159.66 255.5,-123.16 358.5,-123.16 358.5,-159.66"/>
-<text xml:space="preserve" text-anchor="middle" x="307" y="-144.26" font-family="sans-serif" font-size="12.00">⚙️ TaskExecutor</text>
+<text xml:space="preserve" text-anchor="middle" x="307" y="-144.26" font-family="sans-serif" font-size="12.00">[Hidden] TaskExecutor</text>
 <text xml:space="preserve" text-anchor="middle" x="307" y="-128.51" font-family="sans-serif" font-size="12.00">(Hidden)</text>
 </g>
 <!-- TaskPoller&#45;&gt;TaskExecutor -->
@@ -63,7 +63,7 @@
 <g id="node5" class="node">
 <title>TaskReporter</title>
 <polygon fill="none" stroke="black" points="390.49,-45.8 348.74,-75.6 265.26,-75.6 223.51,-45.8 265.26,-16 348.74,-16 390.49,-45.8"/>
-<text xml:space="preserve" text-anchor="middle" x="307" y="-48.65" font-family="sans-serif" font-size="12.00">📤 TaskReporter</text>
+<text xml:space="preserve" text-anchor="middle" x="307" y="-48.65" font-family="sans-serif" font-size="12.00">[Out] TaskReporter</text>
 <text xml:space="preserve" text-anchor="middle" x="307" y="-32.9" font-family="sans-serif" font-size="12.00">(Output)</text>
 </g>
 <!-- TaskExecutor&#45;&gt;TaskReporter -->

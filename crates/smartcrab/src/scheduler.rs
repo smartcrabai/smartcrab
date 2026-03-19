@@ -20,7 +20,7 @@ struct CronEntry {
 /// graphs should fire based on their cron expressions.
 pub async fn run_cron_graphs(graphs: Vec<Arc<DirectedGraph>>) -> Result<()> {
     if graphs.is_empty() {
-        // Nothing to schedule — block forever so tokio::select! doesn't exit.
+        // Nothing to schedule -- block forever so tokio::select! doesn't exit.
         return std::future::pending().await;
     }
 
@@ -50,7 +50,7 @@ pub async fn run_cron_graphs(graphs: Vec<Arc<DirectedGraph>>) -> Result<()> {
     let mut last_fired: Vec<Option<chrono::DateTime<Utc>>> = vec![None; entries.len()];
 
     let mut interval = tokio::time::interval(Duration::from_secs(60));
-    // First tick fires immediately — use it to bootstrap.
+    // First tick fires immediately -- use it to bootstrap.
     interval.tick().await;
 
     loop {

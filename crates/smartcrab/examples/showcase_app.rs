@@ -9,7 +9,7 @@
 use smartcrab::prelude::*;
 
 // ===========================================================================
-// Graph 1: Basic Pipeline (Startup) — linear: Greeter → Formatter → Printer
+// Graph 1: Basic Pipeline (Startup) -- linear: Greeter -> Formatter -> Printer
 // ===========================================================================
 mod basic_pipeline {
     use async_trait::async_trait;
@@ -50,7 +50,7 @@ mod basic_pipeline {
         type Output = Greeting;
         async fn run(&self, input: Greeting) -> Result<Greeting> {
             Ok(Greeting {
-                message: format!("✨ {} ✨", input.message),
+                message: format!("** {} **", input.message),
             })
         }
     }
@@ -72,7 +72,7 @@ mod basic_pipeline {
 
     pub fn build() -> std::result::Result<DirectedGraph, GraphError> {
         DirectedGraphBuilder::new("basic_pipeline")
-            .description("Linear pipeline: Greeter → Formatter → Printer")
+            .description("Linear pipeline: Greeter -> Formatter -> Printer")
             .trigger(TriggerKind::Startup)
             .add_input(Greeter)
             .add_hidden(Formatter)
@@ -84,7 +84,7 @@ mod basic_pipeline {
 }
 
 // ===========================================================================
-// Graph 2: Conditional Branch (Startup) — Sensor → Classifier → branches
+// Graph 2: Conditional Branch (Startup) -- Sensor -> Classifier -> branches
 // ===========================================================================
 mod conditional_branch {
     use async_trait::async_trait;
@@ -145,7 +145,7 @@ mod conditional_branch {
     impl OutputNode for Celebrate {
         type Input = SensorData;
         async fn run(&self, input: SensorData) -> Result<()> {
-            println!("🎉 Temperature is positive: {}°C", input.temperature);
+            println!("[celebrate] Temperature is positive: {}C", input.temperature);
             Ok(())
         }
     }
@@ -161,7 +161,7 @@ mod conditional_branch {
         type Input = SensorData;
         type Output = SensorData;
         async fn run(&self, input: SensorData) -> Result<SensorData> {
-            println!("⚠️  Temperature is negative: {}°C", input.temperature);
+            println!("[alert] Temperature is negative: {}C", input.temperature);
             Ok(input)
         }
     }
@@ -177,7 +177,7 @@ mod conditional_branch {
         type Input = SensorData;
         async fn run(&self, input: SensorData) -> Result<()> {
             println!(
-                "📝 Logged: temp={}, label={}",
+                "[log] Logged: temp={}, label={}",
                 input.temperature, input.label
             );
             Ok(())
@@ -211,7 +211,7 @@ mod conditional_branch {
 }
 
 // ===========================================================================
-// Graph 3: Diamond (Startup) — fan-out + fan-in
+// Graph 3: Diamond (Startup) -- fan-out + fan-in
 // ===========================================================================
 mod diamond {
     use async_trait::async_trait;
@@ -285,7 +285,7 @@ mod diamond {
         type Input = Text;
         type Output = Text;
         async fn run(&self, input: Text) -> Result<Text> {
-            println!("🔀 Merging: {}", input.content);
+            println!("[merge] Merging: {}", input.content);
             Ok(input)
         }
     }
@@ -300,7 +300,7 @@ mod diamond {
     impl OutputNode for Display {
         type Input = Text;
         async fn run(&self, input: Text) -> Result<()> {
-            println!("📄 Result: {}", input.content);
+            println!("[display] Result: {}", input.content);
             Ok(())
         }
     }
@@ -324,7 +324,7 @@ mod diamond {
 }
 
 // ===========================================================================
-// Graph 4: Chat Trigger — MessageInput → AgentProcessor → MessageOutput
+// Graph 4: Chat Trigger -- MessageInput -> AgentProcessor -> MessageOutput
 // ===========================================================================
 mod chat_pipeline {
     use async_trait::async_trait;
@@ -350,7 +350,7 @@ mod chat_pipeline {
         type TriggerData = DiscordMessage;
         type Output = DiscordMessage;
         async fn run(&self, msg: DiscordMessage) -> Result<DiscordMessage> {
-            println!("💬 Received message from {}: {}", msg.author, msg.content);
+            println!("[chat] Received message from {}: {}", msg.author, msg.content);
             Ok(msg)
         }
     }
@@ -366,7 +366,7 @@ mod chat_pipeline {
         type Input = DiscordMessage;
         type Output = ChatReply;
         async fn run(&self, input: DiscordMessage) -> Result<ChatReply> {
-            println!("🤖 Processing: {}", input.content);
+            println!("[agent] Processing: {}", input.content);
             Ok(ChatReply {
                 channel: input.channel_id.clone(),
                 content: format!(
@@ -389,7 +389,7 @@ mod chat_pipeline {
     impl OutputNode for MessageOutput {
         type Input = ChatReply;
         async fn run(&self, input: ChatReply) -> Result<()> {
-            println!("📤 #{}: {}", input.channel, input.content);
+            println!("[output] #{}: {}", input.channel, input.content);
             if let Some(client) = &self.client {
                 client.send_message(&input.channel, &input.content).await?;
             }
@@ -400,7 +400,7 @@ mod chat_pipeline {
     pub fn build() -> std::result::Result<DirectedGraph, GraphError> {
         let client = std::env::var("DISCORD_TOKEN").ok().map(DiscordClient::new);
         DirectedGraphBuilder::new("chat_pipeline")
-            .description("Chat-triggered pipeline: receive → process → reply")
+            .description("Chat-triggered pipeline: receive -> process -> reply")
             .trigger(TriggerKind::discord(
                 vec!["mention".into(), "dm".into()],
                 None,
@@ -415,7 +415,7 @@ mod chat_pipeline {
 }
 
 // ===========================================================================
-// Graph 5: Cron Trigger — ScheduledPoller → ReportBuilder → NotificationSender
+// Graph 5: Cron Trigger -- ScheduledPoller -> ReportBuilder -> NotificationSender
 // ===========================================================================
 mod cron_pipeline {
     use async_trait::async_trait;
@@ -449,7 +449,7 @@ mod cron_pipeline {
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap_or_default()
                 .as_secs();
-            println!("⏰ Cron fired at t={now}");
+            println!("[cron] Cron fired at t={now}");
             Ok(Snapshot {
                 timestamp_secs: now,
                 metric: "cpu_usage".into(),
@@ -469,7 +469,7 @@ mod cron_pipeline {
         type Input = Snapshot;
         type Output = Report;
         async fn run(&self, input: Snapshot) -> Result<Report> {
-            println!("📊 Building report for metric={}", input.metric);
+            println!("[report] Building report for metric={}", input.metric);
             Ok(Report {
                 summary: format!(
                     "[t={}] {}: {:.1}",
@@ -489,14 +489,14 @@ mod cron_pipeline {
     impl OutputNode for NotificationSender {
         type Input = Report;
         async fn run(&self, input: Report) -> Result<()> {
-            println!("📢 Sending notification: {}", input.summary);
+            println!("[notify] Sending notification: {}", input.summary);
             Ok(())
         }
     }
 
     pub fn build() -> std::result::Result<DirectedGraph, GraphError> {
         DirectedGraphBuilder::new("cron_pipeline")
-            .description("Cron-triggered pipeline: poll → build report → notify")
+            .description("Cron-triggered pipeline: poll -> build report -> notify")
             .trigger(TriggerKind::Cron {
                 schedule: "0 * * * * * *".into(),
             })
@@ -510,7 +510,7 @@ mod cron_pipeline {
 }
 
 // ===========================================================================
-// Main — bundle all graphs into a single Runtime
+// Main -- bundle all graphs into a single Runtime
 // ===========================================================================
 
 #[tokio::main]
@@ -522,14 +522,14 @@ async fn main() {
         )
         .init();
 
-    println!("🦀 SmartCrab Showcase App");
+    println!("SmartCrab Showcase App");
     println!("=========================");
     println!("Running 5 graphs concurrently:");
-    println!("  1. basic_pipeline    (Startup) — linear pipeline");
-    println!("  2. conditional_branch (Startup) — conditional routing");
-    println!("  3. diamond           (Startup) — fan-out + fan-in");
-    println!("  4. chat_pipeline     (Chat)    — chat trigger");
-    println!("  5. cron_pipeline     (Cron)    — cron trigger");
+    println!("  1. basic_pipeline    (Startup) -- linear pipeline");
+    println!("  2. conditional_branch (Startup) -- conditional routing");
+    println!("  3. diamond           (Startup) -- fan-out + fan-in");
+    println!("  4. chat_pipeline     (Chat)    -- chat trigger");
+    println!("  5. cron_pipeline     (Cron)    -- cron trigger");
     println!();
 
     let runtime = Runtime::new()
@@ -546,5 +546,5 @@ async fn main() {
     runtime.run().await.expect("runtime execution failed");
 
     println!();
-    println!("✅ All graphs completed successfully!");
+    println!("All graphs completed successfully!");
 }

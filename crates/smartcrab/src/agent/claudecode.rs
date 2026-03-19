@@ -89,7 +89,7 @@ impl ClaudeCode {
 
         match result {
             Err(_) => {
-                // Timeout — child is already consumed by wait_with_output,
+                // Timeout -- child is already consumed by wait_with_output,
                 // the future was dropped so the process will be cleaned up.
                 Err(SmartCrabError::ClaudeCodeTimeout {
                     timeout: self.timeout,

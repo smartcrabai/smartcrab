@@ -1,8 +1,8 @@
 //! Integration tests for Discord REST API.
 //!
 //! These tests require the following environment variables:
-//! - `DISCORD_BOT_TOKEN` — Bot token from Discord Developer Portal
-//! - `DISCORD_TEST_CHANNEL_ID` — Channel ID where the bot can post
+//! - `DISCORD_BOT_TOKEN` -- Bot token from Discord Developer Portal
+//! - `DISCORD_TEST_CHANNEL_ID` -- Channel ID where the bot can post
 //!
 //! Run with:
 //!   DISCORD_BOT_TOKEN=xxx DISCORD_TEST_CHANNEL_ID=yyy \

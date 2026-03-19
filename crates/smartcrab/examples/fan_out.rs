@@ -3,9 +3,9 @@
 //! A single input fans out to multiple independent output nodes.
 //!
 //! ```text
-//!              ┌→ [ConsoleOutput]
-//! [EventSource] → [FileOutput]
-//!              └→ [MetricsOutput]
+//!              +-> [ConsoleOutput]
+//! [EventSource] -> [FileOutput]
+//!              +-> [MetricsOutput]
 //! ```
 //!
 //! Run: `cargo run -p smartcrab --example fan_out`
@@ -60,7 +60,7 @@ impl Node for ConsoleOutput {
 impl OutputNode for ConsoleOutput {
     type Input = Event;
     async fn run(&self, input: Event) -> Result<()> {
-        println!("🖥️  Console: [{}] {}", input.kind, input.payload);
+        println!("[console] Console: [{}] {}", input.kind, input.payload);
         Ok(())
     }
 }
@@ -77,7 +77,7 @@ impl Node for FileOutput {
 impl OutputNode for FileOutput {
     type Input = Event;
     async fn run(&self, input: Event) -> Result<()> {
-        println!("📁 File: would write {} to events.log", input.kind);
+        println!("[file] File: would write {} to events.log", input.kind);
         Ok(())
     }
 }
@@ -94,7 +94,7 @@ impl Node for MetricsOutput {
 impl OutputNode for MetricsOutput {
     type Input = Event;
     async fn run(&self, input: Event) -> Result<()> {
-        println!("📊 Metrics: recorded event type={}", input.kind);
+        println!("[metrics] Metrics: recorded event type={}", input.kind);
         Ok(())
     }
 }

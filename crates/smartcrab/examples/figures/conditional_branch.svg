@@ -13,14 +13,14 @@
 <g id="node1" class="node">
 <title>Sensor</title>
 <path fill="none" stroke="black" d="M118.8,-313.46C118.8,-313.46 73.55,-313.46 73.55,-313.46 67.55,-313.46 61.55,-307.46 61.55,-301.46 61.55,-301.46 61.55,-288.96 61.55,-288.96 61.55,-282.96 67.55,-276.96 73.55,-276.96 73.55,-276.96 118.8,-276.96 118.8,-276.96 124.8,-276.96 130.8,-282.96 130.8,-288.96 130.8,-288.96 130.8,-301.46 130.8,-301.46 130.8,-307.46 124.8,-313.46 118.8,-313.46"/>
-<text xml:space="preserve" text-anchor="middle" x="96.18" y="-298.06" font-family="sans-serif" font-size="12.00">📥 Sensor</text>
+<text xml:space="preserve" text-anchor="middle" x="96.18" y="-298.06" font-family="sans-serif" font-size="12.00">[In] Sensor</text>
 <text xml:space="preserve" text-anchor="middle" x="96.18" y="-282.31" font-family="sans-serif" font-size="12.00">(Input)</text>
 </g>
 <!-- Classifier -->
 <g id="node2" class="node">
 <title>Classifier</title>
 <polygon fill="none" stroke="black" points="136.8,-239.96 55.55,-239.96 55.55,-203.46 136.8,-203.46 136.8,-239.96"/>
-<text xml:space="preserve" text-anchor="middle" x="96.18" y="-224.56" font-family="sans-serif" font-size="12.00">⚙️ Classifier</text>
+<text xml:space="preserve" text-anchor="middle" x="96.18" y="-224.56" font-family="sans-serif" font-size="12.00">[Hidden] Classifier</text>
 <text xml:space="preserve" text-anchor="middle" x="96.18" y="-208.81" font-family="sans-serif" font-size="12.00">(Hidden)</text>
 </g>
 <!-- Sensor&#45;&gt;Classifier -->
@@ -33,7 +33,7 @@
 <g id="node3" class="node">
 <title>Celebrate</title>
 <polygon fill="none" stroke="black" points="136.35,-126.41 102.27,-156.21 34.09,-156.21 0,-126.41 34.09,-96.6 102.27,-96.6 136.35,-126.41"/>
-<text xml:space="preserve" text-anchor="middle" x="68.18" y="-129.26" font-family="sans-serif" font-size="12.00">📤 Celebrate</text>
+<text xml:space="preserve" text-anchor="middle" x="68.18" y="-129.26" font-family="sans-serif" font-size="12.00">[Out] Celebrate</text>
 <text xml:space="preserve" text-anchor="middle" x="68.18" y="-113.51" font-family="sans-serif" font-size="12.00">(Output)</text>
 </g>
 <!-- Classifier&#45;&gt;Celebrate -->
@@ -47,7 +47,7 @@
 <g id="node4" class="node">
 <title>Alert</title>
 <polygon fill="none" stroke="black" points="216.43,-144.66 153.93,-144.66 153.93,-108.16 216.43,-108.16 216.43,-144.66"/>
-<text xml:space="preserve" text-anchor="middle" x="185.18" y="-129.26" font-family="sans-serif" font-size="12.00">⚙️ Alert</text>
+<text xml:space="preserve" text-anchor="middle" x="185.18" y="-129.26" font-family="sans-serif" font-size="12.00">[Hidden] Alert</text>
 <text xml:space="preserve" text-anchor="middle" x="185.18" y="-113.51" font-family="sans-serif" font-size="12.00">(Hidden)</text>
 </g>
 <!-- Classifier&#45;&gt;Alert -->
@@ -61,7 +61,7 @@
 <g id="node5" class="node">
 <title>Logger</title>
 <polygon fill="none" stroke="black" points="241.11,-29.8 213.14,-59.6 157.21,-59.6 129.25,-29.8 157.21,0 213.14,0 241.11,-29.8"/>
-<text xml:space="preserve" text-anchor="middle" x="185.18" y="-32.65" font-family="sans-serif" font-size="12.00">📤 Logger</text>
+<text xml:space="preserve" text-anchor="middle" x="185.18" y="-32.65" font-family="sans-serif" font-size="12.00">[Out] Logger</text>
 <text xml:space="preserve" text-anchor="middle" x="185.18" y="-16.9" font-family="sans-serif" font-size="12.00">(Output)</text>
 </g>
 <!-- Alert&#45;&gt;Logger -->

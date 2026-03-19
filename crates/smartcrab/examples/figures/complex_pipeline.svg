@@ -13,14 +13,14 @@
 <g id="node1" class="node">
 <title>Ingest</title>
 <path fill="none" stroke="black" d="M190.6,-313.46C190.6,-313.46 151.35,-313.46 151.35,-313.46 145.35,-313.46 139.35,-307.46 139.35,-301.46 139.35,-301.46 139.35,-288.96 139.35,-288.96 139.35,-282.96 145.35,-276.96 151.35,-276.96 151.35,-276.96 190.6,-276.96 190.6,-276.96 196.6,-276.96 202.6,-282.96 202.6,-288.96 202.6,-288.96 202.6,-301.46 202.6,-301.46 202.6,-307.46 196.6,-313.46 190.6,-313.46"/>
-<text xml:space="preserve" text-anchor="middle" x="170.98" y="-298.06" font-family="sans-serif" font-size="12.00">📥 Ingest</text>
+<text xml:space="preserve" text-anchor="middle" x="170.98" y="-298.06" font-family="sans-serif" font-size="12.00">[In] Ingest</text>
 <text xml:space="preserve" text-anchor="middle" x="170.98" y="-282.31" font-family="sans-serif" font-size="12.00">(Input)</text>
 </g>
 <!-- Validate -->
 <g id="node2" class="node">
 <title>Validate</title>
 <polygon fill="none" stroke="black" points="207.85,-239.96 134.1,-239.96 134.1,-203.46 207.85,-203.46 207.85,-239.96"/>
-<text xml:space="preserve" text-anchor="middle" x="170.98" y="-224.56" font-family="sans-serif" font-size="12.00">⚙️ Validate</text>
+<text xml:space="preserve" text-anchor="middle" x="170.98" y="-224.56" font-family="sans-serif" font-size="12.00">[Hidden] Validate</text>
 <text xml:space="preserve" text-anchor="middle" x="170.98" y="-208.81" font-family="sans-serif" font-size="12.00">(Hidden)</text>
 </g>
 <!-- Ingest&#45;&gt;Validate -->
@@ -33,7 +33,7 @@
 <g id="node3" class="node">
 <title>Enrich</title>
 <polygon fill="none" stroke="black" points="110.73,-144.66 45.23,-144.66 45.23,-108.16 110.73,-108.16 110.73,-144.66"/>
-<text xml:space="preserve" text-anchor="middle" x="77.98" y="-129.26" font-family="sans-serif" font-size="12.00">⚙️ Enrich</text>
+<text xml:space="preserve" text-anchor="middle" x="77.98" y="-129.26" font-family="sans-serif" font-size="12.00">[Hidden] Enrich</text>
 <text xml:space="preserve" text-anchor="middle" x="77.98" y="-113.51" font-family="sans-serif" font-size="12.00">(Hidden)</text>
 </g>
 <!-- Validate&#45;&gt;Enrich -->
@@ -47,7 +47,7 @@
 <g id="node5" class="node">
 <title>Quarantine</title>
 <polygon fill="none" stroke="black" points="275.66,-126.41 238.82,-156.21 165.13,-156.21 128.29,-126.41 165.13,-96.6 238.82,-96.6 275.66,-126.41"/>
-<text xml:space="preserve" text-anchor="middle" x="201.98" y="-129.26" font-family="sans-serif" font-size="12.00">📤 Quarantine</text>
+<text xml:space="preserve" text-anchor="middle" x="201.98" y="-129.26" font-family="sans-serif" font-size="12.00">[Out] Quarantine</text>
 <text xml:space="preserve" text-anchor="middle" x="201.98" y="-113.51" font-family="sans-serif" font-size="12.00">(Output)</text>
 </g>
 <!-- Validate&#45;&gt;Quarantine -->
@@ -61,7 +61,7 @@
 <g id="node4" class="node">
 <title>IndexOutput</title>
 <polygon fill="none" stroke="black" points="155.95,-29.8 116.96,-59.6 38.99,-59.6 0,-29.8 38.99,0 116.96,0 155.95,-29.8"/>
-<text xml:space="preserve" text-anchor="middle" x="77.98" y="-32.65" font-family="sans-serif" font-size="12.00">📤 IndexOutput</text>
+<text xml:space="preserve" text-anchor="middle" x="77.98" y="-32.65" font-family="sans-serif" font-size="12.00">[Out] IndexOutput</text>
 <text xml:space="preserve" text-anchor="middle" x="77.98" y="-16.9" font-family="sans-serif" font-size="12.00">(Output)</text>
 </g>
 <!-- Enrich&#45;&gt;IndexOutput -->

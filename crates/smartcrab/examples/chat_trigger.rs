@@ -5,7 +5,7 @@
 //! bot that dispatches incoming messages to the graph.
 //!
 //! ```text
-//! [MessageInput] → [AgentProcessor] → [MessageOutput]
+//! [MessageInput] -> [AgentProcessor] -> [MessageOutput]
 //! ```
 //!
 //! Requires `DISCORD_TOKEN` environment variable.
@@ -45,7 +45,7 @@ impl InputNode for MessageInput {
     type TriggerData = DiscordMessage;
     type Output = DiscordMessage;
     async fn run(&self, msg: DiscordMessage) -> Result<DiscordMessage> {
-        println!("💬 Received message from {}: {}", msg.author, msg.content);
+        println!("[chat] Received message from {}: {}", msg.author, msg.content);
         Ok(msg)
     }
 }
@@ -63,7 +63,7 @@ impl HiddenNode for AgentProcessor {
     type Input = DiscordMessage;
     type Output = ChatReply;
     async fn run(&self, input: DiscordMessage) -> Result<ChatReply> {
-        println!("🤖 Processing: {}", input.content);
+        println!("[agent] Processing: {}", input.content);
         Ok(ChatReply {
             channel: input.channel_id.clone(),
             content: format!(
@@ -88,7 +88,7 @@ impl Node for MessageOutput {
 impl OutputNode for MessageOutput {
     type Input = ChatReply;
     async fn run(&self, input: ChatReply) -> Result<()> {
-        println!("📤 #{}: {}", input.channel, input.content);
+        println!("[output] #{}: {}", input.channel, input.content);
         self.client
             .send_message(&input.channel, &input.content)
             .await?;
@@ -113,7 +113,7 @@ async fn main() {
     let client = DiscordClient::new(&token);
 
     let graph = DirectedGraphBuilder::new("chat_pipeline")
-        .description("Chat-triggered pipeline: receive → process → reply")
+        .description("Chat-triggered pipeline: receive -> process -> reply")
         .trigger(TriggerKind::discord(
             vec!["mention".into(), "dm".into()],
             None,
@@ -126,7 +126,7 @@ async fn main() {
         .build()
         .expect("failed to build graph");
 
-    println!("🤖 Starting Discord bot (mention or DM to trigger)");
+    println!("[bot] Starting Discord bot (mention or DM to trigger)");
     println!("   Press Ctrl-C to stop");
 
     Runtime::new()

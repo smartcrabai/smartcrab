@@ -3,9 +3,9 @@
 //! A graph with a self-loop that keeps executing until an exit condition is met.
 //!
 //! ```text
-//! [Seed] → [Accumulator] ──(loop)──→ [Accumulator]
-//!                │
-//!             (exit when sum ≥ 10)
+//! [Seed] -> [Accumulator] --(loop)--> [Accumulator]
+//!                |
+//!             (exit when sum >= 10)
 //! ```
 //!
 //! Run: `cargo run -p smartcrab --example loop_with_exit`
@@ -43,7 +43,7 @@ impl InputNode for Seed {
     type TriggerData = ();
     type Output = Counter;
     async fn run(&self, _: ()) -> Result<Counter> {
-        println!("🌱 Seeding with value=1");
+        println!("[seed] Seeding with value=1");
         Ok(Counter { value: 1 })
     }
 }
@@ -66,7 +66,7 @@ impl HiddenNode for Accumulator {
         let iter = self.iteration.fetch_add(1, Ordering::SeqCst) + 1;
         let new_value = input.value + iter;
         println!(
-            "🔄 Iteration {iter}: {} + {iter} = {new_value}",
+            "[loop] Iteration {iter}: {} + {iter} = {new_value}",
             input.value
         );
         Ok(Counter { value: new_value })
@@ -85,7 +85,7 @@ impl Node for ResultPrinter {
 impl OutputNode for ResultPrinter {
     type Input = Counter;
     async fn run(&self, input: Counter) -> Result<()> {
-        println!("✅ Final value: {}", input.value);
+        println!("[result] Final value: {}", input.value);
         Ok(())
     }
 }

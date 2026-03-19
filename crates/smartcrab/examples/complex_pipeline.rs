@@ -4,8 +4,8 @@
 //! processing. Demonstrates how multiple patterns compose in a single graph.
 //!
 //! ```text
-//! [Ingest] → [Validate] ──"valid"──→ [Enrich] → [IndexOutput]
-//!                        └─"invalid"─→ [Quarantine]
+//! [Ingest] -> [Validate] --"valid"--> [Enrich] -> [IndexOutput]
+//!                        \--"invalid"--> [Quarantine]
 //! ```
 //!
 //! Run: `cargo run -p smartcrab --example complex_pipeline`
@@ -43,7 +43,7 @@ impl InputNode for Ingest {
     type TriggerData = ();
     type Output = Document;
     async fn run(&self, _: ()) -> Result<Document> {
-        println!("📨 Ingesting document...");
+        println!("[ingest] Ingesting document...");
         Ok(Document {
             id: 1001,
             body: "SmartCrab is a workflow orchestration engine.".into(),
@@ -72,7 +72,7 @@ impl HiddenNode for Validate {
         } else {
             "invalid".into()
         };
-        println!("✅ Validation: {}", input.status);
+        println!("[validate] Validation: {}", input.status);
         Ok(input)
     }
 }
@@ -91,7 +91,7 @@ impl HiddenNode for Enrich {
     type Output = Document;
     async fn run(&self, mut input: Document) -> Result<Document> {
         input.score = input.body.split_whitespace().count() as f64 * 1.5;
-        println!("🔧 Enriched: score={}", input.score);
+        println!("[enrich] Enriched: score={}", input.score);
         Ok(input)
     }
 }
@@ -109,7 +109,7 @@ impl OutputNode for IndexOutput {
     type Input = Document;
     async fn run(&self, input: Document) -> Result<()> {
         println!(
-            "📦 Indexed document #{}: score={}, body={}...",
+            "[index] Indexed document #{}: score={}, body={}...",
             input.id,
             input.score,
             &input.body.chars().take(40).collect::<String>()
@@ -130,7 +130,7 @@ impl Node for Quarantine {
 impl OutputNode for Quarantine {
     type Input = Document;
     async fn run(&self, input: Document) -> Result<()> {
-        println!("🚫 Quarantined document #{}: {}", input.id, input.status);
+        println!("[quarantine] Quarantined document #{}: {}", input.id, input.status);
         Ok(())
     }
 }

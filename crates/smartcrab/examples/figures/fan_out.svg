@@ -13,14 +13,14 @@
 <g id="node1" class="node">
 <title>EventSource</title>
 <path fill="none" stroke="black" d="M307.84,-132.1C307.84,-132.1 231.84,-132.1 231.84,-132.1 225.84,-132.1 219.84,-126.1 219.84,-120.1 219.84,-120.1 219.84,-107.6 219.84,-107.6 219.84,-101.6 225.84,-95.6 231.84,-95.6 231.84,-95.6 307.84,-95.6 307.84,-95.6 313.84,-95.6 319.84,-101.6 319.84,-107.6 319.84,-107.6 319.84,-120.1 319.84,-120.1 319.84,-126.1 313.84,-132.1 307.84,-132.1"/>
-<text xml:space="preserve" text-anchor="middle" x="269.84" y="-116.7" font-family="sans-serif" font-size="12.00">📥 EventSource</text>
+<text xml:space="preserve" text-anchor="middle" x="269.84" y="-116.7" font-family="sans-serif" font-size="12.00">[In] EventSource</text>
 <text xml:space="preserve" text-anchor="middle" x="269.84" y="-100.95" font-family="sans-serif" font-size="12.00">(Input)</text>
 </g>
 <!-- ConsoleOutput -->
 <g id="node2" class="node">
 <title>ConsoleOutput</title>
 <polygon fill="none" stroke="black" points="181.67,-29.8 136.25,-59.6 45.42,-59.6 0,-29.8 45.42,0 136.25,0 181.67,-29.8"/>
-<text xml:space="preserve" text-anchor="middle" x="90.84" y="-32.65" font-family="sans-serif" font-size="12.00">📤 ConsoleOutput</text>
+<text xml:space="preserve" text-anchor="middle" x="90.84" y="-32.65" font-family="sans-serif" font-size="12.00">[Out] ConsoleOutput</text>
 <text xml:space="preserve" text-anchor="middle" x="90.84" y="-16.9" font-family="sans-serif" font-size="12.00">(Output)</text>
 </g>
 <!-- EventSource&#45;&gt;ConsoleOutput -->
@@ -33,7 +33,7 @@
 <g id="node3" class="node">
 <title>FileOutput</title>
 <polygon fill="none" stroke="black" points="340.46,-29.8 305.15,-59.6 234.52,-59.6 199.21,-29.8 234.52,0 305.15,0 340.46,-29.8"/>
-<text xml:space="preserve" text-anchor="middle" x="269.84" y="-32.65" font-family="sans-serif" font-size="12.00">📤 FileOutput</text>
+<text xml:space="preserve" text-anchor="middle" x="269.84" y="-32.65" font-family="sans-serif" font-size="12.00">[Out] FileOutput</text>
 <text xml:space="preserve" text-anchor="middle" x="269.84" y="-16.9" font-family="sans-serif" font-size="12.00">(Output)</text>
 </g>
 <!-- EventSource&#45;&gt;FileOutput -->
@@ -46,7 +46,7 @@
 <g id="node4" class="node">
 <title>MetricsOutput</title>
 <polygon fill="none" stroke="black" points="529.16,-29.8 486.5,-59.6 401.17,-59.6 358.51,-29.8 401.17,0 486.5,0 529.16,-29.8"/>
-<text xml:space="preserve" text-anchor="middle" x="443.84" y="-32.65" font-family="sans-serif" font-size="12.00">📤 MetricsOutput</text>
+<text xml:space="preserve" text-anchor="middle" x="443.84" y="-32.65" font-family="sans-serif" font-size="12.00">[Out] MetricsOutput</text>
 <text xml:space="preserve" text-anchor="middle" x="443.84" y="-16.9" font-family="sans-serif" font-size="12.00">(Output)</text>
 </g>
 <!-- EventSource&#45;&gt;MetricsOutput -->

@@ -121,9 +121,9 @@ async fn event_handler(
         let bot_id = ctx.cache.current_user().id;
 
         // A bot can be @-mentioned in three ways:
-        //   1. Direct user mention   → message.mentions contains the bot user
-        //   2. Content-embedded      → "<@BOT_ID>" or "<@!BOT_ID>" in content
-        //   3. Integration role mention → "<@&ROLE_ID>" where that role belongs
+        //   1. Direct user mention   -> message.mentions contains the bot user
+        //   2. Content-embedded      -> "<@BOT_ID>" or "<@!BOT_ID>" in content
+        //   3. Integration role mention -> "<@&ROLE_ID>" where that role belongs
         //      to the bot (Discord creates a managed role for every bot).
         let mention_in_array = new_message.mentions_user_id(bot_id);
         let mention_in_content = new_message.content.contains(&data.mention_pattern)

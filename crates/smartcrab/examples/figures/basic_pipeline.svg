@@ -13,14 +13,14 @@
 <g id="node1" class="node">
 <title>Greeter</title>
 <path fill="none" stroke="black" d="M77.47,-204.6C77.47,-204.6 30.72,-204.6 30.72,-204.6 24.72,-204.6 18.72,-198.6 18.72,-192.6 18.72,-192.6 18.72,-180.1 18.72,-180.1 18.72,-174.1 24.72,-168.1 30.72,-168.1 30.72,-168.1 77.47,-168.1 77.47,-168.1 83.47,-168.1 89.47,-174.1 89.47,-180.1 89.47,-180.1 89.47,-192.6 89.47,-192.6 89.47,-198.6 83.47,-204.6 77.47,-204.6"/>
-<text xml:space="preserve" text-anchor="middle" x="54.09" y="-189.2" font-family="sans-serif" font-size="12.00">📥 Greeter</text>
+<text xml:space="preserve" text-anchor="middle" x="54.09" y="-189.2" font-family="sans-serif" font-size="12.00">[In] Greeter</text>
 <text xml:space="preserve" text-anchor="middle" x="54.09" y="-173.45" font-family="sans-serif" font-size="12.00">(Input)</text>
 </g>
 <!-- Formatter -->
 <g id="node2" class="node">
 <title>Formatter</title>
 <polygon fill="none" stroke="black" points="95.09,-132.1 13.09,-132.1 13.09,-95.6 95.09,-95.6 95.09,-132.1"/>
-<text xml:space="preserve" text-anchor="middle" x="54.09" y="-116.7" font-family="sans-serif" font-size="12.00">⚙️ Formatter</text>
+<text xml:space="preserve" text-anchor="middle" x="54.09" y="-116.7" font-family="sans-serif" font-size="12.00">[Hidden] Formatter</text>
 <text xml:space="preserve" text-anchor="middle" x="54.09" y="-100.95" font-family="sans-serif" font-size="12.00">(Hidden)</text>
 </g>
 <!-- Greeter&#45;&gt;Formatter -->
@@ -33,7 +33,7 @@
 <g id="node3" class="node">
 <title>Printer</title>
 <polygon fill="none" stroke="black" points="108.19,-29.8 81.14,-59.6 27.05,-59.6 0,-29.8 27.05,0 81.14,0 108.19,-29.8"/>
-<text xml:space="preserve" text-anchor="middle" x="54.09" y="-32.65" font-family="sans-serif" font-size="12.00">📤 Printer</text>
+<text xml:space="preserve" text-anchor="middle" x="54.09" y="-32.65" font-family="sans-serif" font-size="12.00">[Out] Printer</text>
 <text xml:space="preserve" text-anchor="middle" x="54.09" y="-16.9" font-family="sans-serif" font-size="12.00">(Output)</text>
 </g>
 <!-- Formatter&#45;&gt;Printer -->

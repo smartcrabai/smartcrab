@@ -3,8 +3,8 @@
 //! A graph that routes data through different paths based on a condition.
 //!
 //! ```text
-//!                  ┌──"positive"──→ [Celebrate]
-//! [Sensor] → [Classifier] ──"negative"──→ [Alert] → [Logger]
+//!                  +--"positive"--> [Celebrate]
+//! [Sensor] -> [Classifier] --"negative"--> [Alert] -> [Logger]
 //! ```
 //!
 //! Run: `cargo run -p smartcrab --example conditional_branch`
@@ -81,7 +81,7 @@ impl Node for Celebrate {
 impl OutputNode for Celebrate {
     type Input = SensorData;
     async fn run(&self, input: SensorData) -> Result<()> {
-        println!("🎉 Temperature is positive: {}°C", input.temperature);
+        println!("[celebrate] Temperature is positive: {}C", input.temperature);
         Ok(())
     }
 }
@@ -99,7 +99,7 @@ impl HiddenNode for Alert {
     type Input = SensorData;
     type Output = SensorData;
     async fn run(&self, input: SensorData) -> Result<SensorData> {
-        println!("⚠️  Temperature is negative: {}°C", input.temperature);
+        println!("[alert] Temperature is negative: {}C", input.temperature);
         Ok(input)
     }
 }
@@ -117,7 +117,7 @@ impl OutputNode for Logger {
     type Input = SensorData;
     async fn run(&self, input: SensorData) -> Result<()> {
         println!(
-            "📝 Logged: temp={}, label={}",
+            "[log] Logged: temp={}, label={}",
             input.temperature, input.label
         );
         Ok(())

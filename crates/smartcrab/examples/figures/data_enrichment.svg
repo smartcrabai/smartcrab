@@ -13,14 +13,14 @@
 <g id="node1" class="node">
 <title>FetchData</title>
 <path fill="none" stroke="black" d="M108,-349.6C108,-349.6 45.5,-349.6 45.5,-349.6 39.5,-349.6 33.5,-343.6 33.5,-337.6 33.5,-337.6 33.5,-325.1 33.5,-325.1 33.5,-319.1 39.5,-313.1 45.5,-313.1 45.5,-313.1 108,-313.1 108,-313.1 114,-313.1 120,-319.1 120,-325.1 120,-325.1 120,-337.6 120,-337.6 120,-343.6 114,-349.6 108,-349.6"/>
-<text xml:space="preserve" text-anchor="middle" x="76.75" y="-334.2" font-family="sans-serif" font-size="12.00">📥 FetchData</text>
+<text xml:space="preserve" text-anchor="middle" x="76.75" y="-334.2" font-family="sans-serif" font-size="12.00">[In] FetchData</text>
 <text xml:space="preserve" text-anchor="middle" x="76.75" y="-318.45" font-family="sans-serif" font-size="12.00">(Input)</text>
 </g>
 <!-- ValidateProfile -->
 <g id="node2" class="node">
 <title>ValidateProfile</title>
 <polygon fill="none" stroke="black" points="130.88,-277.1 22.63,-277.1 22.63,-240.6 130.88,-240.6 130.88,-277.1"/>
-<text xml:space="preserve" text-anchor="middle" x="76.75" y="-261.7" font-family="sans-serif" font-size="12.00">⚙️ ValidateProfile</text>
+<text xml:space="preserve" text-anchor="middle" x="76.75" y="-261.7" font-family="sans-serif" font-size="12.00">[Hidden] ValidateProfile</text>
 <text xml:space="preserve" text-anchor="middle" x="76.75" y="-245.95" font-family="sans-serif" font-size="12.00">(Hidden)</text>
 </g>
 <!-- FetchData&#45;&gt;ValidateProfile -->
@@ -33,7 +33,7 @@
 <g id="node3" class="node">
 <title>EnrichProfile</title>
 <polygon fill="none" stroke="black" points="126.75,-204.6 26.75,-204.6 26.75,-168.1 126.75,-168.1 126.75,-204.6"/>
-<text xml:space="preserve" text-anchor="middle" x="76.75" y="-189.2" font-family="sans-serif" font-size="12.00">⚙️ EnrichProfile</text>
+<text xml:space="preserve" text-anchor="middle" x="76.75" y="-189.2" font-family="sans-serif" font-size="12.00">[Hidden] EnrichProfile</text>
 <text xml:space="preserve" text-anchor="middle" x="76.75" y="-173.45" font-family="sans-serif" font-size="12.00">(Hidden)</text>
 </g>
 <!-- ValidateProfile&#45;&gt;EnrichProfile -->
@@ -46,7 +46,7 @@
 <g id="node4" class="node">
 <title>TransformProfile</title>
 <polygon fill="none" stroke="black" points="136.13,-132.1 17.38,-132.1 17.38,-95.6 136.13,-95.6 136.13,-132.1"/>
-<text xml:space="preserve" text-anchor="middle" x="76.75" y="-116.7" font-family="sans-serif" font-size="12.00">⚙️ TransformProfile</text>
+<text xml:space="preserve" text-anchor="middle" x="76.75" y="-116.7" font-family="sans-serif" font-size="12.00">[Hidden] TransformProfile</text>
 <text xml:space="preserve" text-anchor="middle" x="76.75" y="-100.95" font-family="sans-serif" font-size="12.00">(Hidden)</text>
 </g>
 <!-- EnrichProfile&#45;&gt;TransformProfile -->
@@ -59,7 +59,7 @@
 <g id="node5" class="node">
 <title>StoreProfile</title>
 <polygon fill="none" stroke="black" points="153.5,-29.8 115.13,-59.6 38.38,-59.6 0,-29.8 38.38,0 115.13,0 153.5,-29.8"/>
-<text xml:space="preserve" text-anchor="middle" x="76.75" y="-32.65" font-family="sans-serif" font-size="12.00">📤 StoreProfile</text>
+<text xml:space="preserve" text-anchor="middle" x="76.75" y="-32.65" font-family="sans-serif" font-size="12.00">[Out] StoreProfile</text>
 <text xml:space="preserve" text-anchor="middle" x="76.75" y="-16.9" font-family="sans-serif" font-size="12.00">(Output)</text>
 </g>
 <!-- TransformProfile&#45;&gt;StoreProfile -->
