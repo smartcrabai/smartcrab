@@ -28,7 +28,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
-          node-version: '22'
+          node-version: '24'
 
       - name: Install frontend dependencies
         if: hashFiles('crates/smartcrab-app/package.json') != ''
@@ -54,7 +54,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
-          node-version: '22'
+          node-version: '24'
 
       - name: Install frontend dependencies
         if: hashFiles('crates/smartcrab-app/package.json') != ''
@@ -86,7 +86,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
-          node-version: '22'
+          node-version: '24'
 
       - name: Install frontend dependencies
         if: hashFiles('crates/smartcrab-app/package.json') != ''
