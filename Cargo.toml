@@ -2,8 +2,8 @@
 exclude = ["testcrab"]
 members = [
   "crates/smartcrab",
-  "crates/smartcrab-cli",
   "crates/smartcrab-app/src-tauri",
+  "crates/smartcrab-cli",
 ]
 resolver = "3"
 

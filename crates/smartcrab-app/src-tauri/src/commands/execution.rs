@@ -82,7 +82,7 @@ pub struct ExecutionLog {
 // Pipeline YAML model (simplified)
 // ---------------------------------------------------------------------------
 
-/// Simplified pipeline definition parsed from YAML stored in SQLite.
+/// Simplified pipeline definition parsed from YAML stored in `SQLite`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 struct PipelineDefinition {
     name: String,
@@ -180,8 +180,11 @@ fn now_iso() -> String {
 ///
 /// Returns the `execution_id` immediately. Actual execution happens in a
 /// background task that emits `ExecutionEvent`s via Tauri events.
+///
+/// # Errors
+///
+/// Returns [`AppError`] if the pipeline is not found or database access fails.
 #[tauri::command]
-#[allow(clippy::needless_pass_by_value)] // Tauri requires State by value
 pub async fn execute_pipeline(
     app: AppHandle,
     db: State<'_, DbState>,
@@ -213,7 +216,7 @@ pub async fn execute_pipeline(
     {
         let trigger_json = trigger_data
             .as_ref()
-            .map(|v| serde_json::to_string(v))
+            .map(serde_json::to_string)
             .transpose()?;
         let conn = db.lock()?;
         conn.execute(
@@ -237,8 +240,8 @@ pub async fn execute_pipeline(
         // A new connection is needed because `State<'_>` cannot be moved into
         // the spawned task — we extract the db path here before spawning.
         let conn = db.lock()?;
-        let path = conn.path().map(|p| std::path::Path::new(p).to_path_buf());
-        path
+
+        conn.path().map(|p| std::path::Path::new(p).to_path_buf())
     };
 
     tokio::spawn(async move {
@@ -247,7 +250,7 @@ pub async fn execute_pipeline(
             &exec_id,
             &pipeline_id,
             &yaml_def,
-            &trigger_data,
+            trigger_data.as_ref(),
             db_inner.as_deref(),
         )
         .await;
@@ -261,8 +264,15 @@ pub async fn execute_pipeline(
 }
 
 /// Cancel a running execution.
+///
+/// # Errors
+///
+/// Returns [`AppError`] if the execution is not found or database access fails.
 #[tauri::command]
-#[allow(clippy::needless_pass_by_value)]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri State and command args must be owned"
+)]
 pub fn cancel_execution(db: State<'_, DbState>, execution_id: String) -> Result<(), AppError> {
     let conn = db.lock()?;
     let updated = conn.execute(
@@ -276,8 +286,15 @@ pub fn cancel_execution(db: State<'_, DbState>, execution_id: String) -> Result<
 }
 
 /// Get a list of past executions.
+///
+/// # Errors
+///
+/// Returns [`AppError`] if database access fails.
 #[tauri::command]
-#[allow(clippy::needless_pass_by_value)]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri State and command args must be owned"
+)]
 pub fn get_execution_history(
     db: State<'_, DbState>,
     pipeline_id: Option<String>,
@@ -330,8 +347,19 @@ pub fn get_execution_history(
 }
 
 /// Get full details of a single execution.
+///
+/// # Errors
+///
+/// Returns [`AppError`] if the execution is not found or database access fails.
 #[tauri::command]
-#[allow(clippy::needless_pass_by_value)]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri State and command args must be owned"
+)]
+#[expect(
+    clippy::too_many_lines,
+    reason = "large query result assembly; extracting helpers would obscure the DB schema"
+)]
 pub fn get_execution_detail(
     db: State<'_, DbState>,
     execution_id: String,
@@ -551,12 +579,20 @@ fn simulate_node_execution(node: &PipelineNode, input: &serde_json::Value) -> se
 }
 
 /// Run the pipeline nodes in topological order with event emission and DB recording.
+#[expect(
+    clippy::too_many_lines,
+    reason = "pipeline runner is inherently stateful; sub-functions would require excessive parameter threading"
+)]
+#[expect(
+    clippy::unused_async,
+    reason = "reserved for future real async node execution (HTTP/LLM calls)"
+)]
 async fn run_pipeline_async(
     app: &AppHandle,
     execution_id: &str,
     pipeline_id: &str,
     yaml_def: &str,
-    trigger_data: &Option<serde_json::Value>,
+    trigger_data: Option<&serde_json::Value>,
     db_path: Option<&std::path::Path>,
 ) -> Result<(), AppError> {
     let definition: PipelineDefinition =
@@ -570,7 +606,7 @@ async fn run_pipeline_async(
 
     let mut loop_guard = LoopGuard::new(100);
     let mut outputs: HashMap<String, serde_json::Value> = HashMap::new();
-    let initial_input = trigger_data.clone().unwrap_or(serde_json::Value::Null);
+    let initial_input = trigger_data.cloned().unwrap_or(serde_json::Value::Null);
 
     // Open a separate connection for the background task
     let conn = if let Some(path) = db_path {
@@ -587,10 +623,9 @@ async fn run_pipeline_async(
             continue;
         };
 
-        let iteration = loop_guard.visit(node_id).map_err(|e| {
+        let iteration = loop_guard.visit(node_id).inspect_err(|e| {
             final_status = "failed";
             error_message = Some(e.to_string());
-            e
         })?;
 
         // Determine input

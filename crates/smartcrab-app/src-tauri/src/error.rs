@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-/// Application-level errors for SmartCrab Tauri app.
+/// Application-level errors for `SmartCrab` Tauri app.
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
     #[error("Database error: {0}")]

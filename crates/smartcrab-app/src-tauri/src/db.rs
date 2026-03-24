@@ -13,7 +13,7 @@ pub struct DbState {
 }
 
 impl DbState {
-    /// Open (or create) a SQLite database at `path` and run migrations.
+    /// Open (or create) a `SQLite` database at `path` and run migrations.
     ///
     /// # Errors
     ///
