@@ -25,11 +25,41 @@ jobs:
       - name: Check formatting
         run: cargo fmt -- --check
 
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+
+      - name: Install frontend dependencies
+        if: hashFiles('crates/smartcrab-app/package.json') != ''
+        working-directory: crates/smartcrab-app
+        run: npm install
+
+      - name: TypeScript type check
+        if: hashFiles('crates/smartcrab-app/package.json') != ''
+        working-directory: crates/smartcrab-app
+        run: npx tsc --noEmit
+
   check:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Install Tauri system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+
+      - name: Install frontend dependencies
+        if: hashFiles('crates/smartcrab-app/package.json') != ''
+        working-directory: crates/smartcrab-app
+        run: npm install
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
@@ -47,6 +77,21 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Install Tauri system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+
+      - name: Install frontend dependencies
+        if: hashFiles('crates/smartcrab-app/package.json') != ''
+        working-directory: crates/smartcrab-app
+        run: npm install
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
