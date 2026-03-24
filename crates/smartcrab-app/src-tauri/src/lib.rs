@@ -1,13 +1,17 @@
 pub mod adapters;
+pub mod db;
 pub mod error;
+
+use std::sync::Arc;
+
+use tauri::Manager as _;
 
 use crate::adapters::AdapterRegistry;
 use crate::adapters::chat::ChatAdapter;
 use crate::adapters::chat::discord::DiscordChatAdapter;
 use crate::adapters::llm::LlmAdapter;
 use crate::adapters::llm::claude::ClaudeLlmAdapter;
-
-use std::sync::Arc;
+use crate::error::{AppError, Result};
 
 /// Builds the default chat adapter registry with all built-in adapters.
 #[must_use]
@@ -27,11 +31,38 @@ pub fn default_llm_registry() -> AdapterRegistry<dyn LlmAdapter> {
     registry
 }
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
+/// Entry point called from `main.rs`.
+///
+/// Initialises the database and starts the Tauri application.
+///
+/// # Errors
+///
+/// Returns [`AppError`] if the database cannot be initialised or the Tauri
+/// runtime fails to start.
+pub fn run() -> Result<()> {
     tauri::Builder::default()
+        .setup(|app| {
+            let app_dir = app
+                .path()
+                .app_data_dir()
+                .map_err(|e| AppError::Other(e.to_string()))?;
+
+            std::fs::create_dir_all(&app_dir)?;
+
+            let db_path = app_dir.join("smartcrab.db");
+            let db_path_str = db_path
+                .to_str()
+                .ok_or_else(|| AppError::Other("DB path is not valid UTF-8".to_owned()))?;
+
+            let _conn = db::init(db_path_str)?;
+
+            tracing::info!("SmartCrab app started");
+            Ok(())
+        })
         .run(tauri::generate_context!())
-        .ok();
+        .map_err(AppError::Tauri)?;
+
+    Ok(())
 }
 
 #[cfg(test)]
@@ -86,13 +117,13 @@ mod tests {
                     group_message: true,
                 }
             }
-            async fn send_message(&self, _: &str, _: &str) -> Result<(), AppError> {
+            async fn send_message(&self, _: &str, _: &str) -> Result<()> {
                 Ok(())
             }
-            async fn start_listener(&self) -> Result<(), AppError> {
+            async fn start_listener(&self) -> Result<()> {
                 Ok(())
             }
-            async fn stop_listener(&self) -> Result<(), AppError> {
+            async fn stop_listener(&self) -> Result<()> {
                 Ok(())
             }
             fn is_running(&self) -> bool {

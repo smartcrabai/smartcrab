@@ -63,24 +63,17 @@ impl LlmAdapter for ClaudeLlmAdapter {
                 .output(),
         )
         .await
-        .map_err(|_| AppError::AdapterError {
-            adapter: ADAPTER_ID.to_owned(),
-            message: format!("timed out after {timeout_secs}s"),
-        })?
-        .map_err(|e| AppError::AdapterError {
-            adapter: ADAPTER_ID.to_owned(),
-            message: format!("failed to spawn claude process: {e}"),
+        .map_err(|_| AppError::Adapter(format!("{ADAPTER_ID}: timed out after {timeout_secs}s")))?
+        .map_err(|e| {
+            AppError::Adapter(format!("{ADAPTER_ID}: failed to spawn claude process: {e}"))
         })?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            return Err(AppError::AdapterError {
-                adapter: ADAPTER_ID.to_owned(),
-                message: format!(
-                    "claude exited with code {}: {stderr}",
-                    output.status.code().unwrap_or(-1)
-                ),
-            });
+            return Err(AppError::Adapter(format!(
+                "{ADAPTER_ID}: exited with code {}: {stderr}",
+                output.status.code().unwrap_or(-1)
+            )));
         }
 
         let content = String::from_utf8_lossy(&output.stdout).into_owned();

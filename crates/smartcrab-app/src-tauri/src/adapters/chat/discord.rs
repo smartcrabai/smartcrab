@@ -58,10 +58,9 @@ impl ChatAdapter for DiscordChatAdapter {
 
     async fn send_message(&self, _channel_id: &str, _content: &str) -> Result<(), AppError> {
         // TODO: implement via poise / serenity HTTP client
-        Err(AppError::AdapterError {
-            adapter: ADAPTER_ID.to_owned(),
-            message: "send_message not yet implemented".to_owned(),
-        })
+        Err(AppError::Adapter(format!(
+            "{ADAPTER_ID}: send_message not yet implemented"
+        )))
     }
 
     async fn start_listener(&self) -> Result<(), AppError> {
