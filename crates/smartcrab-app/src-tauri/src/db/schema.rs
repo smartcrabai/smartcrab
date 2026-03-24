@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS skills (
     description TEXT,
     file_path TEXT NOT NULL,
     skill_type TEXT NOT NULL,
+    pipeline_id TEXT,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
 )";
@@ -86,7 +87,9 @@ CREATE TABLE IF NOT EXISTS cron_jobs (
     schedule TEXT NOT NULL,
     is_active INTEGER DEFAULT 1,
     last_run_at TEXT,
-    next_run_at TEXT
+    next_run_at TEXT,
+    created_at TEXT,
+    updated_at TEXT
 )";
 
 /// All table creation statements in dependency order.
