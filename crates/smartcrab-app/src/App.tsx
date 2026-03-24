@@ -1,4 +1,3 @@
-import React from 'react';
 import { useUiStore, type AppView } from './store/uiStore';
 
 const viewLabels: Record<AppView, string> = {
