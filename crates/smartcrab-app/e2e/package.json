@@ -1,0 +1,17 @@
+{
+  "name": "smartcrab-app-e2e",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "wdio run wdio.conf.ts"
+  },
+  "devDependencies": {
+    "@wdio/cli": "^9",
+    "@wdio/local-runner": "^9",
+    "@wdio/mocha-framework": "^9",
+    "@wdio/spec-reporter": "^9",
+    "ts-node": "^10",
+    "typescript": "^5"
+  }
+}
