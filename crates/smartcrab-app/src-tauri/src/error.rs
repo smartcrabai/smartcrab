@@ -77,6 +77,12 @@ mod tests {
     }
 
     #[test]
+    fn app_error_display() {
+        let err = AppError::NotFound("pipeline 'x' not found".to_owned());
+        assert!(err.to_string().contains("not found"));
+    }
+
+    #[test]
     fn app_error_serializes_to_string() {
         let err = AppError::NotFound("test".to_owned());
         let json =
