@@ -60,10 +60,24 @@ pub fn run() -> Result<()> {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            commands::chat_adapter::list_adapters,
+            commands::chat_adapter::get_adapter_config,
+            commands::chat_adapter::update_adapter_config,
+            commands::chat_adapter::start_adapter,
+            commands::chat_adapter::stop_adapter,
+            commands::chat_adapter::get_adapter_status,
+            commands::cron::list_cron_jobs,
+            commands::cron::create_cron_job,
+            commands::cron::update_cron_job,
+            commands::cron::delete_cron_job,
             commands::execution::execute_pipeline,
             commands::execution::cancel_execution,
             commands::execution::get_execution_history,
             commands::execution::get_execution_detail,
+            commands::skills::list_skills,
+            commands::skills::generate_skill,
+            commands::skills::delete_skill,
+            commands::chat_ai::chat_create_pipeline,
         ])
         .run(tauri::generate_context!())
         .map_err(AppError::Tauri)?;

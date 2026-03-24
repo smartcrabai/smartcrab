@@ -59,6 +59,24 @@ mod tests {
     use super::*;
 
     #[test]
+    fn database_error_displays() {
+        let err = AppError::Database(rusqlite::Error::QueryReturnedNoRows);
+        assert!(err.to_string().contains("Database error"));
+    }
+
+    #[test]
+    fn not_found_error_displays() {
+        let err = AppError::NotFound("pipeline abc".to_owned());
+        assert!(err.to_string().contains("pipeline abc"));
+    }
+
+    #[test]
+    fn validation_error_displays() {
+        let err = AppError::Validation("missing nodes".to_owned());
+        assert!(err.to_string().contains("missing nodes"));
+    }
+
+    #[test]
     fn app_error_display() {
         let err = AppError::NotFound("pipeline 'x' not found".to_owned());
         assert!(err.to_string().contains("not found"));
@@ -66,9 +84,9 @@ mod tests {
 
     #[test]
     fn app_error_serializes_to_string() {
-        let err = AppError::InvalidInput("bad input".to_owned());
+        let err = AppError::NotFound("test".to_owned());
         let json =
             serde_json::to_string(&err).unwrap_or_else(|e| panic!("serialize should succeed: {e}"));
-        assert!(json.contains("Invalid input"));
+        assert!(json.contains("Not found: test"));
     }
 }
