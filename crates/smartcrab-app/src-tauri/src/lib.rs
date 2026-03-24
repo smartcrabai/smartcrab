@@ -37,8 +37,6 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::adapters::chat::ChatAdapter;
-    use crate::adapters::llm::LlmAdapter;
 
     #[test]
     fn default_chat_registry_contains_discord() {
@@ -72,10 +70,10 @@ mod tests {
 
         #[async_trait]
         impl ChatAdapter for SlackAdapter {
-            fn id(&self) -> &str {
+            fn id(&self) -> &'static str {
                 "slack"
             }
-            fn name(&self) -> &str {
+            fn name(&self) -> &'static str {
                 "Slack"
             }
             fn capabilities(&self) -> &ChatCapabilities {
