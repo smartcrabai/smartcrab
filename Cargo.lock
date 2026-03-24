@@ -4478,7 +4478,7 @@ checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
 
 [[package]]
 name = "smartcrab"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "async-trait",
  "chrono",
@@ -4500,7 +4500,7 @@ dependencies = [
 
 [[package]]
 name = "smartcrab-app"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "async-trait",
  "chrono",
@@ -4523,7 +4523,7 @@ dependencies = [
 
 [[package]]
 name = "smartcrab-cli"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "assert_cmd",
  "clap",
