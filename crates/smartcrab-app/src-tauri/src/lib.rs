@@ -1,6 +1,7 @@
 #![deny(clippy::dbg_macro, clippy::expect_used, clippy::unwrap_used)]
 #![warn(clippy::pedantic)]
 
+pub mod bridge;
 pub mod commands;
 pub mod db;
 pub mod engine;
@@ -36,6 +37,12 @@ pub fn run() -> Result<()> {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            commands::pipeline::list_pipelines,
+            commands::pipeline::get_pipeline,
+            commands::pipeline::create_pipeline,
+            commands::pipeline::update_pipeline,
+            commands::pipeline::delete_pipeline,
+            commands::pipeline::validate_pipeline,
             commands::chat_adapter::list_adapters,
             commands::chat_adapter::get_adapter_config,
             commands::chat_adapter::update_adapter_config,
