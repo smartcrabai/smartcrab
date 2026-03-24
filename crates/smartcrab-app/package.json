@@ -1,0 +1,26 @@
+{
+  "name": "smartcrab-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2",
+    "@xyflow/react": "^12",
+    "lucide-react": "^0.400.0",
+    "react": "^19",
+    "react-dom": "^19",
+    "tailwindcss": "^3",
+    "yaml": "^2"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5",
+    "vite": "^5"
+  }
+}
