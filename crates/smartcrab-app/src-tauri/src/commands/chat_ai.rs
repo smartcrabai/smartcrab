@@ -18,6 +18,11 @@ The pipeline YAML must have at minimum a 'name' key and a 'nodes' list. \
 Do not include any other fenced code blocks in your response.";
 
 /// Generate a pipeline YAML from a natural-language prompt using the Claude CLI.
+///
+/// # Errors
+///
+/// Returns [`AppError::ClaudeCli`] if the `claude` binary cannot be spawned,
+/// exits with a non-zero status, or produces non-UTF-8 output.
 #[tauri::command]
 pub async fn chat_create_pipeline(prompt: String) -> Result<ChatResponse, AppError> {
     let full_prompt = format!("{SYSTEM_PROMPT}\n\nUser request: {prompt}");
@@ -74,7 +79,7 @@ mod tests {
         let text = "Here is your pipeline:\n```yaml\nname: Test\nnodes: []\n```\nDone.";
         let yaml = extract_yaml_block(text);
         assert!(yaml.is_some());
-        let yaml = yaml.expect("should have yaml block");
+        let yaml = yaml.unwrap_or_else(|| panic!("should have yaml block"));
         assert!(yaml.contains("name: Test"));
     }
 
@@ -83,7 +88,7 @@ mod tests {
         let text = "Pipeline:\n```\nname: Unlabelled\nnodes: []\n```";
         let yaml = extract_yaml_block(text);
         assert!(yaml.is_some());
-        let yaml = yaml.expect("should have yaml block");
+        let yaml = yaml.unwrap_or_else(|| panic!("should have yaml block"));
         assert!(yaml.contains("name: Unlabelled"));
     }
 
@@ -102,7 +107,7 @@ mod tests {
         };
         let json = serde_json::to_string(&resp);
         assert!(json.is_ok());
-        let s = json.expect("serialize should succeed");
+        let s = json.unwrap_or_else(|e| panic!("serialize should succeed: {e}"));
         assert!(s.contains("Pipeline created"));
         assert!(s.contains("yaml_content"));
     }

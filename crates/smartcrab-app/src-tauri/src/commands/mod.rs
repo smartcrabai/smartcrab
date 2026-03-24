@@ -73,7 +73,8 @@ pub fn init_db(conn: &Connection) -> Result<(), rusqlite::Error> {
 
 #[cfg(test)]
 pub(crate) fn test_db() -> Connection {
-    let conn = Connection::open_in_memory().expect("in-memory db for tests");
-    init_db(&conn).expect("schema init for tests");
+    let conn =
+        Connection::open_in_memory().unwrap_or_else(|e| panic!("in-memory db for tests: {e}"));
+    init_db(&conn).unwrap_or_else(|e| panic!("schema init for tests: {e}"));
     conn
 }

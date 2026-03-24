@@ -30,7 +30,15 @@ pub struct AdapterStatus {
 }
 
 /// List all registered chat adapters with their configuration status.
+///
+/// # Errors
+///
+/// Returns [`AppError`] if the database lock is poisoned or the query fails.
 #[tauri::command]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri State must be passed by value"
+)]
 pub fn list_adapters(db: State<'_, DbState>) -> Result<Vec<AdapterInfo>, AppError> {
     let conn = lock_db(&db)?;
     let mut stmt =
@@ -53,7 +61,16 @@ pub fn list_adapters(db: State<'_, DbState>) -> Result<Vec<AdapterInfo>, AppErro
 }
 
 /// Get configuration for a specific adapter type.
+///
+/// # Errors
+///
+/// Returns [`AppError::NotFound`] if the adapter type is not registered, or
+/// [`AppError`] for database or JSON parse failures.
 #[tauri::command]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri State and command args must be owned"
+)]
 pub fn get_adapter_config(
     db: State<'_, DbState>,
     adapter_type: String,
@@ -77,7 +94,15 @@ pub fn get_adapter_config(
 }
 
 /// Insert or update configuration for a chat adapter.
+///
+/// # Errors
+///
+/// Returns [`AppError`] if the JSON is invalid or the database operation fails.
 #[tauri::command]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri State and command args must be owned"
+)]
 pub fn update_adapter_config(
     db: State<'_, DbState>,
     adapter_type: String,
@@ -96,6 +121,10 @@ pub fn update_adapter_config(
 }
 
 /// Start a chat adapter (placeholder — actual adapter start logic is runtime-dependent).
+///
+/// # Errors
+///
+/// Reserved for future use; currently always returns `Ok(())`.
 #[tauri::command]
 pub async fn start_adapter(adapter_type: String) -> Result<(), AppError> {
     tracing::info!(adapter = %adapter_type, "start_adapter requested");
@@ -105,6 +134,10 @@ pub async fn start_adapter(adapter_type: String) -> Result<(), AppError> {
 }
 
 /// Stop a chat adapter (placeholder).
+///
+/// # Errors
+///
+/// Reserved for future use; currently always returns `Ok(())`.
 #[tauri::command]
 pub async fn stop_adapter(adapter_type: String) -> Result<(), AppError> {
     tracing::info!(adapter = %adapter_type, "stop_adapter requested");
@@ -112,6 +145,10 @@ pub async fn stop_adapter(adapter_type: String) -> Result<(), AppError> {
 }
 
 /// Get the runtime status of a chat adapter.
+///
+/// # Errors
+///
+/// Reserved for future use; currently always returns `Ok(...)`.
 #[tauri::command]
 pub fn get_adapter_status(adapter_type: String) -> Result<AdapterStatus, AppError> {
     // Placeholder: real implementation would query an in-process adapter manager.
@@ -126,6 +163,7 @@ pub fn get_adapter_status(adapter_type: String) -> Result<AdapterStatus, AppErro
 // Standalone helpers (no Tauri State) used by tests
 // ---------------------------------------------------------------------------
 
+#[cfg(test)]
 pub(crate) fn list_adapters_db(conn: &rusqlite::Connection) -> Result<Vec<AdapterInfo>, AppError> {
     let mut stmt =
         conn.prepare("SELECT adapter_type, name, config_json, is_active FROM chat_adapter_config")?;
@@ -146,6 +184,7 @@ pub(crate) fn list_adapters_db(conn: &rusqlite::Connection) -> Result<Vec<Adapte
     Ok(adapters)
 }
 
+#[cfg(test)]
 pub(crate) fn get_adapter_config_db(
     conn: &rusqlite::Connection,
     adapter_type: &str,
@@ -167,6 +206,7 @@ pub(crate) fn get_adapter_config_db(
     })
 }
 
+#[cfg(test)]
 pub(crate) fn update_adapter_config_db(
     conn: &rusqlite::Connection,
     adapter_type: &str,
@@ -191,9 +231,8 @@ mod tests {
     #[test]
     fn list_adapters_empty() {
         let conn = test_db();
-        let adapters = list_adapters_db(&conn);
-        assert!(adapters.is_ok());
-        assert!(adapters.expect("should succeed").is_empty());
+        let adapters = list_adapters_db(&conn).unwrap_or_else(|e| panic!("should succeed: {e}"));
+        assert!(adapters.is_empty());
     }
 
     #[test]
@@ -202,24 +241,28 @@ mod tests {
 
         // Insert
         let config = r#"{"token":"abc123"}"#;
-        update_adapter_config_db(&conn, "discord", config).expect("insert should succeed");
+        update_adapter_config_db(&conn, "discord", config)
+            .unwrap_or_else(|e| panic!("insert should succeed: {e}"));
 
         // Read
-        let result = get_adapter_config_db(&conn, "discord").expect("get should succeed");
+        let result = get_adapter_config_db(&conn, "discord")
+            .unwrap_or_else(|e| panic!("get should succeed: {e}"));
         assert_eq!(result.adapter_type, "discord");
         assert_eq!(result.config_json["token"], "abc123");
         assert!(!result.is_active);
 
         // List
-        let list = list_adapters_db(&conn).expect("list should succeed");
+        let list = list_adapters_db(&conn).unwrap_or_else(|e| panic!("list should succeed: {e}"));
         assert_eq!(list.len(), 1);
         assert!(list[0].is_configured);
         assert_eq!(list[0].adapter_type, "discord");
 
         // Update
         let config2 = r#"{"token":"def456","guild":"123"}"#;
-        update_adapter_config_db(&conn, "discord", config2).expect("update should succeed");
-        let updated = get_adapter_config_db(&conn, "discord").expect("get should succeed");
+        update_adapter_config_db(&conn, "discord", config2)
+            .unwrap_or_else(|e| panic!("update should succeed: {e}"));
+        let updated = get_adapter_config_db(&conn, "discord")
+            .unwrap_or_else(|e| panic!("get should succeed: {e}"));
         assert_eq!(updated.config_json["token"], "def456");
         assert_eq!(updated.config_json["guild"], "123");
     }
@@ -229,7 +272,9 @@ mod tests {
         let conn = test_db();
         let result = get_adapter_config_db(&conn, "nonexistent");
         assert!(result.is_err());
-        let err = result.expect_err("should be NotFound");
+        let Err(err) = result else {
+            panic!("should be NotFound")
+        };
         assert!(err.to_string().contains("not found"));
     }
 
@@ -243,15 +288,17 @@ mod tests {
     #[test]
     fn adapter_not_configured_when_empty_json() {
         let conn = test_db();
-        update_adapter_config_db(&conn, "slack", "{}").expect("insert should succeed");
-        let list = list_adapters_db(&conn).expect("list should succeed");
+        update_adapter_config_db(&conn, "slack", "{}")
+            .unwrap_or_else(|e| panic!("insert should succeed: {e}"));
+        let list = list_adapters_db(&conn).unwrap_or_else(|e| panic!("list should succeed: {e}"));
         assert_eq!(list.len(), 1);
         assert!(!list[0].is_configured);
     }
 
     #[test]
     fn adapter_status_default() {
-        let status = get_adapter_status("discord".to_owned()).expect("should succeed");
+        let status = get_adapter_status("discord".to_owned())
+            .unwrap_or_else(|e| panic!("should succeed: {e}"));
         assert_eq!(status.adapter_type, "discord");
         assert!(!status.is_running);
         assert!(status.connected_since.is_none());
@@ -265,7 +312,8 @@ mod tests {
             is_configured: true,
             is_active: false,
         };
-        let json = serde_json::to_string(&info).expect("serialize should succeed");
+        let json = serde_json::to_string(&info)
+            .unwrap_or_else(|e| panic!("serialize should succeed: {e}"));
         assert!(json.contains("discord"));
         assert!(json.contains("is_configured"));
     }

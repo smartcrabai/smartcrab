@@ -26,21 +26,47 @@ struct PipelineRecord {
 }
 
 /// List all generated skills.
+///
+/// # Errors
+///
+/// Returns [`AppError`] if the database lock is poisoned or the query fails.
 #[tauri::command]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri State must be passed by value"
+)]
 pub fn list_skills(db: State<'_, DbState>) -> Result<Vec<SkillInfo>, AppError> {
     let conn = lock_db(&db)?;
     list_skills_db(&conn)
 }
 
 /// Generate a skill Markdown file from a stored pipeline YAML and register it.
+///
+/// # Errors
+///
+/// Returns [`AppError::NotFound`] if the pipeline does not exist, or
+/// [`AppError`] for IO or database failures.
 #[tauri::command]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri State and command args must be owned"
+)]
 pub fn generate_skill(db: State<'_, DbState>, pipeline_id: String) -> Result<SkillInfo, AppError> {
     let conn = lock_db(&db)?;
     generate_skill_db(&conn, &pipeline_id)
 }
 
 /// Delete a skill by id (removes the file and the DB record).
+///
+/// # Errors
+///
+/// Returns [`AppError::NotFound`] if no skill with the given id exists, or
+/// [`AppError`] for database failures.
 #[tauri::command]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri State and command args must be owned"
+)]
 pub fn delete_skill(db: State<'_, DbState>, id: String) -> Result<(), AppError> {
     let conn = lock_db(&db)?;
     delete_skill_db(&conn, &id)
@@ -198,7 +224,7 @@ pub(crate) fn insert_test_pipeline(
          VALUES (?1, ?2, ?3, ?4, '2024-01-01T00:00:00Z', '2024-01-01T00:00:00Z')",
         rusqlite::params![id, name, description, yaml],
     )
-    .expect("insert test pipeline");
+    .unwrap_or_else(|e| panic!("insert test pipeline: {e}"));
 }
 
 #[cfg(test)]
@@ -209,9 +235,8 @@ mod tests {
     #[test]
     fn list_skills_empty() {
         let conn = test_db();
-        let skills = list_skills_db(&conn);
-        assert!(skills.is_ok());
-        assert!(skills.expect("should succeed").is_empty());
+        let skills = list_skills_db(&conn).unwrap_or_else(|e| panic!("should succeed: {e}"));
+        assert!(skills.is_empty());
     }
 
     #[test]
@@ -219,7 +244,9 @@ mod tests {
         let conn = test_db();
         let result = generate_skill_db(&conn, "nonexistent-pipeline");
         assert!(result.is_err());
-        let err = result.expect_err("should be NotFound");
+        let Err(err) = result else {
+            panic!("should be NotFound")
+        };
         assert!(err.to_string().contains("not found"));
     }
 
@@ -233,12 +260,13 @@ mod tests {
             Some("A test pipeline"),
             "name: MyPipeline\nnodes: []",
         );
-        let skill = generate_skill_db(&conn, "pl-1").expect("should generate skill");
+        let skill = generate_skill_db(&conn, "pl-1")
+            .unwrap_or_else(|e| panic!("should generate skill: {e}"));
         assert_eq!(skill.name, "MyPipeline");
         assert_eq!(skill.pipeline_id, Some("pl-1".to_owned()));
         assert!(skill.file_path.contains("MyPipeline"));
 
-        let skills = list_skills_db(&conn).expect("should list");
+        let skills = list_skills_db(&conn).unwrap_or_else(|e| panic!("should list: {e}"));
         assert_eq!(skills.len(), 1);
     }
 
@@ -252,9 +280,10 @@ mod tests {
             None,
             "name: AnotherPipeline\nnodes: []",
         );
-        let skill = generate_skill_db(&conn, "pl-2").expect("should generate skill");
-        delete_skill_db(&conn, &skill.id).expect("should delete");
-        let skills = list_skills_db(&conn).expect("should list");
+        let skill = generate_skill_db(&conn, "pl-2")
+            .unwrap_or_else(|e| panic!("should generate skill: {e}"));
+        delete_skill_db(&conn, &skill.id).unwrap_or_else(|e| panic!("should delete: {e}"));
+        let skills = list_skills_db(&conn).unwrap_or_else(|e| panic!("should list: {e}"));
         assert!(skills.is_empty());
     }
 

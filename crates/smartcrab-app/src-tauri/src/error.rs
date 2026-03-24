@@ -47,7 +47,7 @@ mod tests {
         let err = AppError::NotFound("pipeline xyz".to_owned());
         let json = serde_json::to_string(&err);
         assert!(json.is_ok());
-        let s = json.expect("serialization should succeed in test");
+        let s = json.unwrap_or_else(|e| panic!("serialization should succeed in test: {e}"));
         assert!(s.contains("Not found: pipeline xyz"));
     }
 

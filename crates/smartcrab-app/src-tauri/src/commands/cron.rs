@@ -26,14 +26,31 @@ fn validate_schedule(schedule: &str) -> Result<(), AppError> {
 }
 
 /// List all cron jobs.
+///
+/// # Errors
+///
+/// Returns [`AppError`] if the database lock is poisoned or the query fails.
 #[tauri::command]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri State must be passed by value"
+)]
 pub fn list_cron_jobs(db: State<'_, DbState>) -> Result<Vec<CronJob>, AppError> {
     let conn = lock_db(&db)?;
     list_cron_jobs_db(&conn)
 }
 
 /// Create a new cron job for the given pipeline.
+///
+/// # Errors
+///
+/// Returns [`AppError::InvalidInput`] if the schedule expression is invalid, or
+/// [`AppError`] for database failures.
 #[tauri::command]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri State and command args must be owned"
+)]
 pub fn create_cron_job(
     db: State<'_, DbState>,
     pipeline_id: String,
@@ -44,7 +61,16 @@ pub fn create_cron_job(
 }
 
 /// Update an existing cron job's schedule and/or active state.
+///
+/// # Errors
+///
+/// Returns [`AppError::InvalidInput`] if the new schedule is invalid, or
+/// [`AppError`] for database failures.
 #[tauri::command]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri State and command args must be owned"
+)]
 pub fn update_cron_job(
     db: State<'_, DbState>,
     id: String,
@@ -56,7 +82,16 @@ pub fn update_cron_job(
 }
 
 /// Delete a cron job by id.
+///
+/// # Errors
+///
+/// Returns [`AppError::NotFound`] if no job with the given id exists, or
+/// [`AppError`] for database failures.
 #[tauri::command]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri State and command args must be owned"
+)]
 pub fn delete_cron_job(db: State<'_, DbState>, id: String) -> Result<(), AppError> {
     let conn = lock_db(&db)?;
     delete_cron_job_db(&conn, &id)
@@ -183,16 +218,15 @@ mod tests {
     #[test]
     fn list_cron_jobs_empty() {
         let conn = test_db();
-        let jobs = list_cron_jobs_db(&conn);
-        assert!(jobs.is_ok());
-        assert!(jobs.expect("should succeed").is_empty());
+        let jobs = list_cron_jobs_db(&conn).unwrap_or_else(|e| panic!("should succeed: {e}"));
+        assert!(jobs.is_empty());
     }
 
     #[test]
     fn create_cron_job_valid_schedule() {
         let conn = test_db();
-        let job =
-            create_cron_job_db(&conn, "pipeline-1", "0 * * * * *").expect("should create job");
+        let job = create_cron_job_db(&conn, "pipeline-1", "0 * * * * *")
+            .unwrap_or_else(|e| panic!("should create job: {e}"));
         assert_eq!(job.pipeline_id, "pipeline-1");
         assert_eq!(job.schedule, "0 * * * * *");
         assert!(job.is_active);
@@ -205,17 +239,19 @@ mod tests {
         // invalid via the cron crate's own test suite (test_nom_invalid_days_of_week_list).
         let result = create_cron_job_db(&conn, "pipeline-1", "* * * * * MON,TURTLE");
         assert!(result.is_err());
-        let err = result.expect_err("should be InvalidInput");
+        let Err(err) = result else {
+            panic!("should be InvalidInput")
+        };
         assert!(err.to_string().contains("invalid cron expression"));
     }
 
     #[test]
     fn update_cron_job_schedule() {
         let conn = test_db();
-        let job =
-            create_cron_job_db(&conn, "pipeline-1", "0 * * * * *").expect("should create job");
-        let updated =
-            update_cron_job_db(&conn, &job.id, Some("0 0 * * * *"), None).expect("should update");
+        let job = create_cron_job_db(&conn, "pipeline-1", "0 * * * * *")
+            .unwrap_or_else(|e| panic!("should create job: {e}"));
+        let updated = update_cron_job_db(&conn, &job.id, Some("0 0 * * * *"), None)
+            .unwrap_or_else(|e| panic!("should update: {e}"));
         assert_eq!(updated.schedule, "0 0 * * * *");
         assert!(updated.is_active);
     }
@@ -223,19 +259,20 @@ mod tests {
     #[test]
     fn update_cron_job_active_state() {
         let conn = test_db();
-        let job =
-            create_cron_job_db(&conn, "pipeline-1", "0 * * * * *").expect("should create job");
-        let updated = update_cron_job_db(&conn, &job.id, None, Some(false)).expect("should update");
+        let job = create_cron_job_db(&conn, "pipeline-1", "0 * * * * *")
+            .unwrap_or_else(|e| panic!("should create job: {e}"));
+        let updated = update_cron_job_db(&conn, &job.id, None, Some(false))
+            .unwrap_or_else(|e| panic!("should update: {e}"));
         assert!(!updated.is_active);
     }
 
     #[test]
     fn delete_cron_job_removes_it() {
         let conn = test_db();
-        let job =
-            create_cron_job_db(&conn, "pipeline-1", "0 * * * * *").expect("should create job");
-        delete_cron_job_db(&conn, &job.id).expect("should delete");
-        let jobs = list_cron_jobs_db(&conn).expect("should list");
+        let job = create_cron_job_db(&conn, "pipeline-1", "0 * * * * *")
+            .unwrap_or_else(|e| panic!("should create job: {e}"));
+        delete_cron_job_db(&conn, &job.id).unwrap_or_else(|e| panic!("should delete: {e}"));
+        let jobs = list_cron_jobs_db(&conn).unwrap_or_else(|e| panic!("should list: {e}"));
         assert!(jobs.is_empty());
     }
 
