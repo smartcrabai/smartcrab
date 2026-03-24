@@ -101,8 +101,6 @@ impl DbState {
     ///
     /// Returns [`AppError::Other`] if the lock is poisoned.
     pub fn lock(&self) -> Result<std::sync::MutexGuard<'_, Connection>> {
-        self.conn
-            .lock()
-            .map_err(|e| AppError::Other(e.to_string()))
+        self.conn.lock().map_err(|e| AppError::Other(e.to_string()))
     }
 }
