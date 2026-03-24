@@ -1,8 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    if let Err(err) = smartcrab_app::run() {
-        eprintln!("SmartCrab failed to start: {err}");
+    smartcrab_app::run().unwrap_or_else(|e| {
+        eprintln!("Fatal error: {e}");
         std::process::exit(1);
-    }
+    });
 }
