@@ -1,6 +1,7 @@
 pub mod chat_adapter;
 pub mod chat_ai;
 pub mod cron;
+pub mod execution;
 pub mod skills;
 
 #[cfg(test)]

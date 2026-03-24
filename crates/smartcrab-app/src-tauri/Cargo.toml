@@ -1,8 +1,8 @@
 [package]
-name = "smartcrab-app"
 description = "Tauri v2 desktop app for SmartCrab AI pipeline orchestration"
 edition.workspace = true
 license.workspace = true
+name = "smartcrab-app"
 repository.workspace = true
 version.workspace = true
 
