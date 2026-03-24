@@ -1,6 +1,10 @@
 [workspace]
 exclude = ["testcrab"]
-members = ["crates/smartcrab", "crates/smartcrab-cli", "crates/smartcrab-app/src-tauri"]
+members = [
+  "crates/smartcrab",
+  "crates/smartcrab-cli",
+  "crates/smartcrab-app/src-tauri",
+]
 resolver = "3"
 
 [workspace.package]
