@@ -92,7 +92,13 @@ pub(crate) fn generate_skill_db(
     let safe_name: String = record
         .name
         .chars()
-        .map(|c| if c.is_alphanumeric() || c == '-' || c == '_' { c } else { '_' })
+        .map(|c| {
+            if c.is_alphanumeric() || c == '-' || c == '_' {
+                c
+            } else {
+                '_'
+            }
+        })
         .collect();
 
     let content = build_skill_content(&record.name, record.description.as_deref(), &record.yaml);
