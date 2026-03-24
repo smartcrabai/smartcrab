@@ -1,9 +1,13 @@
 {
   "name": "smartcrab-app",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.4",
+  "type": "module",
   "scripts": {
-    "dev": "echo 'placeholder'",
-    "build": "echo 'placeholder'"
+    "dev": "echo 'dev placeholder'",
+    "build": "echo 'build placeholder'"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
   }
 }
