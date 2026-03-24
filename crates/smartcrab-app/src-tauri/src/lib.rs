@@ -1,4 +1,5 @@
 pub mod db;
+pub mod engine;
 pub mod error;
 
 use tauri::Manager as _;
