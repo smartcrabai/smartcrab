@@ -2,6 +2,7 @@ pub mod migrations;
 pub mod schema;
 
 use rusqlite::Connection;
+use std::sync::Mutex;
 
 use crate::error::{AppError, Result};
 
@@ -27,6 +28,36 @@ pub fn init(db_path: &str) -> Result<Connection> {
     tracing::info!(path = db_path, "Database initialised");
 
     Ok(conn)
+}
+
+/// Thread-safe wrapper around a `rusqlite::Connection` for use as Tauri managed state.
+pub struct DbState {
+    pub conn: Mutex<Connection>,
+}
+
+impl DbState {
+    /// Create an in-memory database initialised with the application schema.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`AppError`] if schema initialisation fails.
+    pub fn open_in_memory() -> Result<Self> {
+        let conn = init(":memory:")?;
+        Ok(Self {
+            conn: Mutex::new(conn),
+        })
+    }
+
+    /// Acquire the database lock.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`AppError::Other`] if the lock is poisoned.
+    pub fn lock(&self) -> Result<std::sync::MutexGuard<'_, Connection>> {
+        self.conn
+            .lock()
+            .map_err(|e| AppError::Other(e.to_string()))
+    }
 }
 
 #[cfg(test)]
@@ -72,35 +103,5 @@ mod tests {
             assert_eq!(count, 1, "Table '{table}' should exist");
         }
         Ok(())
-    }
-}
-
-use std::sync::Mutex;
-
-/// Thread-safe wrapper around a `rusqlite::Connection` for use as Tauri managed state.
-pub struct DbState {
-    pub conn: Mutex<Connection>,
-}
-
-impl DbState {
-    /// Create an in-memory database initialised with the application schema.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`AppError`] if schema initialisation fails.
-    pub fn open_in_memory() -> Result<Self> {
-        let conn = init(":memory:")?;
-        Ok(Self {
-            conn: Mutex::new(conn),
-        })
-    }
-
-    /// Acquire the database lock.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`AppError::Other`] if the lock is poisoned.
-    pub fn lock(&self) -> Result<std::sync::MutexGuard<'_, Connection>> {
-        self.conn.lock().map_err(|e| AppError::Other(e.to_string()))
     }
 }
