@@ -1,0 +1,9 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nicegui-org/nicegui/main/nicegui/resources/tauri_capability.schema.json",
+  "identifier": "default",
+  "description": "Default capability for SmartCrab",
+  "windows": ["main"],
+  "permissions": [
+    "core:default"
+  ]
+}
