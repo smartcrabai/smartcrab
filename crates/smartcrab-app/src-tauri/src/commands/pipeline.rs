@@ -382,9 +382,9 @@ edges:
     #[test]
     fn crud_not_found() {
         let conn = setup_test_db();
-        let result = query_pipeline_by_id(&conn, "nonexistent");
-        assert!(result.is_err());
-        let err = result.unwrap_err();
+        let Err(err) = query_pipeline_by_id(&conn, "nonexistent") else {
+            panic!("expected NotFound error")
+        };
         assert!(matches!(err, AppError::NotFound(_)));
     }
 
@@ -525,7 +525,7 @@ edges:
                 })
             })
             .unwrap_or_else(|e| panic!("Query failed: {e}"))
-            .filter_map(|r| r.ok())
+            .filter_map(std::result::Result::ok)
             .collect();
         assert_eq!(rows.len(), 3);
     }

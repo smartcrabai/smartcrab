@@ -169,10 +169,10 @@ edges:
 nodes: {}
 edges: []
 ";
-        let err = validate_pipeline_yaml(yaml);
-        assert!(err.is_err());
-        let msg = err.unwrap_err().to_string();
-        assert!(msg.contains("at least one node"));
+        let Err(e) = validate_pipeline_yaml(yaml) else {
+            panic!("expected validation error")
+        };
+        assert!(e.to_string().contains("at least one node"));
     }
 
     #[test]
@@ -184,10 +184,10 @@ edges:
   - from: ghost
     to: sink
 ";
-        let err = validate_pipeline_yaml(yaml);
-        assert!(err.is_err());
-        let msg = err.unwrap_err().to_string();
-        assert!(msg.contains("ghost"));
+        let Err(e) = validate_pipeline_yaml(yaml) else {
+            panic!("expected validation error")
+        };
+        assert!(e.to_string().contains("ghost"));
     }
 
     #[test]
@@ -199,10 +199,10 @@ edges:
   - from: source
     to: ghost
 ";
-        let err = validate_pipeline_yaml(yaml);
-        assert!(err.is_err());
-        let msg = err.unwrap_err().to_string();
-        assert!(msg.contains("ghost"));
+        let Err(e) = validate_pipeline_yaml(yaml) else {
+            panic!("expected validation error")
+        };
+        assert!(e.to_string().contains("ghost"));
     }
 
     #[test]
@@ -287,9 +287,9 @@ edges:
   - from: b
     to: a
 ";
-        let err = validate_pipeline_yaml(yaml);
-        assert!(err.is_err());
-        let msg = err.unwrap_err().to_string();
-        assert!(msg.contains("input node"));
+        let Err(e) = validate_pipeline_yaml(yaml) else {
+            panic!("expected validation error")
+        };
+        assert!(e.to_string().contains("input node"));
     }
 }
