@@ -1,23 +1,52 @@
-# smartcrab
+# SmartCrab
 
-## Overview
-
-
+SmartCrab is a Rust framework implementing the Tool-to-AI paradigm — a Tauri-based desktop application for building, running, and managing AI-powered workflows.
 
 ## Installation
 
-### Homebrew (macOS / Linux)
+### macOS
 
-```sh
-brew install smartcrabai/tap/smartcrab-cli
-```
+Download the `.dmg` from [GitHub Releases](https://github.com/smartcrabai/smartcrab/releases/latest).
 
-### Shell script installer
+### Windows
 
-```sh
-curl --proto '=https' --tlsv1.2 -LsSf https://github.com/smartcrabai/smartcrab/releases/latest/download/smartcrab-cli-installer.sh | sh
-```
+Download the `.msi` or `.exe` installer from [GitHub Releases](https://github.com/smartcrabai/smartcrab/releases/latest).
+
+### Linux
+
+Download the `.deb` or `.AppImage` from [GitHub Releases](https://github.com/smartcrabai/smartcrab/releases/latest).
 
 ## Development
 
-Run `cargo run` to start the project.
+### Prerequisites
+
+- [Rust](https://rustup.rs/) (latest stable)
+- [Node.js](https://nodejs.org/) 24+
+- Linux only: `libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf`
+
+### Setup
+
+```sh
+cd crates/smartcrab-app
+npm install
+```
+
+### Run (development)
+
+```sh
+npm run tauri dev
+```
+
+### Build (production)
+
+```sh
+npm run tauri build
+```
+
+## Documentation
+
+https://smartcrabai.github.io/smartcrab/
+
+## License
+
+Apache-2.0
