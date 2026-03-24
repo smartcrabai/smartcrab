@@ -1,9 +1,11 @@
+pub mod commands;
 pub mod db;
 pub mod engine;
 pub mod error;
 
 use tauri::Manager as _;
 
+use crate::db::DbState;
 use crate::error::{AppError, Result};
 
 /// Entry point called from `main.rs`.
@@ -29,11 +31,20 @@ pub fn run() -> Result<()> {
                 .to_str()
                 .ok_or_else(|| AppError::Other("DB path is not valid UTF-8".to_owned()))?;
 
-            let _conn = db::init(db_path_str)?;
+            let conn = db::init(db_path_str)?;
+            app.manage(DbState {
+                conn: std::sync::Mutex::new(conn),
+            });
 
             tracing::info!("SmartCrab app started");
             Ok(())
         })
+        .invoke_handler(tauri::generate_handler![
+            commands::execution::execute_pipeline,
+            commands::execution::cancel_execution,
+            commands::execution::get_execution_history,
+            commands::execution::get_execution_detail,
+        ])
         .run(tauri::generate_context!())
         .map_err(AppError::Tauri)?;
 
