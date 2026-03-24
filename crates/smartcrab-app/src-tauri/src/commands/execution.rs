@@ -192,9 +192,8 @@ pub async fn execute_pipeline(
 
     let (pipeline_name, yaml_def, trigger_type) = {
         let conn = db.lock()?;
-        let mut stmt = conn.prepare(
-            "SELECT name, yaml_definition, trigger_type FROM pipelines WHERE id = ?1",
-        )?;
+        let mut stmt = conn
+            .prepare("SELECT name, yaml_definition, trigger_type FROM pipelines WHERE id = ?1")?;
         let row = stmt.query_row([&pipeline_id], |row| {
             Ok((
                 row.get::<_, String>(0)?,
@@ -205,9 +204,7 @@ pub async fn execute_pipeline(
         match row {
             Ok(r) => r,
             Err(rusqlite::Error::QueryReturnedNoRows) => {
-                return Err(AppError::PipelineNotFound {
-                    id: pipeline_id,
-                });
+                return Err(AppError::PipelineNotFound { id: pipeline_id });
             }
             Err(e) => return Err(AppError::Database(e)),
         }
@@ -245,9 +242,15 @@ pub async fn execute_pipeline(
     };
 
     tokio::spawn(async move {
-        let result =
-            run_pipeline_async(&app, &exec_id, &pipeline_id, &yaml_def, &trigger_data, db_inner.as_deref())
-                .await;
+        let result = run_pipeline_async(
+            &app,
+            &exec_id,
+            &pipeline_id,
+            &yaml_def,
+            &trigger_data,
+            db_inner.as_deref(),
+        )
+        .await;
 
         if let Err(e) = &result {
             error!(execution_id = %exec_id, error = %e, "pipeline execution failed");
@@ -260,10 +263,7 @@ pub async fn execute_pipeline(
 /// Cancel a running execution.
 #[tauri::command]
 #[allow(clippy::needless_pass_by_value)]
-pub fn cancel_execution(
-    db: State<'_, DbState>,
-    execution_id: String,
-) -> Result<(), AppError> {
+pub fn cancel_execution(db: State<'_, DbState>, execution_id: String) -> Result<(), AppError> {
     let conn = db.lock()?;
     let updated = conn.execute(
         "UPDATE pipeline_executions SET status = 'cancelled', completed_at = ?1 WHERE id = ?2 AND status = 'running'",
@@ -286,7 +286,9 @@ pub fn get_execution_history(
     let conn = db.lock()?;
     let limit = limit.unwrap_or(50);
 
-    let (sql, params): (String, Vec<Box<dyn rusqlite::types::ToSql>>) = if let Some(ref pid) = pipeline_id {
+    let (sql, params): (String, Vec<Box<dyn rusqlite::types::ToSql>>) = if let Some(ref pid) =
+        pipeline_id
+    {
         (
             "SELECT e.id, e.pipeline_id, COALESCE(p.name, ''), e.trigger_type, e.status, e.started_at, e.completed_at \
              FROM pipeline_executions e LEFT JOIN pipelines p ON e.pipeline_id = p.id \
@@ -354,14 +356,22 @@ pub fn get_execution_detail(
             ))
         },
     );
-    let (id, pipeline_id, trigger_type, trigger_data_raw, status, started_at, completed_at, error_message) =
-        match exec {
-            Ok(r) => r,
-            Err(rusqlite::Error::QueryReturnedNoRows) => {
-                return Err(AppError::ExecutionNotFound { id: execution_id });
-            }
-            Err(e) => return Err(AppError::Database(e)),
-        };
+    let (
+        id,
+        pipeline_id,
+        trigger_type,
+        trigger_data_raw,
+        status,
+        started_at,
+        completed_at,
+        error_message,
+    ) = match exec {
+        Ok(r) => r,
+        Err(rusqlite::Error::QueryReturnedNoRows) => {
+            return Err(AppError::ExecutionNotFound { id: execution_id });
+        }
+        Err(e) => return Err(AppError::Database(e)),
+    };
 
     let trigger_data = trigger_data_raw
         .as_deref()
@@ -479,7 +489,10 @@ fn topological_order(nodes: &[PipelineNode], edges: &[PipelineEdge]) -> Vec<Stri
             EdgeTarget::Parallel(ts) => ts.clone(),
         };
         for target in targets {
-            adjacency.entry(edge.from.clone()).or_default().push(target.clone());
+            adjacency
+                .entry(edge.from.clone())
+                .or_default()
+                .push(target.clone());
             *in_degree.entry(target).or_insert(0) += 1;
         }
     }
@@ -521,19 +534,13 @@ fn outgoing_edges<'a>(from: &str, edges: &'a [PipelineEdge]) -> Vec<&'a Pipeline
 }
 
 /// Evaluate a condition spec against an output value and return the next node id.
-fn evaluate_condition(
-    condition: &ConditionSpec,
-    output: &serde_json::Value,
-) -> Option<String> {
+fn evaluate_condition(condition: &ConditionSpec, output: &serde_json::Value) -> Option<String> {
     let field_value = output.get(&condition.field)?.as_str()?;
     condition.rules.get(field_value).cloned()
 }
 
 /// Simulate node execution, producing a simple output JSON.
-fn simulate_node_execution(
-    node: &PipelineNode,
-    input: &serde_json::Value,
-) -> serde_json::Value {
+fn simulate_node_execution(node: &PipelineNode, input: &serde_json::Value) -> serde_json::Value {
     serde_json::json!({
         "node_id": node.id,
         "node_name": node.name,
@@ -771,12 +778,7 @@ mod tests {
         }
     }
 
-    fn seed_execution(
-        db: &DbState,
-        execution_id: &str,
-        pipeline_id: &str,
-        status: &str,
-    ) {
+    fn seed_execution(db: &DbState, execution_id: &str, pipeline_id: &str, status: &str) {
         let conn = db.conn.lock().ok();
         if let Some(conn) = conn.as_ref() {
             let _ = conn.execute(
@@ -802,12 +804,7 @@ mod tests {
         }
     }
 
-    fn seed_execution_log(
-        db: &DbState,
-        execution_id: &str,
-        node_id: Option<&str>,
-        message: &str,
-    ) {
+    fn seed_execution_log(db: &DbState, execution_id: &str, node_id: Option<&str>, message: &str) {
         let conn = db.conn.lock().ok();
         if let Some(conn) = conn.as_ref() {
             let _ = conn.execute(
@@ -831,11 +828,10 @@ mod tests {
 
         let count: i64 = conn
             .and_then(|c| {
-                c.query_row(
-                    "SELECT COUNT(*) FROM pipeline_executions",
-                    [],
-                    |row| row.get(0),
-                ).ok()
+                c.query_row("SELECT COUNT(*) FROM pipeline_executions", [], |row| {
+                    row.get(0)
+                })
+                .ok()
             })
             .unwrap_or(-1);
         assert_eq!(count, 0);

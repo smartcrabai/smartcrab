@@ -48,9 +48,7 @@ mod tests {
 
     #[test]
     fn app_error_display() {
-        let err = AppError::ExecutionNotFound {
-            id: "x".to_owned(),
-        };
+        let err = AppError::ExecutionNotFound { id: "x".to_owned() };
         assert_eq!(err.to_string(), "Execution not found: x");
     }
 }
