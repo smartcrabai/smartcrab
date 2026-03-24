@@ -12,6 +12,11 @@ use tauri::Manager as _;
 use crate::db::DbState;
 use crate::error::{AppError, Result};
 
+/// Entry point called from `main.rs`.
+///
+/// # Errors
+///
+/// Returns [`AppError`] if the database cannot be initialised or the Tauri runtime fails.
 pub fn run() -> Result<()> {
     tauri::Builder::default()
         .setup(|app| {

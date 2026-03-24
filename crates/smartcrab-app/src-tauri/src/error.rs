@@ -79,8 +79,8 @@ mod tests {
     #[test]
     fn app_error_serializes_to_string() {
         let err = AppError::NotFound("test".to_owned());
-        let json = serde_json::to_string(&err)
-            .unwrap_or_else(|e| panic!("serialize should succeed: {e}"));
+        let json =
+            serde_json::to_string(&err).unwrap_or_else(|e| panic!("serialize should succeed: {e}"));
         assert!(json.contains("Not found: test"));
     }
 }

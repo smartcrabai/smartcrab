@@ -193,13 +193,9 @@ pub async fn execute_pipeline(
 
     let (pipeline_name, yaml_def) = {
         let conn = db.lock()?;
-        let mut stmt = conn
-            .prepare("SELECT name, yaml_content FROM pipelines WHERE id = ?1")?;
+        let mut stmt = conn.prepare("SELECT name, yaml_content FROM pipelines WHERE id = ?1")?;
         let row = stmt.query_row([&pipeline_id], |row| {
-            Ok((
-                row.get::<_, String>(0)?,
-                row.get::<_, String>(1)?,
-            ))
+            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
         });
         match row {
             Ok(r) => r,
