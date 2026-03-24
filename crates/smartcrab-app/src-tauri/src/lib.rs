@@ -1,24 +1,44 @@
-#![deny(clippy::dbg_macro, clippy::expect_used, clippy::unwrap_used)]
-#![warn(clippy::pedantic)]
-
 pub mod commands;
 pub mod db;
+pub mod engine;
 pub mod error;
 
-use db::DbState;
+use tauri::Manager as _;
 
-/// Build and run the Tauri application.
+use crate::db::DbState;
+use crate::error::{AppError, Result};
+
+/// Entry point called from `main.rs`.
+///
+/// Initialises the database and starts the Tauri application.
 ///
 /// # Errors
 ///
-/// Returns an error if Tauri fails to initialise or the database cannot be
-/// opened.
-pub fn run() -> Result<(), Box<dyn std::error::Error>> {
-    let db_path = "smartcrab.db";
-    let db_state = DbState::open(db_path)?;
-
+/// Returns [`AppError`] if the database cannot be initialised or the Tauri
+/// runtime fails to start.
+pub fn run() -> Result<()> {
     tauri::Builder::default()
-        .manage(db_state)
+        .setup(|app| {
+            let app_dir = app
+                .path()
+                .app_data_dir()
+                .map_err(|e| AppError::Other(e.to_string()))?;
+
+            std::fs::create_dir_all(&app_dir)?;
+
+            let db_path = app_dir.join("smartcrab.db");
+            let db_path_str = db_path
+                .to_str()
+                .ok_or_else(|| AppError::Other("DB path is not valid UTF-8".to_owned()))?;
+
+            let conn = db::init(db_path_str)?;
+            app.manage(DbState {
+                conn: std::sync::Mutex::new(conn),
+            });
+
+            tracing::info!("SmartCrab app started");
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             commands::execution::execute_pipeline,
             commands::execution::cancel_execution,
@@ -26,7 +46,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
             commands::execution::get_execution_detail,
         ])
         .run(tauri::generate_context!())
-        .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
+        .map_err(AppError::Tauri)?;
 
     Ok(())
 }

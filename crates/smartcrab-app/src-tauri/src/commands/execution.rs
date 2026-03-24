@@ -147,12 +147,10 @@ impl LoopGuard {
         let count = self.counts.entry(node_id.to_owned()).or_insert(0);
         *count += 1;
         if *count > self.max_iterations {
-            return Err(AppError::ExecutionFailed {
-                message: format!(
-                    "node `{node_id}` exceeded max iterations ({max})",
-                    max = self.max_iterations,
-                ),
-            });
+            return Err(AppError::Other(format!(
+                "node `{node_id}` exceeded max iterations ({max})",
+                max = self.max_iterations,
+            )));
         }
         Ok(*count)
     }
@@ -193,25 +191,25 @@ pub async fn execute_pipeline(
 ) -> Result<String, AppError> {
     let execution_id = uuid::Uuid::new_v4().to_string();
 
-    let (pipeline_name, yaml_def, trigger_type) = {
+    let (pipeline_name, yaml_def) = {
         let conn = db.lock()?;
         let mut stmt = conn
-            .prepare("SELECT name, yaml_definition, trigger_type FROM pipelines WHERE id = ?1")?;
+            .prepare("SELECT name, yaml_content FROM pipelines WHERE id = ?1")?;
         let row = stmt.query_row([&pipeline_id], |row| {
             Ok((
                 row.get::<_, String>(0)?,
                 row.get::<_, String>(1)?,
-                row.get::<_, String>(2)?,
             ))
         });
         match row {
             Ok(r) => r,
             Err(rusqlite::Error::QueryReturnedNoRows) => {
-                return Err(AppError::PipelineNotFound { id: pipeline_id });
+                return Err(AppError::NotFound(format!("pipeline '{pipeline_id}'")));
             }
             Err(e) => return Err(AppError::Database(e)),
         }
     };
+    let trigger_type = "manual";
 
     {
         let trigger_json = trigger_data
@@ -280,7 +278,7 @@ pub fn cancel_execution(db: State<'_, DbState>, execution_id: String) -> Result<
         rusqlite::params![now_iso(), execution_id],
     )?;
     if updated == 0 {
-        return Err(AppError::ExecutionNotFound { id: execution_id });
+        return Err(AppError::NotFound(format!("execution '{execution_id}'")));
     }
     Ok(())
 }
@@ -396,7 +394,7 @@ pub fn get_execution_detail(
     ) = match exec {
         Ok(r) => r,
         Err(rusqlite::Error::QueryReturnedNoRows) => {
-            return Err(AppError::ExecutionNotFound { id: execution_id });
+            return Err(AppError::NotFound(format!("execution '{execution_id}'")));
         }
         Err(e) => return Err(AppError::Database(e)),
     };
@@ -595,10 +593,8 @@ async fn run_pipeline_async(
     trigger_data: Option<&serde_json::Value>,
     db_path: Option<&std::path::Path>,
 ) -> Result<(), AppError> {
-    let definition: PipelineDefinition =
-        serde_json::from_str(yaml_def).map_err(|e| AppError::ExecutionFailed {
-            message: format!("failed to parse pipeline definition: {e}"),
-        })?;
+    let definition: PipelineDefinition = serde_json::from_str(yaml_def)
+        .map_err(|e| AppError::Other(format!("failed to parse pipeline definition: {e}")))?;
 
     let order = topological_order(&definition.nodes, &definition.edges);
     let node_map: HashMap<String, &PipelineNode> =
@@ -807,7 +803,7 @@ mod tests {
         let conn = db.conn.lock().ok();
         if let Some(conn) = conn.as_ref() {
             let _ = conn.execute(
-                "INSERT INTO pipelines (id, name, yaml_definition, trigger_type) VALUES (?1, ?2, '{}', 'manual')",
+                "INSERT INTO pipelines (id, name, yaml_content, created_at, updated_at) VALUES (?1, ?2, '{}', datetime('now'), datetime('now'))",
                 rusqlite::params![pipeline_id, name],
             );
         }

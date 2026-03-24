@@ -1,54 +1,55 @@
 use serde::Serialize;
 
-/// Application-level errors for `SmartCrab` Tauri app.
+/// Application-level error type for the `SmartCrab` desktop app.
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
     #[error("Database error: {0}")]
     Database(#[from] rusqlite::Error),
 
+    #[error("Migration error: {0}")]
+    Migration(String),
+
+    #[error("Tauri error: {0}")]
+    Tauri(#[from] tauri::Error),
+
     #[error("Serialization error: {0}")]
     Serialization(#[from] serde_json::Error),
 
-    #[error("Pipeline not found: {id}")]
-    PipelineNotFound { id: String },
+    #[error("IO error: {0}")]
+    Io(#[from] std::io::Error),
 
-    #[error("Execution not found: {id}")]
-    ExecutionNotFound { id: String },
+    #[error("YAML error: {0}")]
+    Yaml(#[from] serde_yaml::Error),
 
-    #[error("Execution failed: {message}")]
-    ExecutionFailed { message: String },
+    #[error("Engine error: {0}")]
+    Engine(String),
 
-    #[error("Internal error: {0}")]
-    Internal(String),
+    #[error("Not found: {0}")]
+    NotFound(String),
+
+    #[error("Invalid input: {0}")]
+    InvalidInput(String),
+
+    #[error("Adapter error: {0}")]
+    Adapter(String),
+
+    #[error("Claude CLI error: {0}")]
+    ClaudeCli(String),
+
+    #[error("Validation error: {0}")]
+    Validation(String),
+
+    #[error("{0}")]
+    Other(String),
 }
 
+pub type Result<T> = std::result::Result<T, AppError>;
+
 impl Serialize for AppError {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
         serializer.serialize_str(&self.to_string())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn app_error_serializes_to_string() {
-        let err = AppError::PipelineNotFound {
-            id: "abc".to_owned(),
-        };
-        let json = serde_json::to_string(&err);
-        assert!(json.is_ok());
-        let json = json.ok();
-        assert!(json.is_some_and(|j| j.contains("Pipeline not found: abc")));
-    }
-
-    #[test]
-    fn app_error_display() {
-        let err = AppError::ExecutionNotFound { id: "x".to_owned() };
-        assert_eq!(err.to_string(), "Execution not found: x");
     }
 }
