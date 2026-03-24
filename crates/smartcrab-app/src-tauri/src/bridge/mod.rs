@@ -116,8 +116,7 @@ pub fn validate_pipeline_yaml(yaml_content: &str) -> Result<(), AppError> {
     let has_input = types.values().any(|t| t == "input");
     if !has_input {
         return Err(AppError::Validation(
-            "Pipeline must have at least one input node (a node with no incoming edges)"
-                .to_owned(),
+            "Pipeline must have at least one input node (a node with no incoming edges)".to_owned(),
         ));
     }
 
@@ -135,7 +134,11 @@ pub fn validate_pipeline_yaml(yaml_content: &str) -> Result<(), AppError> {
 pub fn parse_pipeline_yaml(yaml_content: &str) -> Result<ParsedPipeline, AppError> {
     let def: PipelineDef = serde_yaml::from_str(yaml_content)?;
     let node_types = auto_detect_node_types(&def.nodes, &def.edges);
-    let edges = def.edges.iter().map(|e| (e.from.clone(), e.to.clone())).collect();
+    let edges = def
+        .edges
+        .iter()
+        .map(|e| (e.from.clone(), e.to.clone()))
+        .collect();
     Ok((node_types, edges))
 }
 

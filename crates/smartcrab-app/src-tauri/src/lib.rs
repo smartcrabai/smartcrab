@@ -12,10 +12,13 @@ use commands::pipeline;
 /// cannot be initialised, or the Tauri application fails to start. These
 /// are all considered unrecoverable fatal startup failures.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
-#[expect(clippy::expect_used, reason = "fatal startup failure — no recovery path")]
+#[expect(
+    clippy::expect_used,
+    reason = "fatal startup failure — no recovery path"
+)]
 pub fn run() {
-    let conn = rusqlite::Connection::open_in_memory()
-        .expect("Failed to open in-memory SQLite database");
+    let conn =
+        rusqlite::Connection::open_in_memory().expect("Failed to open in-memory SQLite database");
     pipeline::init_db(&conn).expect("Failed to initialise database schema");
 
     tauri::Builder::default()

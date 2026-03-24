@@ -72,7 +72,10 @@ pub fn init_db(conn: &Connection) -> Result<(), AppError> {
 /// Returns `AppError::Database` if the query fails or `AppError::Validation` if
 /// the database lock cannot be acquired.
 #[tauri::command]
-#[expect(clippy::needless_pass_by_value, reason = "Tauri command injection requires owned State<T>")]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri command injection requires owned State<T>"
+)]
 pub fn list_pipelines(db: State<'_, DbState>) -> Result<Vec<PipelineInfo>, AppError> {
     let conn = db
         .lock()
@@ -104,7 +107,10 @@ pub fn list_pipelines(db: State<'_, DbState>) -> Result<Vec<PipelineInfo>, AppEr
 /// Returns `AppError::NotFound` if no pipeline with `id` exists, `AppError::Database`
 /// on query failure, or `AppError::Validation` if the lock cannot be acquired.
 #[tauri::command]
-#[expect(clippy::needless_pass_by_value, reason = "Tauri command injection requires owned State<T>")]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri command injection requires owned State<T>"
+)]
 pub fn get_pipeline(db: State<'_, DbState>, id: String) -> Result<PipelineDetail, AppError> {
     let conn = db
         .lock()
@@ -120,7 +126,10 @@ pub fn get_pipeline(db: State<'_, DbState>, id: String) -> Result<PipelineDetail
 /// invalid, `AppError::Database` on insert failure, or `AppError::Validation`
 /// if the lock cannot be acquired.
 #[tauri::command]
-#[expect(clippy::needless_pass_by_value, reason = "Tauri command injection requires owned State<T>")]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri command injection requires owned State<T>"
+)]
 pub fn create_pipeline(
     db: State<'_, DbState>,
     name: String,
@@ -152,7 +161,10 @@ pub fn create_pipeline(
 /// invalid, `AppError::Database` on update failure, or `AppError::Validation`
 /// if the lock cannot be acquired.
 #[tauri::command]
-#[expect(clippy::needless_pass_by_value, reason = "Tauri command injection requires owned State<T>")]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri command injection requires owned State<T>"
+)]
 pub fn update_pipeline(
     db: State<'_, DbState>,
     id: String,
@@ -206,7 +218,9 @@ pub fn update_pipeline(
     let affected = conn.execute(&sql, ordered.as_slice())?;
 
     if affected == 0 {
-        return Err(AppError::NotFound(format!("Pipeline with id '{id}' not found")));
+        return Err(AppError::NotFound(format!(
+            "Pipeline with id '{id}' not found"
+        )));
     }
 
     query_pipeline_by_id(&conn, &id)
@@ -220,15 +234,15 @@ pub fn update_pipeline(
 /// `AppError::Database` on delete failure, or `AppError::Validation` if the
 /// lock cannot be acquired.
 #[tauri::command]
-#[expect(clippy::needless_pass_by_value, reason = "Tauri command injection requires owned State<T>")]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri command injection requires owned State<T>"
+)]
 pub fn delete_pipeline(db: State<'_, DbState>, id: String) -> Result<(), AppError> {
     let conn = db
         .lock()
         .map_err(|e| AppError::Validation(format!("Failed to acquire database lock: {e}")))?;
-    let affected = conn.execute(
-        "DELETE FROM pipelines WHERE id = ?1",
-        rusqlite::params![id],
-    )?;
+    let affected = conn.execute("DELETE FROM pipelines WHERE id = ?1", rusqlite::params![id])?;
     if affected == 0 {
         return Err(AppError::NotFound(format!(
             "Pipeline with id '{id}' not found"
@@ -245,7 +259,10 @@ pub fn delete_pipeline(db: State<'_, DbState>, id: String) -> Result<(), AppErro
 /// rather than as a top-level `Err`. Only returns `Err` if an unexpected
 /// internal error occurs.
 #[tauri::command]
-#[expect(clippy::needless_pass_by_value, reason = "Tauri command injection requires owned State<T>")]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri command injection requires owned State<T>"
+)]
 pub fn validate_pipeline(yaml_content: String) -> Result<ValidationResult, AppError> {
     let mut errors = Vec::new();
     let mut warnings = Vec::new();
@@ -390,8 +407,8 @@ edges:
         )
         .unwrap_or_else(|e| panic!("Update failed: {e}"));
 
-        let pipeline = query_pipeline_by_id(&conn, &id)
-            .unwrap_or_else(|e| panic!("Query failed: {e}"));
+        let pipeline =
+            query_pipeline_by_id(&conn, &id).unwrap_or_else(|e| panic!("Query failed: {e}"));
         assert_eq!(pipeline.name, "Updated");
     }
 
@@ -408,10 +425,7 @@ edges:
         .unwrap_or_else(|e| panic!("Insert failed: {e}"));
 
         let affected = conn
-            .execute(
-                "DELETE FROM pipelines WHERE id = ?1",
-                rusqlite::params![id],
-            )
+            .execute("DELETE FROM pipelines WHERE id = ?1", rusqlite::params![id])
             .unwrap_or_else(|e| panic!("Delete failed: {e}"));
         assert_eq!(affected, 1);
 
@@ -468,9 +482,18 @@ edges:
         assert!(result.is_ok());
         let result = result.unwrap_or_else(|e| panic!("Validation failed: {e}"));
         assert!(result.is_valid);
-        assert_eq!(result.node_types.get("a").map(String::as_str), Some("input"));
-        assert_eq!(result.node_types.get("b").map(String::as_str), Some("hidden"));
-        assert_eq!(result.node_types.get("c").map(String::as_str), Some("output"));
+        assert_eq!(
+            result.node_types.get("a").map(String::as_str),
+            Some("input")
+        );
+        assert_eq!(
+            result.node_types.get("b").map(String::as_str),
+            Some("hidden")
+        );
+        assert_eq!(
+            result.node_types.get("c").map(String::as_str),
+            Some("output")
+        );
     }
 
     #[test]
