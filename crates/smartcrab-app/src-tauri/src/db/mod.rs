@@ -5,9 +5,13 @@ use rusqlite::Connection;
 
 use crate::error::{AppError, Result};
 
-/// Open (or create) the application SQLite database at `db_path`,
+/// Open (or create) the application `SQLite` database at `db_path`,
 /// enable WAL mode for better concurrent read performance, and apply
 /// all pending schema migrations.
+///
+/// # Errors
+///
+/// Returns [`AppError`] if the database cannot be opened or migrations fail.
 pub fn init(db_path: &str) -> Result<Connection> {
     let conn = Connection::open(db_path).map_err(AppError::Database)?;
 

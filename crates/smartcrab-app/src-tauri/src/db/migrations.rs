@@ -16,6 +16,10 @@ static MIGRATIONS: &[Migration] = &[];
 ///
 /// Creates the `schema_migrations` tracking table on first run, then
 /// executes each migration whose version has not yet been recorded.
+///
+/// # Errors
+///
+/// Returns [`crate::error::AppError`] if a migration SQL fails to execute.
 pub fn run(conn: &Connection) -> Result<()> {
     conn.execute_batch(
         "CREATE TABLE IF NOT EXISTS schema_migrations (

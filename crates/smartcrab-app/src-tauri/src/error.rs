@@ -1,4 +1,4 @@
-/// Top-level application errors for the SmartCrab desktop app.
+/// Top-level application errors for the `SmartCrab` desktop app.
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
     #[error("Database error: {0}")]
