@@ -1,19 +1,19 @@
 # SmartCrab
 
-- OpenClawはAI→ツールだったが、ツール→AIを簡単にできるようにするRustフレームワーク
-- Railsライクなコードジェネレータを持つ
+- OpenClaw was AI -> tool, but this is a Rust framework that makes tool -> AI easy
+- Has a Rails-like code generator
 
-## フレームワーのディレクトリ構成
+## Framework Directory Structure
 
 - src/
-　- dto/ # 各Layer間のデータ受け渡しに使う型
-　- dag/ # 一連処理をグラフ化したもの
-  - layer/ # Layer: 1つ1つはシンプルな処理を表す
-    - hidden/ # Dtoを受け取ってResult<Dto>を返すlayer
-    - input/ # Dtoを受け取らずにResult<Dto>を返すlayer
-      - chat/ # Discord等からDM/メンションを受け取ってResult<Dto>を返すlayer
-      - cron/ # Cronで発火してResult<Dto>を返すlayer
-      - http/ # HTTPリクエストを受けてResult<Dto>を返すlayer
-    - output/ # dtoを受け取ってResultを返すlayer
+  - dto/ # Types used for data passing between each Layer
+  - dag/ # A series of processes modeled as a graph
+  - layer/ # Layer: each represents a simple process
+    - hidden/ # Layer that receives a Dto and returns Result<Dto>
+    - input/ # Layer that returns Result<Dto> without receiving a Dto
+      - chat/ # Layer that receives DMs/mentions from Discord etc. and returns Result<Dto>
+      - cron/ # Layer that fires on a cron schedule and returns Result<Dto>
+      - http/ # Layer that receives HTTP requests and returns Result<Dto>
+    - output/ # Layer that receives a Dto and returns a Result
 
-hiddenやoutputではClaude Codeを子プロセスとして実行できる
+hidden and output layers can run Claude Code as a child process

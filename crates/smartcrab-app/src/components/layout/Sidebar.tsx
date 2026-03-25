@@ -22,7 +22,7 @@ export default function Sidebar({ currentView, onViewChange }: SidebarProps) {
   return (
     <aside className="bg-gray-800 h-full flex flex-col w-64 shrink-0">
       <div className="px-4 py-4 border-b border-gray-700">
-        <h1 className="text-lg font-bold text-white">SmartCrab 🦀</h1>
+        <h1 className="text-lg font-bold text-white">SmartCrab</h1>
       </div>
       <nav className="flex-1 px-2 py-3 space-y-1">
         {navItems.map((item) => (

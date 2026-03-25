@@ -44,7 +44,7 @@ export function AdapterSettings() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-white">アダプター設定</h2>
+      <h2 className="text-xl font-semibold text-white">Adapter Settings</h2>
       {adapters.map(adapter => (
         <AdapterCard
           key={adapter.adapterType}
@@ -56,7 +56,7 @@ export function AdapterSettings() {
         />
       ))}
       {adapters.length === 0 && (
-        <p className="text-gray-400">アダプターが見つかりません</p>
+        <p className="text-gray-400">No adapters found</p>
       )}
     </div>
   );
@@ -113,7 +113,7 @@ function AdapterCard({
                 : 'bg-gray-700 text-gray-400'
             }`}
           >
-            {adapter.isActive ? '稼働中' : adapter.isConfigured ? '設定済み' : '未設定'}
+            {adapter.isActive ? 'Running' : adapter.isConfigured ? 'Configured' : 'Not configured'}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -126,7 +126,7 @@ function AdapterCard({
             }`}
           >
             {adapter.isActive ? <Square size={14} /> : <Play size={14} />}
-            {adapter.isActive ? '停止' : '開始'}
+            {adapter.isActive ? 'Stop' : 'Start'}
           </button>
           <button
             onClick={handleExpand}
@@ -142,7 +142,7 @@ function AdapterCard({
           {adapter.adapterType === 'discord' && (
             <>
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Bot Token 環境変数名</label>
+                <label className="block text-sm text-gray-400 mb-1">Bot Token Env Var Name</label>
                 <input
                   type="text"
                   className="w-full bg-gray-700 text-white rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -152,7 +152,7 @@ function AdapterCard({
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-400 mb-1">通知チャンネル ID</label>
+                <label className="block text-sm text-gray-400 mb-1">Notification Channel ID</label>
                 <input
                   type="text"
                   className="w-full bg-gray-700 text-white rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -165,7 +165,7 @@ function AdapterCard({
           )}
           {adapter.adapterType === 'claude' && (
             <div>
-              <label className="block text-sm text-gray-400 mb-1">タイムアウト (秒)</label>
+              <label className="block text-sm text-gray-400 mb-1">Timeout (seconds)</label>
               <input
                 type="number"
                 className="w-full bg-gray-700 text-white rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -193,7 +193,7 @@ function AdapterCard({
             onClick={handleSave}
             className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded font-medium"
           >
-            保存
+            Save
           </button>
         </div>
       )}

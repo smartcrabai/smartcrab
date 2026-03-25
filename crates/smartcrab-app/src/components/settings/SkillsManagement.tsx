@@ -57,7 +57,7 @@ export function SkillsManagement() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-white">スキル管理</h2>
+      <h2 className="text-xl font-semibold text-white">Skill Management</h2>
 
       {error && (
         <div className="bg-red-900/50 border border-red-700 rounded p-3 text-red-300 text-sm">
@@ -67,7 +67,7 @@ export function SkillsManagement() {
 
       {pipelines.length > 0 && (
         <div className="bg-gray-800 rounded-lg border border-gray-700 p-4 space-y-2">
-          <p className="text-sm text-gray-400 font-medium">パイプラインからスキルを生成</p>
+          <p className="text-sm text-gray-400 font-medium">Generate skills from pipeline</p>
           {pipelines.map(pipeline => (
             <div key={pipeline.id} className="flex items-center justify-between">
               <span className="text-white text-sm">{pipeline.name}</span>
@@ -77,7 +77,7 @@ export function SkillsManagement() {
                 className="flex items-center gap-1 px-3 py-1.5 bg-purple-700 hover:bg-purple-600 disabled:opacity-50 text-white text-xs rounded font-medium"
               >
                 <Wand2 size={13} />
-                {generatingFor === pipeline.id ? '生成中...' : '生成'}
+                {generatingFor === pipeline.id ? 'Generating...' : 'Generate'}
               </button>
             </div>
           ))}
@@ -85,7 +85,7 @@ export function SkillsManagement() {
       )}
 
       {skills.length === 0 ? (
-        <p className="text-gray-400">スキルが見つかりません</p>
+        <p className="text-gray-400">No skills found</p>
       ) : (
         <div className="space-y-2">
           {skills.map(skill => (
@@ -109,14 +109,14 @@ export function SkillsManagement() {
                 <button
                   onClick={() => previewSkillFile(skill)}
                   className="p-1.5 text-gray-400 hover:text-blue-400 transition-colors"
-                  title="プレビュー"
+                  title="Preview"
                 >
                   <Eye size={15} />
                 </button>
                 <button
                   onClick={() => deleteSkill(skill.id)}
                   className="p-1.5 text-gray-400 hover:text-red-400 transition-colors"
-                  title="削除"
+                  title="Delete"
                 >
                   <Trash2 size={15} />
                 </button>

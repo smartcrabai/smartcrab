@@ -27,7 +27,7 @@ export function ChatInput({ onSend, disabled }: { onSend: (s: string) => void; d
         onChange={e => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
         disabled={disabled}
-        placeholder="パイプラインの説明を入力... (Enterで送信、Shift+Enterで改行)"
+        placeholder="Enter pipeline description... (Enter to send, Shift+Enter for new line)"
       />
       <button
         onClick={submit}
