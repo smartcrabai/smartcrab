@@ -71,13 +71,16 @@ mod tests {
         }
     }
 
+    fn make_adapter(label: &str) -> Arc<TestAdapter> {
+        Arc::new(TestAdapter {
+            label: label.to_owned(),
+        })
+    }
+
     #[test]
     fn register_and_get() {
         let mut registry = AdapterRegistry::<dyn DummyAdapter>::new();
-        let adapter: Arc<dyn DummyAdapter> = Arc::new(TestAdapter {
-            label: "test".to_owned(),
-        });
-        registry.register("test".to_owned(), adapter);
+        registry.register("test".to_owned(), make_adapter("test"));
 
         let found = registry.get("test");
         assert!(found.is_some());
@@ -93,18 +96,8 @@ mod tests {
     #[test]
     fn list_returns_all() {
         let mut registry = AdapterRegistry::<dyn DummyAdapter>::new();
-        registry.register(
-            "a".to_owned(),
-            Arc::new(TestAdapter {
-                label: "A".to_owned(),
-            }),
-        );
-        registry.register(
-            "b".to_owned(),
-            Arc::new(TestAdapter {
-                label: "B".to_owned(),
-            }),
-        );
+        registry.register("a".to_owned(), make_adapter("A"));
+        registry.register("b".to_owned(), make_adapter("B"));
 
         let items = registry.list();
         assert_eq!(items.len(), 2);
@@ -114,5 +107,18 @@ mod tests {
     fn default_creates_empty_registry() {
         let registry = AdapterRegistry::<dyn DummyAdapter>::default();
         assert!(registry.list().is_empty());
+    }
+
+    #[test]
+    fn register_same_id_overwrites_previous() {
+        let mut registry = AdapterRegistry::<dyn DummyAdapter>::new();
+        registry.register("alpha".to_owned(), make_adapter("first"));
+        registry.register("alpha".to_owned(), make_adapter("second"));
+
+        assert_eq!(registry.list().len(), 1);
+        assert_eq!(
+            registry.get("alpha").map(|a| a.name().to_owned()),
+            Some("second".to_owned())
+        );
     }
 }

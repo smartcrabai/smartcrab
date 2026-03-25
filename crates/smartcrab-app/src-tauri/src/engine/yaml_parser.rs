@@ -78,10 +78,10 @@ trigger:
   triggers: [mention, dm]
 nodes:
   - id: receive_message
-    name: Discord受信
+    name: Discord Receive
     next: process_with_claude
   - id: process_with_claude
-    name: Claude処理
+    name: Claude Processing
     action:
       type: llm_call
       provider: claude
@@ -89,7 +89,7 @@ nodes:
       timeout_secs: 300
     next: send_reply
   - id: send_reply
-    name: Discord返信
+    name: Discord Reply
 "#;
 
     const EXAMPLE2_HEALTH_CHECK: &str = r#"
@@ -100,10 +100,10 @@ trigger:
   schedule: "*/5 * * * *"
 nodes:
   - id: health_check
-    name: ヘルスチェック開始
+    name: Health Check Start
     next: check_api
   - id: check_api
-    name: API確認
+    name: API Check
     action:
       type: http_request
       method: GET
@@ -118,7 +118,7 @@ nodes:
           codes: [200]
         next: notify
   - id: analyze_error
-    name: エラー分析
+    name: Error Analysis
     action:
       type: llm_call
       provider: claude
@@ -126,7 +126,7 @@ nodes:
       timeout_secs: 60
     next: notify
   - id: notify
-    name: 通知送信
+    name: Send Notification
 "#;
 
     const EXAMPLE3_LOOP: &str = r#"
@@ -138,10 +138,10 @@ trigger:
 max_loop_count: 5
 nodes:
   - id: receive_code
-    name: コード受信
+    name: Code Receive
     next: review_code
   - id: review_code
-    name: コードレビュー
+    name: Code Review
     action:
       type: llm_call
       provider: claude
@@ -149,7 +149,7 @@ nodes:
       timeout_secs: 120
     next: send_result
   - id: send_result
-    name: 結果送信
+    name: Send Result
 "#;
 
     #[test]

@@ -37,29 +37,51 @@ all_posts = "All Pages"
 errata_section = "Errata & Updates"
 
 [languages.ja]
+# sakoku-ignore-next-line
 title = "SmartCrab ドキュメント"
+# sakoku-ignore-next-line
 description = "SmartCrab は「ツール → AI」パラダイムを実現する Rust フレームワーク"
 
 [languages.ja.translations]
+# sakoku-ignore-next-line
 copy = "コピー"
+# sakoku-ignore-next-line
 copied = "コピー完了!"
+# sakoku-ignore-next-line
 failed_to_copy = "コピー失敗"
+# sakoku-ignore-next-line
 next = "次へ"
+# sakoku-ignore-next-line
 back_to = "戻る"
+# sakoku-ignore-next-line
 previous = "前へ"
+# sakoku-ignore-next-line
 edit_page = "このページを編集"
+# sakoku-ignore-next-line
 found_error_alert = "エラーや不明点を発見しましたか？"
+# sakoku-ignore-next-line
 open_issue = "GitHub で Issue を開く"
+# sakoku-ignore-next-line
 attribution = "修正は寄稿者として反映されます"
+# sakoku-ignore-next-line
 found_typo_alert = "誤字を発見しましたか？"
+# sakoku-ignore-next-line
 fork_and_pr = "Fork して PR を送ってください"
+# sakoku-ignore-next-line
 copy_url_msg = "URL をコピー"
+# sakoku-ignore-next-line
 share_on_x = "X でシェア"
+# sakoku-ignore-next-line
 toc_title = "目次"
+# sakoku-ignore-next-line
 sidebar_feeds = "フィード"
+# sakoku-ignore-next-line
 global_feed = "全体フィード"
+# sakoku-ignore-next-line
 category_feeds = "カテゴリフィード"
+# sakoku-ignore-next-line
 all_posts = "全ページ"
+# sakoku-ignore-next-line
 errata_section = "修正と更新"
 
 
@@ -75,6 +97,7 @@ nav = [
 ]
 
 [extra.lang]
+# sakoku-ignore-next-line
 aliases = { en = "English", ja = "日本語" }
 
 [extra.logo]

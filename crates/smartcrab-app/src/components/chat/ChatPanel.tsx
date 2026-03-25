@@ -45,20 +45,20 @@ export function ChatPanel({ onOpenInEditor }: { onOpenInEditor?: (yaml: string) 
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 py-3 bg-gray-800 border-b border-gray-700">
-        <h2 className="text-lg font-semibold text-white">AIでパイプラインを作成</h2>
+        <h2 className="text-lg font-semibold text-white">Create Pipeline with AI</h2>
       </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
           <div className="text-center text-gray-500 mt-8">
-            <p>パイプラインを自然言語で説明してください。</p>
-            <p className="text-sm mt-2">例: 「5分ごとにAPIを確認してエラーならDiscordに通知」</p>
+            <p>Describe your pipeline in natural language.</p>
+            <p className="text-sm mt-2">e.g. "Check API every 5 minutes and notify Discord on error"</p>
           </div>
         )}
         {messages.map((msg, i) => (
           <ChatMessage key={`${msg.timestamp}-${i}`} message={msg} onOpenInEditor={onOpenInEditor} />
         ))}
         {isLoading && (
-          <div className="text-gray-400 animate-pulse">Claude が考えています...</div>
+          <div className="text-gray-400 animate-pulse" role="status" aria-live="polite">Claude is thinking...</div>
         )}
       </div>
       <ChatInput onSend={sendMessage} disabled={isLoading} />

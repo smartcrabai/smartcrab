@@ -1,4 +1,0 @@
-// Re-export smartcrab Discord types so nodes can use either path.
-// To use custom types instead, replace these re-exports with your own struct definitions.
-pub use smartcrab::chat::discord::DiscordMessage;
-pub use smartcrab::chat::discord::DiscordNotification;

@@ -453,6 +453,7 @@ edges:
         let result = result.unwrap_or_else(|e| panic!("Validation failed: {e}"));
         assert!(result.is_valid);
         assert!(result.errors.is_empty());
+        assert!(result.warnings.is_empty());
     }
 
     #[test]
@@ -493,6 +494,33 @@ edges:
         assert_eq!(
             result.node_types.get("c").map(String::as_str),
             Some("output")
+        );
+    }
+
+    #[test]
+    fn validate_pipeline_no_output_node_generates_warning() {
+        let yaml = r"
+nodes:
+  a:
+    type: input
+  b:
+    type: hidden
+edges:
+  - from: a
+    to: b
+"
+        .to_owned();
+
+        let result = validate_pipeline(yaml);
+
+        assert!(result.is_ok());
+        let result = result.unwrap_or_else(|e| panic!("Validation failed: {e}"));
+        assert!(result.is_valid);
+        assert!(result.errors.is_empty());
+        assert!(
+            result.warnings.iter().any(|w| w.contains("output")),
+            "expected a warning about missing output node, got: {:?}",
+            result.warnings
         );
     }
 

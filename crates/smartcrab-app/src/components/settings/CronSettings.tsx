@@ -9,14 +9,14 @@ function humanReadableCron(schedule: string): string {
   const [min, hour, dom, month, dow] = parts;
 
   if (min === '*' && hour === '*' && dom === '*' && month === '*' && dow === '*') {
-    return '毎分';
+    return 'Every minute';
   }
+  if (min.startsWith('*/')) return `Every ${min.slice(2)} minutes`;
+  if (hour.startsWith('*/')) return `Every ${hour.slice(2)} hours`;
   if (dom === '*' && month === '*' && dow === '*') {
-    if (min !== '*' && hour !== '*') return `毎日 ${hour}:${min.padStart(2, '0')}`;
-    if (min !== '*' && hour === '*') return `毎時 ${min} 分`;
+    if (min !== '*' && hour !== '*') return `Daily at ${hour}:${min.padStart(2, '0')}`;
+    if (min !== '*' && hour === '*') return `Every hour at minute ${min}`;
   }
-  if (min.startsWith('*/')) return `${min.slice(2)} 分ごと`;
-  if (hour.startsWith('*/')) return `${hour.slice(2)} 時間ごと`;
   return schedule;
 }
 
@@ -44,7 +44,7 @@ export function CronSettings() {
 
   async function createJob() {
     if (!newPipelineId.trim() || !newSchedule.trim()) {
-      setError('パイプラインとスケジュールを入力してください');
+      setError('Please enter pipeline and schedule');
       return;
     }
     try {
@@ -74,27 +74,27 @@ export function CronSettings() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-white">スケジュール設定</h2>
+        <h2 className="text-xl font-semibold text-white">Schedule Settings</h2>
         <button
           onClick={() => setShowForm(prev => !prev)}
           className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-sm font-medium"
         >
           <Plus size={14} />
-          新規追加
+          Add New
         </button>
       </div>
 
       {showForm && (
         <div className="bg-gray-800 rounded-lg border border-gray-700 p-4 space-y-3">
           <div>
-            <label className="block text-sm text-gray-400 mb-1">パイプライン</label>
+            <label className="block text-sm text-gray-400 mb-1">Pipeline</label>
             {pipelines.length > 0 ? (
               <select
                 className="w-full bg-gray-700 text-white rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={newPipelineId}
                 onChange={e => setNewPipelineId(e.target.value)}
               >
-                <option value="">選択してください</option>
+                <option value="">Please select</option>
                 {pipelines.map(p => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
@@ -105,12 +105,12 @@ export function CronSettings() {
                 className="w-full bg-gray-700 text-white rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={newPipelineId}
                 onChange={e => setNewPipelineId(e.target.value)}
-                placeholder="パイプライン ID"
+                placeholder="Pipeline ID"
               />
             )}
           </div>
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Cron 式</label>
+            <label className="block text-sm text-gray-400 mb-1">Cron Expression</label>
             <input
               type="text"
               className="w-full bg-gray-700 text-white rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
@@ -119,7 +119,7 @@ export function CronSettings() {
               placeholder="*/5 * * * *"
             />
             <p className="text-xs text-gray-500 mt-1">
-              プレビュー: {humanReadableCron(newSchedule)}
+              Preview: {humanReadableCron(newSchedule)}
             </p>
           </div>
           {error && <p className="text-sm text-red-400">{error}</p>}
@@ -128,20 +128,20 @@ export function CronSettings() {
               onClick={createJob}
               className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded font-medium"
             >
-              作成
+              Create
             </button>
             <button
               onClick={() => { setShowForm(false); setError(null); }}
               className="px-4 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm rounded font-medium"
             >
-              キャンセル
+              Cancel
             </button>
           </div>
         </div>
       )}
 
       {cronJobs.length === 0 && !showForm && (
-        <p className="text-gray-400">スケジュールが登録されていません</p>
+        <p className="text-gray-400">No schedules registered</p>
       )}
 
       {cronJobs.map(job => (
@@ -156,25 +156,25 @@ export function CronSettings() {
                     job.isActive ? 'bg-green-900 text-green-300' : 'bg-gray-700 text-gray-400'
                   }`}
                 >
-                  {job.isActive ? '有効' : '無効'}
+                  {job.isActive ? 'Active' : 'Inactive'}
                 </span>
               </div>
-              <p className="text-xs text-gray-400">パイプライン: {job.pipelineId}</p>
+              <p className="text-xs text-gray-400">Pipeline: {job.pipelineId}</p>
               {job.lastRunAt && (
                 <p className="text-xs text-gray-500">
-                  最終実行: {new Date(job.lastRunAt).toLocaleString('ja-JP')}
+                  Last run: {new Date(job.lastRunAt).toLocaleString()}
                 </p>
               )}
               {job.nextRunAt && (
                 <p className="text-xs text-gray-500">
-                  次回実行: {new Date(job.nextRunAt).toLocaleString('ja-JP')}
+                  Next run: {new Date(job.nextRunAt).toLocaleString()}
                 </p>
               )}
             </div>
             <button
               onClick={() => deleteJob(job.id)}
               className="p-1.5 text-gray-500 hover:text-red-400 transition-colors"
-              title="削除"
+              title="Delete"
             >
               <Trash2 size={15} />
             </button>
