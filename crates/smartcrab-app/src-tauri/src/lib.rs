@@ -42,7 +42,10 @@ pub fn default_llm_registry() -> AdapterRegistry<dyn LlmAdapter> {
 ///
 /// Returns [`AppError`] if the database cannot be initialised or the Tauri runtime fails.
 pub fn run() -> Result<()> {
-    let builder = tauri::Builder::default();
+    let builder = tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_process::init());
 
     #[cfg(feature = "webdriver")]
     let builder = builder.plugin(tauri_plugin_webdriver::init());

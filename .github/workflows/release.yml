@@ -69,3 +69,24 @@ jobs:
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
+
+      # Ad-hoc sign the .app so macOS shows "unidentified developer" instead of "damaged"
+      # (xattr -cr /Applications/SmartCrab.app is still needed after install)
+      - name: Ad-hoc sign and re-upload macOS app
+        if: contains(matrix.args, 'apple-darwin')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TARGET_DIR="crates/smartcrab-app/src-tauri/target"
+          APP=$(find "$TARGET_DIR" -path "*/release/bundle/macos/*.app" -maxdepth 6 | head -1)
+          if [ -z "$APP" ]; then
+            echo "Warning: no .app bundle found, skipping ad-hoc signing"
+            exit 0
+          fi
+          codesign --force --deep --sign - "$APP" || { echo "Error: codesign failed" >&2; exit 1; }
+
+          DMG=$(find "$TARGET_DIR" -path "*/release/bundle/dmg/*.dmg" -maxdepth 6 | head -1)
+          if [ -n "$DMG" ]; then
+            hdiutil create -volname "SmartCrab" -srcfolder "$APP" -ov -format UDZO "$DMG"
+            gh release upload "${{ github.ref_name }}" "$DMG" --clobber
+          fi
