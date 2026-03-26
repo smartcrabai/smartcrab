@@ -8,6 +8,14 @@ SmartCrab is a Rust framework implementing the Tool-to-AI paradigm — a Tauri-b
 
 Download the `.dmg` from [GitHub Releases](https://github.com/smartcrabai/smartcrab/releases/latest).
 
+After downloading the DMG and copying `SmartCrab.app` to `/Applications`, run the following in Terminal before the first launch:
+
+```sh
+xattr -cr /Applications/SmartCrab.app
+```
+
+This removes the Gatekeeper quarantine attribute, allowing the app to launch.
+
 ### Windows
 
 Download the `.msi` or `.exe` installer from [GitHub Releases](https://github.com/smartcrabai/smartcrab/releases/latest).
