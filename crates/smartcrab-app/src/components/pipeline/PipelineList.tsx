@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import type { PipelineInfo } from "../../types";
+import { toErrorMessage } from "../../lib/error";
 
 interface PipelineListProps {
   onEditPipeline: (id: string) => void;
@@ -27,7 +28,7 @@ export default function PipelineList({
       const result = await invoke<PipelineInfo[]>("list_pipelines");
       setPipelines(result);
     } catch (err) {
-      setError(String(err));
+      setError(toErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -39,7 +40,7 @@ export default function PipelineList({
       await invoke("delete_pipeline", { id });
       setPipelines((prev) => prev.filter((p) => p.id !== id));
     } catch (err) {
-      setError(String(err));
+      setError(toErrorMessage(err));
     }
   }
 
