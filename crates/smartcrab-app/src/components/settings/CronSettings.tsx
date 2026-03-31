@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Plus, Trash2 } from 'lucide-react';
 import type { CronJob, PipelineInfo } from '../../types';
+import { toErrorMessage } from '../../lib/error';
 
 function humanReadableCron(schedule: string): string {
   const parts = schedule.trim().split(/\s+/);
@@ -58,7 +59,7 @@ export function CronSettings() {
       setError(null);
       await loadJobs();
     } catch (e) {
-      setError(String(e));
+      setError(toErrorMessage(e));
     }
   }
 

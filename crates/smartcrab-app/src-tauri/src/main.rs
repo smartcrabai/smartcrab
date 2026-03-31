@@ -18,14 +18,13 @@ fn fix_path_for_gui() {
     if let Ok(output) = std::process::Command::new(&shell)
         .args(["-l", "-c", "echo $PATH"])
         .output()
+        && let Ok(path) = String::from_utf8(output.stdout)
     {
-        if let Ok(path) = String::from_utf8(output.stdout) {
-            let path = path.trim();
-            if !path.is_empty() {
-                // SAFETY: called at startup before Tauri spawns any threads.
-                unsafe { std::env::set_var("PATH", path) };
-                return;
-            }
+        let path = path.trim();
+        if !path.is_empty() {
+            // SAFETY: called at startup before Tauri spawns any threads.
+            unsafe { std::env::set_var("PATH", path) };
+            return;
         }
     }
     // Fallback: shell PATH resolution failed silently. Append common user-tool
