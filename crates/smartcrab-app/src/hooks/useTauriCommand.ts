@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { toErrorMessage } from '../lib/error';
 
 export function useTauriCommand<T, A = Record<string, unknown>>(command: string) {
   const [data, setData] = useState<T | null>(null);
@@ -15,7 +16,7 @@ export function useTauriCommand<T, A = Record<string, unknown>>(command: string)
         setData(result);
         return result;
       } catch (e) {
-        setError(String(e));
+        setError(toErrorMessage(e));
         return null;
       } finally {
         setIsLoading(false);

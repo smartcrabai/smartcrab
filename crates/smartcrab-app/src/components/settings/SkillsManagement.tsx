@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Wand2, Trash2, Eye, X } from 'lucide-react';
 import type { SkillInfo, PipelineInfo } from '../../types';
+import { toErrorMessage } from '../../lib/error';
 
 export function SkillsManagement() {
   const [skills, setSkills] = useState<SkillInfo[]>([]);
@@ -31,7 +32,7 @@ export function SkillsManagement() {
       await invoke('generate_skill', { pipelineId });
       await loadSkills();
     } catch (e) {
-      setError(String(e));
+      setError(toErrorMessage(e));
     } finally {
       setGeneratingFor(null);
     }

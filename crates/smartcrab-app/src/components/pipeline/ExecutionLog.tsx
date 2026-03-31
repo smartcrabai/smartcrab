@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import type { ExecutionDetail, ExecutionLog as ExecutionLogEntry } from "../../types";
 import { EXECUTION_STATUS_STYLES, LOG_LEVEL_STYLES, formatDuration } from "./shared";
+import { toErrorMessage } from "../../lib/error";
 
 interface ExecutionLogProps {
   executionId: string;
@@ -29,7 +30,7 @@ export default function ExecutionLog({ executionId }: ExecutionLogProps) {
         setDetail(result);
         setLogs(result.logs);
       } catch (err) {
-        if (!cancelled) setError(String(err));
+        if (!cancelled) setError(toErrorMessage(err));
       } finally {
         if (!cancelled) setLoading(false);
       }

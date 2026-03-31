@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
 import type { ChatMessage as ChatMessageType } from '../../types';
+import { toErrorMessage } from '../../lib/error';
 
 export function ChatPanel({ onOpenInEditor }: { onOpenInEditor?: (yaml: string) => void }) {
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
@@ -33,7 +34,7 @@ export function ChatPanel({ onOpenInEditor }: { onOpenInEditor?: (yaml: string) 
         ...prev,
         {
           role: 'assistant',
-          content: `Error: ${String(e)}`,
+          content: `Error: ${toErrorMessage(e)}`,
           timestamp: new Date().toISOString(),
         },
       ]);

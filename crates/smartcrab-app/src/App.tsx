@@ -3,6 +3,8 @@ import Layout from "./components/layout/Layout";
 import PipelineList from "./components/pipeline/PipelineList";
 import ExecutionHistory from "./components/pipeline/ExecutionHistory";
 import ExecutionLog from "./components/pipeline/ExecutionLog";
+import UpdateBanner from "./components/update/UpdateBanner";
+import { useAppUpdater } from "./hooks/useAppUpdater";
 
 type View = "pipelines" | "executions" | "chat" | "settings";
 
@@ -16,6 +18,7 @@ const VIEW_TITLES: Record<View, string> = {
 function App() {
   const [currentView, setCurrentView] = useState<View>("pipelines");
   const [selectedExecutionId, setSelectedExecutionId] = useState<string | null>(null);
+  const { installAvailableUpdate, dismiss, checkForUpdates: _, ...bannerProps } = useAppUpdater();
 
   const handleViewChange = (view: string) => {
     setCurrentView(view as View);
@@ -51,13 +54,20 @@ function App() {
   };
 
   return (
-    <Layout
-      currentView={currentView}
-      onViewChange={handleViewChange}
-      title={selectedExecutionId ? "Execution Log" : VIEW_TITLES[currentView]}
-    >
-      {renderContent()}
-    </Layout>
+    <>
+      <UpdateBanner
+        {...bannerProps}
+        onInstall={installAvailableUpdate}
+        onDismiss={dismiss}
+      />
+      <Layout
+        currentView={currentView}
+        onViewChange={handleViewChange}
+        title={selectedExecutionId ? "Execution Log" : VIEW_TITLES[currentView]}
+      >
+        {renderContent()}
+      </Layout>
+    </>
   );
 }
 

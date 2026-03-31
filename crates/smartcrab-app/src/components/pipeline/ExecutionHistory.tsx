@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { ExecutionSummary, ExecutionStatus } from "../../types";
 import { EXECUTION_STATUS_STYLES, formatDuration } from "./shared";
+import { toErrorMessage } from "../../lib/error";
 
 interface ExecutionHistoryProps {
   onSelectExecution: (id: string) => void;
@@ -27,7 +28,7 @@ export default function ExecutionHistory({ onSelectExecution }: ExecutionHistory
       const result = await invoke<ExecutionSummary[]>("get_execution_history", {});
       setExecutions(result);
     } catch (err) {
-      setError(String(err));
+      setError(toErrorMessage(err));
     } finally {
       setLoading(false);
     }
