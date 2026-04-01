@@ -32,7 +32,6 @@ Reading the design docs first, then the spec docs, gives you context-grounded un
 | [data-flow](/design/data-flow/) | Data flow design — data flow between Layers, type safety, error handling |
 | [graph-engine](/design/graph-engine/) | Graph engine design — execution engine, conditional branching, validation, lifecycle |
 | [claude-code-integration](/design/claude-code-integration/) | Claude Code integration design — subprocess execution, data exchange, test strategy |
-| [cli](/design/cli/) | CLI tool design — Rails-like developer experience, command structure, templates |
 
 ### Specification Documents (spec/)
 
@@ -41,7 +40,6 @@ Reading the design docs first, then the spec docs, gives you context-grounded un
 | [layer](/spec/layer/) | Node specification — trait definitions and code examples for Input/Hidden/Output Nodes |
 | [dto](/spec/dto/) | DTO specification — the Dto trait, naming conventions, conversions, and code examples |
 | [graph](/spec/graph/) | DirectedGraph specification — DirectedGraphBuilder API, execution semantics, validation |
-| [cli](/spec/cli/) | CLI command specification — details of `crab new` / `generate` / `run` |
 
 ## Glossary
 

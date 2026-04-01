@@ -32,7 +32,6 @@ SmartCrab は「ツール → AI」パラダイムを実現する Rust フレー
 | [data-flow](/design/data-flow/) | データフロー設計 — Node 間のデータの流れ、型安全性、エラーハンドリング |
 | [graph-engine](/design/graph-engine/) | Graph エンジン設計 — 実行エンジン、条件分岐、検証、ライフサイクル |
 | [claude-code-integration](/design/claude-code-integration/) | Claude Code 連携設計 — 子プロセス実行、データ交換、テスト戦略 |
-| [cli](/design/cli/) | CLI ツール設計 — Rails ライク開発体験、コマンド体系、テンプレート |
 
 ### 仕様書（spec/）
 
@@ -41,7 +40,6 @@ SmartCrab は「ツール → AI」パラダイムを実現する Rust フレー
 | [layer](/spec/layer/) | Node 仕様 — Input/Hidden/Output 各 Node のトレイト定義とコード例 |
 | [dto](/spec/dto/) | DTO 仕様 — Dto トレイト、命名規約、変換、コード例 |
 | [graph](/spec/graph/) | DirectedGraph 仕様 — DirectedGraphBuilder API、実行セマンティクス、バリデーション |
-| [cli](/spec/cli/) | CLI コマンド仕様 — `crab new` / `generate` / `run` の詳細 |
 
 ## 用語集
 

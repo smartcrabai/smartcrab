@@ -23,7 +23,6 @@ Reading design first and then specification gives you a background-informed unde
 | [data-flow.md](design/data-flow.md) | Data flow design — data flow between Layers, type safety, error handling |
 | [graph-engine.md](design/graph-engine.md) | Graph engine design — execution engine, conditional branching, validation, lifecycle |
 | [claude-code-integration.md](design/claude-code-integration.md) | Claude Code integration design — child process execution, data exchange, test strategy |
-| [cli.md](design/cli.md) | CLI tool design — Rails-like development experience, command structure, templates |
 
 ### Specifications (spec/)
 
@@ -32,7 +31,6 @@ Reading design first and then specification gives you a background-informed unde
 | [layer.md](spec/layer.md) | Layer specification — trait definitions and code examples for Input/Hidden/Output Layers |
 | [dto.md](spec/dto.md) | DTO specification — Dto trait, naming conventions, conversions, code examples |
 | [graph.md](spec/graph.md) | DirectedGraph specification — DirectedGraphBuilder API, execution semantics, validation |
-| [cli.md](spec/cli.md) | CLI command specification — details of `crab new` / `generate` / `run` |
 
 ## Glossary
 
