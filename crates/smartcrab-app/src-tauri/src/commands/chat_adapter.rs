@@ -78,7 +78,7 @@ pub fn save_adapter_config(
     adapter_type: String,
     config_json: serde_json::Value,
 ) -> Result<(), AppError> {
-    let json_str = config_json.to_string();
+    let json_str = serde_json::to_string(&config_json)?;
     let conn = db.lock()?;
     update_adapter_config_db(&conn, &adapter_type, &json_str)
 }
