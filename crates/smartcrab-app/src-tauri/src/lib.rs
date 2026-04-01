@@ -78,7 +78,7 @@ pub fn run() -> Result<()> {
             commands::pipeline::validate_pipeline,
             commands::chat_adapter::list_adapters,
             commands::chat_adapter::get_adapter_config,
-            commands::chat_adapter::update_adapter_config,
+            commands::chat_adapter::save_adapter_config,
             commands::chat_adapter::start_adapter,
             commands::chat_adapter::stop_adapter,
             commands::chat_adapter::get_adapter_status,

@@ -67,20 +67,20 @@ pub fn get_adapter_config(
 ///
 /// # Errors
 ///
-/// Returns [`AppError`] if the JSON is invalid or the database operation fails.
+/// Returns [`AppError`] if the database operation fails.
 #[tauri::command]
 #[expect(
     clippy::needless_pass_by_value,
     reason = "Tauri State and command args must be owned"
 )]
-pub fn update_adapter_config(
+pub fn save_adapter_config(
     db: State<'_, DbState>,
     adapter_type: String,
-    config_json: String,
+    config_json: serde_json::Value,
 ) -> Result<(), AppError> {
-    let _: serde_json::Value = serde_json::from_str(&config_json)?;
+    let json_str = config_json.to_string();
     let conn = db.lock()?;
-    update_adapter_config_db(&conn, &adapter_type, &config_json)
+    update_adapter_config_db(&conn, &adapter_type, &json_str)
 }
 
 /// Start a chat adapter (placeholder — actual adapter start logic is runtime-dependent).
