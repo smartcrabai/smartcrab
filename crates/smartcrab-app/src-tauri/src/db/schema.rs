@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS skills (
     updated_at TEXT NOT NULL
 )";
 
-/// Generic adapter config — not tied to any specific chat platform.
+/// Generic adapter config -- not tied to any specific chat platform.
 pub const CREATE_CHAT_ADAPTER_CONFIG: &str = "
 CREATE TABLE IF NOT EXISTS chat_adapter_config (
     id TEXT PRIMARY KEY,
