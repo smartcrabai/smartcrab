@@ -40,5 +40,8 @@ uuid = { version = "1", features = ["v4"] }
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
+[dev-dependencies]
+tempfile = "3"
+
 [lints]
 workspace = true

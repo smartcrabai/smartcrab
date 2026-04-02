@@ -298,6 +298,46 @@ pub fn validate_pipeline(yaml_content: String) -> Result<ValidationResult, AppEr
     })
 }
 
+/// Toggle the `is_active` flag of a pipeline and return the updated record.
+///
+/// # Errors
+///
+/// Returns [`AppError::NotFound`] if no pipeline with `id` exists, or
+/// [`AppError`] for database failures.
+#[tauri::command]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri command injection requires owned State<T>"
+)]
+pub fn toggle_pipeline(
+    db: State<'_, DbState>,
+    id: String,
+    is_active: bool,
+) -> Result<PipelineDetail, AppError> {
+    let conn = db
+        .lock()
+        .map_err(|e| AppError::Validation(format!("Failed to acquire database lock: {e}")))?;
+    toggle_pipeline_db(&conn, &id, is_active)
+}
+
+fn toggle_pipeline_db(
+    conn: &Connection,
+    id: &str,
+    is_active: bool,
+) -> Result<PipelineDetail, AppError> {
+    let now = chrono::Utc::now().to_rfc3339();
+    let affected = conn.execute(
+        "UPDATE pipelines SET is_active = ?1, updated_at = ?2 WHERE id = ?3",
+        rusqlite::params![i32::from(is_active), now, id],
+    )?;
+    if affected == 0 {
+        return Err(AppError::NotFound(format!(
+            "Pipeline with id '{id}' not found"
+        )));
+    }
+    query_pipeline_by_id(conn, id)
+}
+
 /// Helper: query a single pipeline by ID from the database.
 fn query_pipeline_by_id(conn: &Connection, id: &str) -> Result<PipelineDetail, AppError> {
     conn.prepare(
@@ -522,6 +562,74 @@ edges:
             "expected a warning about missing output node, got: {:?}",
             result.warnings
         );
+    }
+
+    #[test]
+    fn toggle_pipeline_activates_inactive_pipeline() {
+        let conn = setup_test_db();
+        let id = uuid::Uuid::new_v4().to_string();
+        let now = chrono::Utc::now().to_rfc3339();
+
+        conn.execute(
+            "INSERT INTO pipelines (id, name, description, yaml_content, max_loop_count, is_active, created_at, updated_at) VALUES (?1, ?2, NULL, ?3, 10, 0, ?4, ?5)",
+            rusqlite::params![id, "InactivePipe", valid_yaml(), now, now],
+        )
+        .unwrap_or_else(|e| panic!("Insert failed: {e}"));
+
+        let result =
+            toggle_pipeline_db(&conn, &id, true).unwrap_or_else(|e| panic!("should toggle: {e}"));
+
+        assert!(result.is_active);
+        assert_eq!(result.id, id);
+    }
+
+    #[test]
+    fn toggle_pipeline_deactivates_active_pipeline() {
+        let conn = setup_test_db();
+        let id = uuid::Uuid::new_v4().to_string();
+        let now = chrono::Utc::now().to_rfc3339();
+
+        conn.execute(
+            "INSERT INTO pipelines (id, name, description, yaml_content, max_loop_count, is_active, created_at, updated_at) VALUES (?1, ?2, NULL, ?3, 10, 1, ?4, ?5)",
+            rusqlite::params![id, "ActivePipe", valid_yaml(), now, now],
+        )
+        .unwrap_or_else(|e| panic!("Insert failed: {e}"));
+
+        let result =
+            toggle_pipeline_db(&conn, &id, false).unwrap_or_else(|e| panic!("should toggle: {e}"));
+
+        assert!(!result.is_active);
+    }
+
+    #[test]
+    fn toggle_pipeline_updates_updated_at() {
+        let conn = setup_test_db();
+        let id = uuid::Uuid::new_v4().to_string();
+        let original_updated_at = "2020-01-01T00:00:00Z";
+
+        conn.execute(
+            "INSERT INTO pipelines (id, name, description, yaml_content, max_loop_count, is_active, created_at, updated_at) VALUES (?1, ?2, NULL, ?3, 10, 1, ?4, ?5)",
+            rusqlite::params![id, "TimePipe", valid_yaml(), original_updated_at, original_updated_at],
+        )
+        .unwrap_or_else(|e| panic!("Insert failed: {e}"));
+
+        let result =
+            toggle_pipeline_db(&conn, &id, false).unwrap_or_else(|e| panic!("should toggle: {e}"));
+
+        assert_ne!(result.updated_at, original_updated_at);
+    }
+
+    #[test]
+    fn toggle_pipeline_not_found() {
+        let conn = setup_test_db();
+
+        let result = toggle_pipeline_db(&conn, "nonexistent-id", true);
+
+        assert!(result.is_err());
+        let Err(err) = result else {
+            panic!("should be NotFound")
+        };
+        assert!(matches!(err, AppError::NotFound(_)));
     }
 
     #[test]

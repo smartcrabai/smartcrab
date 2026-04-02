@@ -56,6 +56,32 @@ pub fn generate_skill(db: State<'_, DbState>, pipeline_id: String) -> Result<Ski
     generate_skill_db(&conn, &pipeline_id)
 }
 
+/// Invoke a skill by its id, feeding the skill definition to the LLM adapter.
+///
+/// # Errors
+///
+/// Returns [`AppError::NotFound`] if no skill with `skill_id` exists,
+/// [`AppError::Io`] if the skill file cannot be read, or adapter errors on
+/// execution failure.
+#[tauri::command]
+pub async fn invoke_skill(
+    db: State<'_, DbState>,
+    skill_id: String,
+    input: serde_json::Value,
+) -> Result<SkillInvocationResult, AppError> {
+    let adapter = crate::adapters::llm::claude::ClaudeLlmAdapter::new();
+
+    // Scope the DB lock so it is dropped before the async adapter call.
+    let (skill, skill_content) = {
+        let conn = db.lock()?;
+        let skill = lookup_skill_db(&conn, &skill_id)?;
+        let content = std::fs::read_to_string(&skill.file_path)?;
+        (skill, content)
+    };
+
+    execute_skill_prompt(&skill, &skill_content, &input, &adapter).await
+}
+
 /// Delete a skill by id (removes the file and the DB record).
 ///
 /// # Errors
@@ -208,6 +234,92 @@ fn build_skill_content(name: &str, description: Option<&str>, yaml: &str) -> Str
 }
 
 // ---------------------------------------------------------------------------
+// invoke_skill helpers
+// ---------------------------------------------------------------------------
+
+/// Result of invoking a skill via the LLM adapter.
+#[derive(Debug, Clone, Serialize)]
+pub struct SkillInvocationResult {
+    pub skill_id: String,
+    pub skill_name: String,
+    pub output: String,
+}
+
+/// Look up a single skill by ID from the database.
+///
+/// # Errors
+///
+/// Returns [`AppError::NotFound`] if no skill with `skill_id` exists.
+pub(crate) fn lookup_skill_db(
+    conn: &rusqlite::Connection,
+    skill_id: &str,
+) -> Result<SkillInfo, AppError> {
+    let mut stmt = conn.prepare(
+        "SELECT id, name, description, file_path, skill_type, pipeline_id, created_at, updated_at
+         FROM skills WHERE id = ?1",
+    )?;
+    stmt.query_row([skill_id], |row| {
+        Ok(SkillInfo {
+            id: row.get(0)?,
+            name: row.get(1)?,
+            description: row.get(2)?,
+            file_path: row.get(3)?,
+            skill_type: row.get(4)?,
+            pipeline_id: row.get(5)?,
+            created_at: row.get(6)?,
+            updated_at: row.get(7)?,
+        })
+    })
+    .map_err(|_| AppError::NotFound(format!("skill '{skill_id}' not found")))
+}
+
+/// Build a prompt string from skill markdown content and user input.
+///
+/// If `input` is a JSON string, the raw string value is embedded directly.
+/// Otherwise, the input is pretty-printed as JSON.
+fn build_skill_prompt(skill_content: &str, input: &serde_json::Value) -> String {
+    let input_str = match input {
+        serde_json::Value::String(s) => s.clone(),
+        other => serde_json::to_string_pretty(other)
+            .unwrap_or_else(|e| format!("{{\"error\": \"Failed to serialize input: {e}\"}}")),
+    };
+    format!("# Skill Definition\n\n{skill_content}\n\n---\n\n# User Input\n\n{input_str}")
+}
+
+/// Test helper: invoke a skill end-to-end with an injected adapter.
+#[cfg(test)]
+pub(crate) async fn invoke_skill_db(
+    conn: &rusqlite::Connection,
+    skill_id: &str,
+    input: serde_json::Value,
+    adapter: &dyn crate::adapters::llm::LlmAdapter,
+) -> Result<SkillInvocationResult, AppError> {
+    let skill = lookup_skill_db(conn, skill_id)?;
+    let skill_content = std::fs::read_to_string(&skill.file_path)?;
+    execute_skill_prompt(&skill, &skill_content, &input, adapter).await
+}
+
+async fn execute_skill_prompt(
+    skill: &SkillInfo,
+    skill_content: &str,
+    input: &serde_json::Value,
+    adapter: &dyn crate::adapters::llm::LlmAdapter,
+) -> Result<SkillInvocationResult, AppError> {
+    let prompt = build_skill_prompt(skill_content, input);
+    let request = crate::adapters::llm::LlmRequest {
+        prompt,
+        timeout_secs: None,
+        metadata: None,
+    };
+    let response = adapter.execute_prompt(&request).await?;
+    Ok(SkillInvocationResult {
+        skill_id: skill.id.clone(),
+        skill_name: skill.name.clone(),
+        output: response.content,
+    })
+}
+
+// ---------------------------------------------------------------------------
 // Test helpers
 // ---------------------------------------------------------------------------
 
@@ -228,9 +340,30 @@ pub(crate) fn insert_test_pipeline(
 }
 
 #[cfg(test)]
+pub(crate) fn insert_test_skill(
+    conn: &rusqlite::Connection,
+    id: &str,
+    name: &str,
+    description: Option<&str>,
+    file_path: &str,
+    skill_type: &str,
+    pipeline_id: Option<&str>,
+) {
+    conn.execute(
+        "INSERT INTO skills (id, name, description, file_path, skill_type, pipeline_id, created_at, updated_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, '2024-01-01T00:00:00Z', '2024-01-01T00:00:00Z')",
+        rusqlite::params![id, name, description, file_path, skill_type, pipeline_id],
+    )
+    .unwrap_or_else(|e| panic!("insert test skill: {e}"));
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
+    use crate::adapters::llm::{LlmAdapter, LlmCapabilities, LlmRequest, LlmResponse};
     use crate::commands::test_db;
+    use async_trait::async_trait;
+    use std::sync::Mutex;
 
     #[test]
     fn list_skills_empty() {
@@ -301,5 +434,274 @@ mod tests {
         assert!(content.contains("Desc here"));
         assert!(content.contains("```yaml"));
         assert!(content.contains("name: TestPipe"));
+    }
+
+    // ---------------------------------------------------------------
+    // invoke_skill tests
+    // ---------------------------------------------------------------
+
+    // --- lookup_skill_db ---
+
+    #[test]
+    fn lookup_skill_db_found() {
+        let conn = test_db();
+
+        insert_test_skill(
+            &conn,
+            "sk-1",
+            "MySkill",
+            Some("A test skill"),
+            "/tmp/test-skill.md",
+            "pipeline",
+            Some("pl-1"),
+        );
+
+        let skill =
+            lookup_skill_db(&conn, "sk-1").unwrap_or_else(|e| panic!("should find skill: {e}"));
+
+        assert_eq!(skill.id, "sk-1");
+        assert_eq!(skill.name, "MySkill");
+        assert_eq!(skill.file_path, "/tmp/test-skill.md");
+    }
+
+    #[test]
+    fn lookup_skill_db_not_found() {
+        let conn = test_db();
+
+        let result = lookup_skill_db(&conn, "nonexistent-id");
+
+        assert!(result.is_err());
+        let Err(err) = result else {
+            panic!("should be NotFound")
+        };
+        assert!(matches!(err, AppError::NotFound(_)));
+    }
+
+    // --- build_skill_prompt ---
+
+    #[test]
+    fn build_skill_prompt_string_input() {
+        let skill_content = "# MySkill\n\nDo something useful.";
+
+        let input = serde_json::Value::String("hello world".to_owned());
+
+        let prompt = build_skill_prompt(skill_content, &input);
+
+        assert!(prompt.contains(skill_content));
+        assert!(prompt.contains("hello world"));
+    }
+
+    #[test]
+    fn build_skill_prompt_object_input() {
+        let skill_content = "# DataSkill\n\nProcess the data.";
+
+        let input = serde_json::json!({"key": "value", "count": 42});
+
+        let prompt = build_skill_prompt(skill_content, &input);
+
+        assert!(prompt.contains(skill_content));
+        assert!(prompt.contains("\"key\""));
+        assert!(prompt.contains("\"value\""));
+        assert!(prompt.contains("42"));
+    }
+
+    #[test]
+    fn build_skill_prompt_preserves_skill_content() {
+        let skill_content = "# Skill\n\nLine 1\nLine 2\n```yaml\nname: Test\n```";
+
+        let input = serde_json::Value::String("input".to_owned());
+
+        let prompt = build_skill_prompt(skill_content, &input);
+
+        assert!(prompt.contains("# Skill"));
+        assert!(prompt.contains("```yaml"));
+    }
+
+    // --- invoke_skill_db ---
+
+    /// Fake LLM adapter that captures the prompt it receives.
+    struct FakeLlmAdapter {
+        captured_requests: Mutex<Vec<LlmRequest>>,
+        response_content: String,
+    }
+
+    impl FakeLlmAdapter {
+        fn new(response_content: &str) -> Self {
+            Self {
+                captured_requests: Mutex::new(Vec::new()),
+                response_content: response_content.to_owned(),
+            }
+        }
+    }
+
+    #[async_trait]
+    impl LlmAdapter for FakeLlmAdapter {
+        fn id(&self) -> &'static str {
+            "fake"
+        }
+        fn name(&self) -> &'static str {
+            "Fake"
+        }
+        fn capabilities(&self) -> &LlmCapabilities {
+            static CAPS: LlmCapabilities = LlmCapabilities {
+                streaming: false,
+                function_calling: false,
+                max_context_tokens: 1000,
+            };
+            &CAPS
+        }
+        async fn execute_prompt(
+            &self,
+            request: &LlmRequest,
+        ) -> Result<LlmResponse, crate::error::AppError> {
+            self.captured_requests
+                .lock()
+                .unwrap_or_else(|e| panic!("lock: {e}"))
+                .push(request.clone());
+            Ok(LlmResponse {
+                content: self.response_content.clone(),
+                metadata: None,
+            })
+        }
+    }
+
+    #[tokio::test]
+    async fn invoke_skill_not_found() {
+        let conn = test_db();
+        let adapter = FakeLlmAdapter::new("unused");
+
+        let result = invoke_skill_db(
+            &conn,
+            "nonexistent-id",
+            serde_json::json!("input"),
+            &adapter,
+        )
+        .await;
+
+        assert!(result.is_err());
+        let Err(err) = result else {
+            panic!("should be NotFound")
+        };
+        assert!(matches!(err, AppError::NotFound(_)));
+    }
+
+    #[tokio::test]
+    async fn invoke_skill_file_read_error() {
+        let conn = test_db();
+
+        insert_test_skill(
+            &conn,
+            "sk-bad",
+            "BadFileSkill",
+            None,
+            "/tmp/smartcrab_test_nonexistent_file.md",
+            "pipeline",
+            None,
+        );
+        let adapter = FakeLlmAdapter::new("unused");
+
+        let result = invoke_skill_db(&conn, "sk-bad", serde_json::json!("input"), &adapter).await;
+
+        assert!(result.is_err());
+        let Err(err) = result else {
+            panic!("should be an error")
+        };
+        assert!(
+            matches!(err, AppError::Io(_)),
+            "expected Io error, got: {err}"
+        );
+    }
+
+    #[tokio::test]
+    async fn invoke_skill_passes_prompt_to_adapter() {
+        let conn = test_db();
+        let dir = tempfile::tempdir().unwrap_or_else(|e| panic!("tempdir: {e}"));
+        let skill_file = dir.path().join("test-skill.md");
+        let skill_content = "# TestSkill\n\nDo the thing.\n```yaml\nname: Test\n```";
+        std::fs::write(&skill_file, skill_content)
+            .unwrap_or_else(|e| panic!("write skill file: {e}"));
+        let file_path = skill_file
+            .to_str()
+            .unwrap_or_else(|| panic!("non-UTF-8 path"))
+            .to_owned();
+
+        insert_test_skill(
+            &conn,
+            "sk-ok",
+            "TestSkill",
+            Some("A test skill"),
+            &file_path,
+            "pipeline",
+            Some("pl-1"),
+        );
+        let adapter = FakeLlmAdapter::new("skill output result");
+
+        let result = invoke_skill_db(&conn, "sk-ok", serde_json::json!("do something"), &adapter)
+            .await
+            .unwrap_or_else(|e| panic!("should invoke: {e}"));
+
+        assert_eq!(result.skill_id, "sk-ok");
+        assert_eq!(result.skill_name, "TestSkill");
+        assert_eq!(result.output, "skill output result");
+
+        let captured = adapter
+            .captured_requests
+            .lock()
+            .unwrap_or_else(|e| panic!("lock: {e}"));
+        assert_eq!(captured.len(), 1);
+        let prompt = &captured[0].prompt;
+        assert!(prompt.contains("# TestSkill"));
+        assert!(prompt.contains("do something"));
+    }
+
+    #[tokio::test]
+    async fn invoke_skill_with_object_input() {
+        let conn = test_db();
+        let dir = tempfile::tempdir().unwrap_or_else(|e| panic!("tempdir: {e}"));
+        let skill_file = dir.path().join("obj-skill.md");
+        std::fs::write(&skill_file, "# ObjSkill\n\nProcess data.")
+            .unwrap_or_else(|e| panic!("write skill file: {e}"));
+        let file_path = skill_file
+            .to_str()
+            .unwrap_or_else(|| panic!("non-UTF-8 path"))
+            .to_owned();
+
+        insert_test_skill(
+            &conn, "sk-obj", "ObjSkill", None, &file_path, "pipeline", None,
+        );
+        let adapter = FakeLlmAdapter::new("processed");
+
+        let input = serde_json::json!({"topic": "rust", "level": 42});
+        let result = invoke_skill_db(&conn, "sk-obj", input, &adapter)
+            .await
+            .unwrap_or_else(|e| panic!("should invoke: {e}"));
+
+        assert_eq!(result.output, "processed");
+
+        let captured = adapter
+            .captured_requests
+            .lock()
+            .unwrap_or_else(|e| panic!("lock: {e}"));
+        let prompt = &captured[0].prompt;
+        assert!(prompt.contains("\"topic\""));
+        assert!(prompt.contains("42"));
+    }
+
+    // --- SkillInvocationResult serialization ---
+
+    #[test]
+    fn skill_invocation_result_serializes() {
+        let result = SkillInvocationResult {
+            skill_id: "sk-1".to_owned(),
+            skill_name: "MySkill".to_owned(),
+            output: "some output".to_owned(),
+        };
+
+        let json = serde_json::to_string(&result)
+            .unwrap_or_else(|e| panic!("serialize should succeed: {e}"));
+
+        assert!(json.contains("sk-1"));
+        assert!(json.contains("MySkill"));
+        assert!(json.contains("some output"));
     }
 }
