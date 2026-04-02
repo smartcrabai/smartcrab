@@ -297,6 +297,23 @@ async fn execute_node_action(
             let response = adapter.execute_prompt(&request).await?;
             Ok(serde_json::Value::String(response.content))
         }
+        Some(NodeAction::ChatSend {
+            adapter,
+            channel_id,
+            content_template,
+        }) => {
+            let registry = crate::default_chat_registry();
+            let chat_adapter = registry
+                .get(adapter)
+                .ok_or_else(|| AppError::Other(format!("unknown chat adapter: '{adapter}'")))?;
+            let channel = channel_id
+                .as_deref()
+                .ok_or_else(|| AppError::Other("ChatSend requires a channel_id".to_owned()))?;
+            chat_adapter.send_message(channel, content_template).await?;
+            Ok(serde_json::Value::String(format!(
+                "sent via {adapter} to {channel}"
+            )))
+        }
     }
 }
 
