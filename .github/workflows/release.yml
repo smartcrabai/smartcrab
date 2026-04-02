@@ -42,6 +42,20 @@ jobs:
         with:
           node-version: '24'
 
+      - name: Inject version from git tag
+        shell: node {0}
+        run: |
+          const fs = require("fs");
+          const version = "${{ github.ref_name }}".replace(/^v/, "");
+          if (!/^\d+\.\d+\.\d+/.test(version)) throw new Error(`Invalid version tag: "${version}"`);
+
+          const file = "crates/smartcrab-app/src-tauri/tauri.conf.json";
+          const json = JSON.parse(fs.readFileSync(file, "utf8"));
+          json.version = version;
+          fs.writeFileSync(file, JSON.stringify(json, null, 2) + "\n");
+
+          console.log(`Set version to ${version}`);
+
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
         with:
