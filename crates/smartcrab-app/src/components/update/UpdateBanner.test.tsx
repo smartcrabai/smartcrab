@@ -9,22 +9,20 @@ import type { UpdaterStatus } from '../../hooks/useAppUpdater';
 function buildProps(overrides: Partial<UpdateBannerProps> = {}): UpdateBannerProps {
   return {
     status: 'idle',
-    availableVersion: null,
-    notes: null,
     downloadedBytes: 0,
     contentLength: null,
     error: null,
-    onInstall: vi.fn(),
     onDismiss: vi.fn(),
     ...overrides,
   };
 }
 
 // States that should render nothing
-const SILENT_STATES: UpdaterStatus[] = ['idle', 'upToDate', 'checking', 'installing'];
+// Note: 'available' is now silent because the confirmation dialog handles update approval
+const SILENT_STATES: UpdaterStatus[] = ['idle', 'upToDate', 'checking', 'available', 'installing'];
 
 // States that should render a visible banner
-const VISIBLE_STATES: UpdaterStatus[] = ['available', 'downloading', 'error'];
+const VISIBLE_STATES: UpdaterStatus[] = ['downloading', 'error'];
 
 // ----------------------------------------------------------------
 // Visibility
@@ -44,7 +42,6 @@ describe('UpdateBanner', () => {
       // Given: status is a visible state
       const props = buildProps({
         status,
-        availableVersion: status !== 'error' ? '1.0.0' : null,
         error: status === 'error' ? 'update failed' : null,
       });
       // When: component renders
@@ -55,68 +52,19 @@ describe('UpdateBanner', () => {
   });
 
   // ----------------------------------------------------------------
-  // available state
+  // available state (silent — confirmation handled by native dialog)
   // ----------------------------------------------------------------
 
   describe('available state', () => {
-    const availableProps = buildProps({
-      status: 'available',
-      availableVersion: '2.3.4',
-      notes: 'Bug fixes and improvements',
-    });
-
-    it('should display the available version', () => {
-      // Given: status is available with a version
-      render(<UpdateBanner {...availableProps} />);
-      // Then: version is shown
-      expect(screen.getByText(/2\.3\.4/)).toBeInTheDocument();
-    });
-
-    it('should display the release notes', () => {
-      // Given: status is available with notes
-      render(<UpdateBanner {...availableProps} />);
-      // Then: notes are shown
-      expect(screen.getByText(/Bug fixes and improvements/)).toBeInTheDocument();
-    });
-
-    it('should show an install button', () => {
-      // Given: status is available
-      render(<UpdateBanner {...availableProps} />);
-      // Then: an install button is present
-      const installBtn = screen.getByRole('button', { name: /install/i });
-      expect(installBtn).toBeInTheDocument();
-    });
-
-    it('should call onInstall when the install button is clicked', async () => {
-      // Given: status is available with an onInstall callback
-      const onInstall = vi.fn();
-      render(<UpdateBanner {...availableProps} onInstall={onInstall} />);
-
-      // When: the install button is clicked
-      await userEvent.click(screen.getByRole('button', { name: /install/i }));
-
-      // Then: onInstall is called once
-      expect(onInstall).toHaveBeenCalledOnce();
-    });
-
-    it('should show a dismiss button', () => {
-      // Given: status is available
-      render(<UpdateBanner {...availableProps} />);
-      // Then: a dismiss button is present
-      const dismissBtn = screen.getByRole('button', { name: /dismiss|later|close/i });
-      expect(dismissBtn).toBeInTheDocument();
-    });
-
-    it('should call onDismiss when the dismiss button is clicked', async () => {
-      // Given: status is available with an onDismiss callback
-      const onDismiss = vi.fn();
-      render(<UpdateBanner {...availableProps} onDismiss={onDismiss} />);
-
-      // When: the dismiss button is clicked
-      await userEvent.click(screen.getByRole('button', { name: /dismiss|later|close/i }));
-
-      // Then: onDismiss is called once
-      expect(onDismiss).toHaveBeenCalledOnce();
+    it('should render nothing in available state because dialog handles confirmation', () => {
+      // Given: status is available (no version or notes needed)
+      const props = buildProps({
+        status: 'available',
+      });
+      // When: component renders
+      const { container } = render(<UpdateBanner {...props} />);
+      // Then: nothing is shown (confirmation is handled by native dialog, not banner)
+      expect(container.firstChild).toBeNull();
     });
   });
 
@@ -127,7 +75,6 @@ describe('UpdateBanner', () => {
   describe('downloading state', () => {
     const downloadingProps = buildProps({
       status: 'downloading',
-      availableVersion: '2.3.4',
       downloadedBytes: 512,
       contentLength: 1024,
     });
@@ -146,13 +93,6 @@ describe('UpdateBanner', () => {
       expect(screen.getByText(/1024/)).toBeInTheDocument();
     });
 
-    it('should render the install button as disabled', () => {
-      // Given: status is downloading
-      render(<UpdateBanner {...downloadingProps} />);
-      // Then: the install button is disabled
-      const installBtn = screen.getByRole('button', { name: /install/i });
-      expect(installBtn).toBeDisabled();
-    });
   });
 
   // ----------------------------------------------------------------

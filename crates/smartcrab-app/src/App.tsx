@@ -21,7 +21,7 @@ function App() {
   const [currentView, setCurrentView] = useState<View>("pipelines");
   const [selectedExecutionId, setSelectedExecutionId] = useState<string | null>(null);
   const [discordActive, setDiscordActive] = useState(false);
-  const { installAvailableUpdate, dismiss, checkForUpdates: _, ...bannerProps } = useAppUpdater();
+  const { status, downloadedBytes, contentLength, error, dismiss } = useAppUpdater();
 
   const refreshDiscordStatus = () => {
     invoke<{ is_running: boolean }>('get_adapter_status', { adapterType: 'discord' })
@@ -71,8 +71,10 @@ function App() {
   return (
     <>
       <UpdateBanner
-        {...bannerProps}
-        onInstall={installAvailableUpdate}
+        status={status}
+        downloadedBytes={downloadedBytes}
+        contentLength={contentLength}
+        error={error}
         onDismiss={dismiss}
       />
       <Layout
