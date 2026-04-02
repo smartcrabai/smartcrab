@@ -235,7 +235,7 @@ mod tests {
     #[test]
     fn create_cron_job_invalid_schedule() {
         let conn = test_db();
-        // "* * * * * MON,TURTLE" — TURTLE is not a valid day name; confirmed
+        // "* * * * * MON,TURTLE" -- TURTLE is not a valid day name; confirmed
         // invalid via the cron crate's own test suite (test_nom_invalid_days_of_week_list).
         let result = create_cron_job_db(&conn, "pipeline-1", "* * * * * MON,TURTLE");
         assert!(result.is_err());

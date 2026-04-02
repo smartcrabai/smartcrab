@@ -9,7 +9,7 @@ struct Migration {
 
 /// Data migrations applied after the initial schema is created.
 /// Add entries here (in ascending version order) for schema changes that
-/// cannot be expressed as `ALTER TABLE … IF NOT EXISTS`.
+/// cannot be expressed as `ALTER TABLE ... IF NOT EXISTS`.
 static MIGRATIONS: &[Migration] = &[];
 
 /// Apply any pending migrations to the database.

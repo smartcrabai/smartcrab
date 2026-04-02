@@ -5,7 +5,7 @@ import { dirname } from "node:path";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Path to the debug binary built with `cargo build --features smartcrab-app/webdriver`
-// __dirname = <repo>/crates/smartcrab-app/e2e  →  3 levels up = repo root
+// __dirname = <repo>/crates/smartcrab-app/e2e  ->  3 levels up = repo root
 const APP_BINARY = join(
   __dirname,
   "../../..",

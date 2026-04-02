@@ -210,7 +210,7 @@ pub fn update_pipeline(
 
     let sql = format!("UPDATE pipelines SET {} WHERE id = ?1", sets.join(", "));
 
-    // ?1 = id; ?2 … ?N = set-clause values in the order they were pushed.
+    // ?1 = id; ?2 ... ?N = set-clause values in the order they were pushed.
     let ordered: Vec<&dyn rusqlite::ToSql> = std::iter::once(&id as &dyn rusqlite::ToSql)
         .chain(params.iter().map(std::convert::AsRef::as_ref))
         .collect();

@@ -114,7 +114,7 @@ pub fn save_adapter_config(
     update_adapter_config_db(&conn, &adapter_type, &json_str)
 }
 
-/// Start a chat adapter (placeholder — actual adapter start logic is runtime-dependent).
+/// Start a chat adapter (placeholder -- actual adapter start logic is runtime-dependent).
 ///
 /// # Errors
 ///

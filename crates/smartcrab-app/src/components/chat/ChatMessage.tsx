@@ -24,7 +24,7 @@ export function ChatMessage({
               onClick={() => onOpenInEditor?.(message.yamlContent!)}
               className="mt-1 text-xs text-blue-400 hover:text-blue-300"
             >
-              Open in editor →
+              Open in editor &gt;
             </button>
           </div>
         )}

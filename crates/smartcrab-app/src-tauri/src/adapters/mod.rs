@@ -4,7 +4,7 @@ pub mod llm;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-/// Generic adapter registry — stores adapters by ID.
+/// Generic adapter registry -- stores adapters by ID.
 ///
 /// Any type that implements a supported adapter trait (`ChatAdapter`,
 /// `LlmAdapter`, etc.) can be registered here by its unique string ID.
