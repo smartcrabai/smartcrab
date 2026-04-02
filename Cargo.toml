@@ -7,7 +7,7 @@ resolver = "3"
 edition = "2024"
 license = "Apache-2.0"
 repository = "https://github.com/smartcrabai/smartcrab"
-version = "0.1.9"
+version = "0.1.10"
 
 [workspace.lints.clippy]
 allow_attributes = "deny"
