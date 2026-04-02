@@ -1,6 +1,7 @@
 use serde::Serialize;
 use tauri::State;
 
+use crate::adapters::chat::runtime::ChatRuntimeState;
 use crate::db::DbState;
 use crate::error::AppError;
 
@@ -21,15 +22,26 @@ pub struct AdapterConfig {
     pub is_active: bool,
 }
 
+impl AdapterConfig {
+    /// Returns `true` when the config JSON contains real values
+    /// (not empty or just `{}`).
+    #[must_use]
+    pub fn is_configured(&self) -> bool {
+        self.config_json != serde_json::json!({})
+    }
+}
+
 /// Runtime status of an adapter.
 #[derive(Debug, Clone, Serialize)]
 pub struct AdapterStatus {
     pub adapter_type: String,
     pub is_running: bool,
-    pub connected_since: Option<String>,
 }
 
 /// List all registered chat adapters with their configuration status.
+///
+/// Overlays the in-process adapter registry with persisted DB config.
+/// Adapters that have no DB row yet appear as unconfigured.
 ///
 /// # Errors
 ///
@@ -39,9 +51,28 @@ pub struct AdapterStatus {
     clippy::needless_pass_by_value,
     reason = "Tauri State must be passed by value"
 )]
-pub fn list_adapters(db: State<'_, DbState>) -> Result<Vec<AdapterInfo>, AppError> {
+pub fn list_adapters(
+    db: State<'_, DbState>,
+    runtime: State<'_, ChatRuntimeState>,
+) -> Result<Vec<AdapterInfo>, AppError> {
     let conn = db.lock()?;
-    list_adapters_db(&conn)
+    let registered = runtime.registered_adapters();
+    let mut result = Vec::with_capacity(registered.len());
+
+    for (id, name) in &registered {
+        let db_row = get_adapter_config_db(&conn, id).ok();
+        let (is_configured, is_active) = match &db_row {
+            Some(cfg) => (cfg.is_configured(), cfg.is_active),
+            None => (false, false),
+        };
+        result.push(AdapterInfo {
+            adapter_type: id.clone(),
+            name: name.clone(),
+            is_configured,
+            is_active,
+        });
+    }
+    Ok(result)
 }
 
 /// Get configuration for a specific adapter type.
@@ -111,14 +142,22 @@ pub async fn stop_adapter(adapter_type: String) -> Result<(), AppError> {
 ///
 /// # Errors
 ///
-/// Reserved for future use; currently always returns `Ok(...)`.
+/// Returns [`AppError::NotFound`] if the adapter is not registered.
 #[tauri::command]
-pub fn get_adapter_status(adapter_type: String) -> Result<AdapterStatus, AppError> {
-    // Placeholder: real implementation would query an in-process adapter manager.
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri State must be passed by value"
+)]
+pub fn get_adapter_status(
+    runtime: State<'_, ChatRuntimeState>,
+    adapter_type: String,
+) -> Result<AdapterStatus, AppError> {
+    let status = runtime
+        .get_status(&adapter_type)
+        .ok_or_else(|| AppError::NotFound(format!("adapter '{adapter_type}' not registered")))?;
     Ok(AdapterStatus {
         adapter_type,
-        is_running: false,
-        connected_since: None,
+        is_running: status.is_running,
     })
 }
 
@@ -131,22 +170,32 @@ pub fn get_adapter_status(adapter_type: String) -> Result<AdapterStatus, AppErro
 // We store adapter_type as the `id` so each adapter_type is unique and upsert
 // works via the primary-key conflict clause.
 
+#[cfg(test)]
 pub(crate) fn list_adapters_db(conn: &rusqlite::Connection) -> Result<Vec<AdapterInfo>, AppError> {
     let mut stmt = conn.prepare("SELECT id, config_json, is_active FROM chat_adapter_config")?;
     let rows = stmt.query_map([], |row| {
-        let adapter_type: String = row.get(0)?;
-        let config_json: String = row.get(1)?;
-        let is_configured = config_json != "{}" && !config_json.is_empty();
-        Ok(AdapterInfo {
-            name: adapter_type.clone(),
-            adapter_type,
-            is_configured,
-            is_active: row.get::<_, i32>(2)? != 0,
-        })
+        Ok((
+            row.get::<_, String>(0)?,
+            row.get::<_, String>(1)?,
+            row.get::<_, i32>(2)?,
+        ))
     })?;
     let mut adapters = Vec::new();
     for row in rows {
-        adapters.push(row?);
+        let (adapter_type, config_json_str, is_active_int) = row?;
+        let config_json: serde_json::Value = serde_json::from_str(&config_json_str)?;
+        let is_configured = AdapterConfig {
+            adapter_type: adapter_type.clone(),
+            config_json,
+            is_active: false,
+        }
+        .is_configured();
+        adapters.push(AdapterInfo {
+            name: adapter_type.clone(),
+            adapter_type,
+            is_configured,
+            is_active: is_active_int != 0,
+        });
     }
     Ok(adapters)
 }
@@ -191,13 +240,9 @@ pub(crate) fn update_adapter_config_db(
 mod tests {
     use super::*;
     use crate::commands::test_db;
+    use crate::default_chat_registry;
 
-    #[test]
-    fn list_adapters_empty() {
-        let conn = test_db();
-        let adapters = list_adapters_db(&conn).unwrap_or_else(|e| panic!("should succeed: {e}"));
-        assert!(adapters.is_empty());
-    }
+    // --- DB helpers ---
 
     #[test]
     fn adapter_config_crud() {
@@ -260,15 +305,6 @@ mod tests {
     }
 
     #[test]
-    fn adapter_status_default() {
-        let status = get_adapter_status("discord".to_owned())
-            .unwrap_or_else(|e| panic!("should succeed: {e}"));
-        assert_eq!(status.adapter_type, "discord");
-        assert!(!status.is_running);
-        assert!(status.connected_since.is_none());
-    }
-
-    #[test]
     fn adapter_info_serializes() {
         let info = AdapterInfo {
             adapter_type: "discord".to_owned(),
@@ -280,5 +316,205 @@ mod tests {
             .unwrap_or_else(|e| panic!("serialize should succeed: {e}"));
         assert!(json.contains("discord"));
         assert!(json.contains("is_configured"));
+    }
+
+    // --- Registry-overlay list_adapters ---
+
+    /// List adapters by overlaying registry entries with DB config.
+    /// Returns one `AdapterInfo` per registered adapter.
+    fn list_adapters_overlay_db(
+        registry: &crate::adapters::AdapterRegistry<dyn crate::adapters::chat::ChatAdapter>,
+        conn: &rusqlite::Connection,
+    ) -> Vec<AdapterInfo> {
+        let registered = registry.list();
+        let mut result = Vec::with_capacity(registered.len());
+
+        for (id, adapter) in &registered {
+            let db_row = get_adapter_config_db(conn, id).ok();
+            let (is_configured, is_active) = match &db_row {
+                Some(cfg) => (cfg.is_configured(), cfg.is_active),
+                None => (false, false),
+            };
+            result.push(AdapterInfo {
+                adapter_type: id.clone(),
+                name: adapter.name().to_owned(),
+                is_configured,
+                is_active,
+            });
+        }
+        result
+    }
+
+    /// Get adapter config, returning a default if the adapter is registered
+    /// but has no DB row yet.
+    fn get_adapter_config_or_default_db(
+        registry: &crate::adapters::AdapterRegistry<dyn crate::adapters::chat::ChatAdapter>,
+        conn: &rusqlite::Connection,
+        adapter_type: &str,
+    ) -> Result<AdapterConfig, AppError> {
+        let _adapter = registry
+            .get(adapter_type)
+            .ok_or_else(|| AppError::NotFound(format!("adapter '{adapter_type}' not found")))?;
+
+        match get_adapter_config_db(conn, adapter_type) {
+            Ok(cfg) => Ok(cfg),
+            Err(AppError::NotFound(_)) => Ok(AdapterConfig {
+                adapter_type: adapter_type.to_owned(),
+                config_json: default_config_for_adapter(adapter_type),
+                is_active: false,
+            }),
+            Err(e) => Err(e),
+        }
+    }
+
+    fn default_config_for_adapter(adapter_type: &str) -> serde_json::Value {
+        match adapter_type {
+            "discord" => crate::adapters::chat::discord::DiscordConfig::default_config(),
+            _ => serde_json::json!({}),
+        }
+    }
+
+    /// Persist `is_active` flag to the DB.
+    fn set_adapter_active_db(
+        conn: &rusqlite::Connection,
+        adapter_type: &str,
+        is_active: bool,
+    ) -> Result<(), AppError> {
+        let active_int: i32 = i32::from(is_active);
+        let rows = conn.execute(
+            "UPDATE chat_adapter_config SET is_active = ?1, updated_at = datetime('now') WHERE id = ?2",
+            rusqlite::params![active_int, adapter_type],
+        )?;
+        if rows == 0 {
+            return Err(AppError::NotFound(format!(
+                "adapter '{adapter_type}' has no config row to activate"
+            )));
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn list_adapters_overlay_includes_discord_even_when_db_empty() {
+        // Given: registry with Discord but no DB rows
+        let registry = default_chat_registry();
+        let conn = test_db();
+
+        // When: listing adapters with overlay
+        let adapters = list_adapters_overlay_db(&registry, &conn);
+
+        // Then: Discord appears in the list
+        assert!(
+            !adapters.is_empty(),
+            "list should contain registered adapters"
+        );
+        let discord = adapters.iter().find(|a| a.adapter_type == "discord");
+        assert!(discord.is_some(), "Discord should be in the list");
+        let discord = discord.unwrap_or_else(|| panic!("checked above"));
+        assert_eq!(discord.name, "Discord");
+        assert!(
+            !discord.is_configured,
+            "should not be configured without DB row"
+        );
+        assert!(!discord.is_active, "should not be active without DB row");
+    }
+
+    #[test]
+    fn list_adapters_overlay_merges_db_config() {
+        // Given: registry with Discord and a DB row with config
+        let registry = default_chat_registry();
+        let conn = test_db();
+        update_adapter_config_db(&conn, "discord", r#"{"bot_token_env":"MY_TOKEN"}"#)
+            .unwrap_or_else(|e| panic!("insert should succeed: {e}"));
+
+        // When: listing adapters with overlay
+        let adapters = list_adapters_overlay_db(&registry, &conn);
+
+        // Then: Discord is configured
+        let discord = adapters.iter().find(|a| a.adapter_type == "discord");
+        assert!(discord.is_some());
+        let discord = discord.unwrap_or_else(|| panic!("checked above"));
+        assert!(discord.is_configured, "should be configured with DB row");
+    }
+
+    #[test]
+    fn get_adapter_config_or_default_returns_default_for_registered_adapter() {
+        // Given: registry with Discord but no DB rows
+        let registry = default_chat_registry();
+        let conn = test_db();
+
+        // When: getting config for Discord
+        let result = get_adapter_config_or_default_db(&registry, &conn, "discord");
+
+        // Then: returns a default config (not NotFound)
+        assert!(result.is_ok(), "should return default config, not NotFound");
+        let config = result.unwrap_or_else(|e| panic!("should succeed: {e}"));
+        assert_eq!(config.adapter_type, "discord");
+        assert!(!config.is_active);
+    }
+
+    #[test]
+    fn get_adapter_config_or_default_returns_saved_config() {
+        // Given: registry with Discord and a saved config
+        let registry = default_chat_registry();
+        let conn = test_db();
+        update_adapter_config_db(&conn, "discord", r#"{"bot_token_env":"MY_TOKEN"}"#)
+            .unwrap_or_else(|e| panic!("insert should succeed: {e}"));
+
+        // When: getting config for Discord
+        let result = get_adapter_config_or_default_db(&registry, &conn, "discord");
+
+        // Then: returns the saved config
+        assert!(result.is_ok());
+        let config = result.unwrap_or_else(|e| panic!("should succeed: {e}"));
+        assert_eq!(config.config_json["bot_token_env"], "MY_TOKEN");
+    }
+
+    #[test]
+    fn get_adapter_config_or_default_returns_not_found_for_unregistered() {
+        // Given: registry with Discord but querying for Slack
+        let registry = default_chat_registry();
+        let conn = test_db();
+
+        // When: getting config for unregistered adapter
+        let result = get_adapter_config_or_default_db(&registry, &conn, "slack");
+
+        // Then: returns NotFound
+        assert!(result.is_err());
+        let Err(err) = result else {
+            panic!("should be NotFound")
+        };
+        assert!(err.to_string().contains("not found"));
+    }
+
+    #[test]
+    fn set_adapter_active_persists_to_db() {
+        // Given: a saved adapter config
+        let conn = test_db();
+        update_adapter_config_db(&conn, "discord", r#"{"bot_token_env":"T"}"#)
+            .unwrap_or_else(|e| panic!("insert should succeed: {e}"));
+
+        // When: setting adapter active
+        set_adapter_active_db(&conn, "discord", true)
+            .unwrap_or_else(|e| panic!("should succeed: {e}"));
+
+        // Then: DB reflects is_active = true
+        let config = get_adapter_config_db(&conn, "discord")
+            .unwrap_or_else(|e| panic!("should succeed: {e}"));
+        assert!(config.is_active);
+    }
+
+    #[test]
+    fn adapter_status_reflects_runtime_state() {
+        // Given: a runtime state with Discord registered
+        let runtime =
+            crate::adapters::chat::runtime::ChatRuntimeState::new(default_chat_registry());
+
+        // When: querying status
+        let status = runtime.get_status("discord");
+
+        // Then: Discord is registered but not running
+        assert!(status.is_some());
+        let status = status.unwrap_or_else(|| panic!("checked above"));
+        assert!(!status.is_running);
     }
 }

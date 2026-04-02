@@ -294,4 +294,138 @@ nodes:
             other => panic!("Expected Multiple next, got: {other:?}"),
         }
     }
+
+    // --- chat_send action tests ---
+
+    const EXAMPLE_DISCORD_CHAT_SEND: &str = r#"
+name: discord-reply-bot
+version: "1.0"
+trigger:
+  type: discord
+  triggers: [mention, dm]
+nodes:
+  - id: receive
+    name: Receive Message
+    next: call_llm
+  - id: call_llm
+    name: LLM Processing
+    action:
+      type: llm_call
+      provider: claude
+      prompt: "Respond to the user message"
+      timeout_secs: 60
+    next: reply
+  - id: reply
+    name: Send Reply
+    action:
+      type: chat_send
+      adapter: discord
+      content_template: "{{output}}"
+"#;
+
+    #[test]
+    fn test_parse_discord_pipeline_with_chat_send() {
+        let result = parse_pipeline(EXAMPLE_DISCORD_CHAT_SEND);
+        assert!(result.is_ok(), "Parse should succeed: {:?}", result.err());
+        let pipeline = result.unwrap_or_else(|e| panic!("should have been checked: {e:?}"));
+        assert_eq!(pipeline.definition.name, "discord-reply-bot");
+
+        // Verify trigger config
+        assert!(matches!(
+            pipeline.definition.trigger.trigger_type,
+            crate::engine::yaml_schema::TriggerType::Discord
+        ));
+        let triggers = pipeline.definition.trigger.triggers.as_deref();
+        assert!(triggers.is_some());
+        let triggers = triggers.unwrap_or_default();
+        assert!(triggers.contains(&"mention".to_owned()));
+        assert!(triggers.contains(&"dm".to_owned()));
+    }
+
+    #[test]
+    fn test_chat_send_action_resolves_in_pipeline() {
+        let result = parse_pipeline(EXAMPLE_DISCORD_CHAT_SEND);
+        assert!(result.is_ok());
+        let pipeline = result.unwrap_or_else(|e| panic!("should have been checked: {e:?}"));
+
+        let reply_node = pipeline
+            .definition
+            .nodes
+            .iter()
+            .find(|n| n.id == "reply")
+            .unwrap_or_else(|| panic!("reply node should exist"));
+
+        match reply_node.action {
+            Some(crate::engine::yaml_schema::NodeAction::ChatSend {
+                ref adapter,
+                ref channel_id,
+                ref content_template,
+            }) => {
+                assert_eq!(adapter, "discord");
+                assert!(channel_id.is_none());
+                assert_eq!(content_template, "{{output}}");
+            }
+            ref other => panic!("Expected ChatSend action, got: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_chat_send_node_type_resolution() {
+        let result = parse_pipeline(EXAMPLE_DISCORD_CHAT_SEND);
+        assert!(result.is_ok());
+        let pipeline = result.unwrap_or_else(|e| panic!("should have been checked: {e:?}"));
+
+        let types = &pipeline.node_types;
+        // receive: no incoming edges -> Input
+        assert_eq!(types.get("receive"), Some(&ResolvedNodeType::Input));
+        // call_llm: referenced + has next -> Hidden
+        assert_eq!(types.get("call_llm"), Some(&ResolvedNodeType::Hidden));
+        // reply: referenced but no outgoing -> Output
+        assert_eq!(types.get("reply"), Some(&ResolvedNodeType::Output));
+    }
+
+    #[test]
+    fn test_chat_send_with_explicit_channel_id() {
+        let yaml = r#"
+name: discord-notify
+version: "1.0"
+trigger:
+  type: discord
+  triggers: [mention]
+nodes:
+  - id: receive
+    name: Receive
+    next: notify
+  - id: notify
+    name: Notify Channel
+    action:
+      type: chat_send
+      adapter: discord
+      channel_id: "99887766"
+      content_template: "Alert: {{content}}"
+"#;
+        let result = parse_pipeline(yaml);
+        assert!(result.is_ok());
+        let pipeline = result.unwrap_or_else(|e| panic!("should parse: {e:?}"));
+
+        let notify_node = pipeline
+            .definition
+            .nodes
+            .iter()
+            .find(|n| n.id == "notify")
+            .unwrap_or_else(|| panic!("notify node should exist"));
+
+        match notify_node.action {
+            Some(crate::engine::yaml_schema::NodeAction::ChatSend {
+                ref adapter,
+                ref channel_id,
+                ref content_template,
+            }) => {
+                assert_eq!(adapter, "discord");
+                assert_eq!(channel_id, &Some("99887766".to_owned()));
+                assert_eq!(content_template, "Alert: {{content}}");
+            }
+            ref other => panic!("Expected ChatSend action, got: {other:?}"),
+        }
+    }
 }

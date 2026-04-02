@@ -3,7 +3,11 @@ import { invoke } from '@tauri-apps/api/core';
 import { Play, Square, ChevronDown, ChevronUp } from 'lucide-react';
 import type { AdapterInfo, AdapterConfig } from '../../types';
 
-export function AdapterSettings() {
+interface AdapterSettingsProps {
+  onDiscordStatusChange?: () => void;
+}
+
+export function AdapterSettings({ onDiscordStatusChange }: AdapterSettingsProps) {
   const [adapters, setAdapters] = useState<AdapterInfo[]>([]);
   const [configs, setConfigs] = useState<Record<string, AdapterConfig>>({});
 
@@ -30,13 +34,13 @@ export function AdapterSettings() {
 
   async function toggleAdapter(adapterType: string, isActive: boolean) {
     try {
-      if (isActive) {
-        await invoke('stop_adapter', { adapterType });
-      } else {
-        await invoke('start_adapter', { adapterType });
-      }
+      const command = isActive ? 'stop_adapter' : 'start_adapter';
+      await invoke(command, { adapterType });
       const updated = await invoke<AdapterInfo[]>('list_adapters');
       setAdapters(updated);
+      if (adapterType === 'discord' && onDiscordStatusChange) {
+        onDiscordStatusChange();
+      }
     } catch (e) {
       console.error('Failed to toggle adapter:', e);
     }
@@ -163,20 +167,7 @@ function AdapterCard({
               </div>
             </>
           )}
-          {adapter.adapterType === 'claude' && (
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Timeout (seconds)</label>
-              <input
-                type="number"
-                className="w-full bg-gray-700 text-white rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={Number(localConfig['timeout_secs'] ?? 30)}
-                onChange={e => handleFieldChange('timeout_secs', Number(e.target.value))}
-                min={1}
-                max={300}
-              />
-            </div>
-          )}
-          {adapter.adapterType !== 'discord' && adapter.adapterType !== 'claude' && (
+          {adapter.adapterType !== 'discord' && (
             Object.entries(localConfig).map(([key, val]) => (
               <div key={key}>
                 <label className="block text-sm text-gray-400 mb-1">{key}</label>

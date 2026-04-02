@@ -737,6 +737,7 @@ async fn run_pipeline_async(
 // ---------------------------------------------------------------------------
 
 #[cfg(test)]
+#[expect(clippy::expect_used)]
 mod tests {
     use super::*;
     use crate::db::DbState;
@@ -1138,5 +1139,189 @@ mod tests {
                 assert_eq!(status.as_deref(), Some("cancelled"));
             }
         }
+    }
+
+    // --- Discord trigger type support ---
+
+    #[test]
+    fn execution_stores_discord_trigger_type() {
+        let db = DbState::open_in_memory().expect("open in-memory DB");
+        seed_pipeline(&db, "p-discord", "Discord Bot");
+
+        let conn = db.conn.lock().expect("lock DB connection");
+        let exec_id = "e-discord-1";
+        let trigger_data = serde_json::json!({
+            "channel_id": "123456",
+            "author": "user-789",
+            "content": "@bot hello",
+            "is_mention": true,
+            "is_dm": false,
+            "message_id": "msg-001",
+            "guild_id": "guild-abc"
+        });
+        let trigger_json = serde_json::to_string(&trigger_data).expect("serialize trigger_data");
+
+        conn.execute(
+            "INSERT INTO pipeline_executions (id, pipeline_id, trigger_type, trigger_data, status, started_at) VALUES (?1, ?2, ?3, ?4, 'running', ?5)",
+            rusqlite::params![exec_id, "p-discord", "discord", trigger_json, now_iso()],
+        ).expect("insert execution row");
+
+        let stored_type: String = conn
+            .query_row(
+                "SELECT trigger_type FROM pipeline_executions WHERE id = ?1",
+                [exec_id],
+                |row| row.get(0),
+            )
+            .expect("query trigger_type");
+        assert_eq!(stored_type, "discord");
+
+        let stored_data: String = conn
+            .query_row(
+                "SELECT trigger_data FROM pipeline_executions WHERE id = ?1",
+                [exec_id],
+                |row| row.get(0),
+            )
+            .expect("query trigger_data");
+        let parsed: serde_json::Value =
+            serde_json::from_str(&stored_data).expect("parse trigger_data JSON");
+        assert_eq!(parsed["channel_id"], "123456");
+        assert_eq!(parsed["author"], "user-789");
+        assert_eq!(parsed["is_mention"], true);
+    }
+
+    #[test]
+    fn execution_stores_dm_trigger_data() {
+        let db = DbState::open_in_memory().expect("open in-memory DB");
+        seed_pipeline(&db, "p-dm", "DM Bot");
+
+        let conn = db.conn.lock().expect("lock DB connection");
+        let exec_id = "e-dm-1";
+        let trigger_data = serde_json::json!({
+            "channel_id": "dm-channel",
+            "author": "user-123",
+            "content": "private hello",
+            "is_mention": false,
+            "is_dm": true,
+            "message_id": "msg-dm-001",
+            "guild_id": null
+        });
+        let trigger_json = serde_json::to_string(&trigger_data).expect("serialize trigger_data");
+
+        conn.execute(
+            "INSERT INTO pipeline_executions (id, pipeline_id, trigger_type, trigger_data, status, started_at) VALUES (?1, ?2, ?3, ?4, 'running', ?5)",
+            rusqlite::params![exec_id, "p-dm", "discord", trigger_json, now_iso()],
+        ).expect("insert execution row");
+
+        let stored_data: String = conn
+            .query_row(
+                "SELECT trigger_data FROM pipeline_executions WHERE id = ?1",
+                [exec_id],
+                |row| row.get::<_, String>(0),
+            )
+            .expect("query trigger_data");
+        let parsed: serde_json::Value =
+            serde_json::from_str(&stored_data).expect("parse trigger_data JSON");
+
+        assert_eq!(parsed["is_dm"], true);
+        assert_eq!(parsed["is_mention"], false);
+        assert!(parsed["guild_id"].is_null());
+    }
+
+    // --- Canonical YAML pipeline execution ---
+
+    #[test]
+    fn canonical_yaml_pipeline_parseable() {
+        // Verify that a canonical YAML pipeline can be parsed
+        // (this will be used by the updated execute_pipeline)
+        let yaml = r#"
+name: discord-claude-bot
+version: "1.0"
+trigger:
+  type: discord
+  triggers: [mention, dm]
+nodes:
+  - id: receive_message
+    name: Discord Receive
+    next: process_with_claude
+  - id: process_with_claude
+    name: Claude Processing
+    action:
+      type: llm_call
+      provider: claude
+      prompt: "Respond to the user"
+      timeout_secs: 60
+    next: send_reply
+  - id: send_reply
+    name: Discord Reply
+    action:
+      type: chat_send
+      adapter: discord
+      content_template: "{{output}}"
+"#;
+        let result: std::result::Result<crate::engine::yaml_schema::PipelineDefinition, _> =
+            serde_yaml::from_str(yaml);
+        assert!(
+            result.is_ok(),
+            "canonical YAML should parse: {:?}",
+            result.err()
+        );
+        let def = result.unwrap_or_else(|e| panic!("should parse: {e}"));
+        assert_eq!(def.name, "discord-claude-bot");
+        assert_eq!(def.nodes.len(), 3);
+
+        // Verify the chat_send action in the last node
+        let reply_node = def.nodes.iter().find(|n| n.id == "send_reply");
+        assert!(reply_node.is_some());
+        let reply = reply_node.unwrap_or_else(|| panic!("checked above"));
+        match &reply.action {
+            Some(crate::engine::yaml_schema::NodeAction::ChatSend { adapter, .. }) => {
+                assert_eq!(adapter, "discord");
+            }
+            other => panic!("Expected ChatSend action, got: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn execution_summary_serializes_with_discord_trigger() {
+        let summary = ExecutionSummary {
+            id: "e-1".to_owned(),
+            pipeline_id: "p-1".to_owned(),
+            pipeline_name: "Discord Bot".to_owned(),
+            trigger_type: "discord".to_owned(),
+            status: "completed".to_owned(),
+            started_at: "2026-01-01T00:00:00Z".to_owned(),
+            completed_at: Some("2026-01-01T00:01:00Z".to_owned()),
+        };
+        let json = serde_json::to_value(&summary);
+        assert!(json.is_ok());
+        let json = json.unwrap_or_default();
+        assert_eq!(json["trigger_type"], "discord");
+    }
+
+    #[test]
+    fn execution_detail_includes_trigger_data() {
+        let detail = ExecutionDetail {
+            id: "e-1".to_owned(),
+            pipeline_id: "p-1".to_owned(),
+            trigger_type: "discord".to_owned(),
+            trigger_data: Some(serde_json::json!({
+                "channel_id": "ch-1",
+                "author": "user-1",
+                "content": "hello",
+                "is_mention": true,
+                "is_dm": false,
+            })),
+            status: "completed".to_owned(),
+            started_at: "2026-01-01T00:00:00Z".to_owned(),
+            completed_at: Some("2026-01-01T00:01:00Z".to_owned()),
+            error_message: None,
+            node_executions: vec![],
+            logs: vec![],
+        };
+        let json = serde_json::to_value(&detail);
+        assert!(json.is_ok());
+        let json = json.unwrap_or_default();
+        assert_eq!(json["trigger_type"], "discord");
+        assert!(json["trigger_data"]["is_mention"].is_boolean());
     }
 }

@@ -29,7 +29,6 @@ export interface AdapterConfig {
 export interface AdapterStatus {
   adapterType: string;
   isRunning: boolean;
-  connectedSince?: string;
 }
 
 export interface CronJob {
