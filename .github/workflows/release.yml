@@ -101,6 +101,11 @@ jobs:
 
           DMG=$(find "$TARGET_DIR" -path "*/release/bundle/dmg/*.dmg" -maxdepth 6 | head -1)
           if [ -n "$DMG" ]; then
-            hdiutil create -volname "SmartCrab" -srcfolder "$APP" -ov -format UDZO "$DMG"
+            # -srcfolder expands the directory's contents into the DMG root, not the directory itself.
+            # Place the .app bundle inside a staging directory so it appears correctly in the DMG.
+            STAGING=$(mktemp -d)
+            cp -R "$APP" "$STAGING/"
+            hdiutil create -volname "SmartCrab" -srcfolder "$STAGING" -ov -format UDZO "$DMG"
+            rm -rf "$STAGING"
             gh release upload "${{ github.ref_name }}" "$DMG" --clobber
           fi
