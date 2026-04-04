@@ -5,6 +5,7 @@ import ExecutionHistory from "./components/pipeline/ExecutionHistory";
 import ExecutionLog from "./components/pipeline/ExecutionLog";
 import UpdateBanner from "./components/update/UpdateBanner";
 import { AdapterSettings } from "./components/settings/AdapterSettings";
+import { ChatPanel } from "./components/chat/ChatPanel";
 import { useAppUpdater } from "./hooks/useAppUpdater";
 import { invoke } from "@tauri-apps/api/core";
 
@@ -59,6 +60,8 @@ function App() {
         );
       case "settings":
         return <AdapterSettings onDiscordStatusChange={refreshDiscordStatus} />;
+      case "chat":
+        return <ChatPanel />;
       default:
         return (
           <div className="flex items-center justify-center h-full text-gray-400">
