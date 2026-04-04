@@ -1,5 +1,3 @@
-export type NodeType = 'input' | 'hidden' | 'output';
-
 export interface PipelineInfo {
   id: string;
   name: string;
@@ -20,10 +18,6 @@ export interface NodeDefinition {
   action?: NodeAction;
   next?: string | string[];
   conditions?: Condition[];
-}
-
-export interface ResolvedNode extends NodeDefinition {
-  nodeType: NodeType;
 }
 
 export interface Condition {
@@ -53,11 +47,4 @@ export interface PipelineDefinition {
   };
   max_loop_count?: number;
   nodes: NodeDefinition[];
-}
-
-export interface ValidationResult {
-  isValid: boolean;
-  nodeTypes: Record<string, NodeType>;
-  errors: string[];
-  warnings: string[];
 }
