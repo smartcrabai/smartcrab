@@ -1,10 +1,13 @@
+import { loadChatAdapters, loadLlmAdapters } from "./_loaders";
+
 /**
  * Generic adapter registry.
  *
  * Adapters live under `src/adapters/<kind>/<name>/index.ts` and self-register
  * by calling `llmRegistry.register(...)` / `chatRegistry.register(...)` at
- * module load time. The side-effect imports below ensure every adapter file
- * is evaluated when the bundle is built.
+ * module load time. `ensureAdaptersLoaded()` triggers the side-effect imports
+ * for every adapter file (filesystem-scanned in dev, statically inlined by
+ * the build plugin in production).
  */
 
 export interface Identifiable {
@@ -50,8 +53,8 @@ export class AdapterRegistry<T extends Identifiable> {
 }
 
 /**
- * Minimal LLM adapter shape — replaced by `@smartcrab/ipc-protocol`'s
- * `LlmAdapter` interface once that package is available.
+ * Minimal LLM/Chat adapter shapes — replaced by `@smartcrab/ipc-protocol`
+ * (Unit 2) once that package is available.
  */
 export interface LlmAdapterLike extends Identifiable {
   readonly id: string;
@@ -66,6 +69,19 @@ export interface ChatAdapterLike extends Identifiable {
 export const llmRegistry = new AdapterRegistry<LlmAdapterLike>("llm");
 export const chatRegistry = new AdapterRegistry<ChatAdapterLike>("chat");
 
-// Side-effect imports — adapter index.ts files self-register when evaluated.
-import.meta.glob("./adapters/llm/*/index.ts", { eager: true });
-import.meta.glob("./adapters/chat/*/index.ts", { eager: true });
+let adaptersLoadedPromise: Promise<void> | null = null;
+
+/** Trigger one-time adapter loading. Idempotent and safe to call repeatedly. */
+export function ensureAdaptersLoaded(): Promise<void> {
+  if (!adaptersLoadedPromise) {
+    adaptersLoadedPromise = Promise.all([
+      loadLlmAdapters().catch((err) =>
+        console.error("[registry] llm load error:", err),
+      ),
+      loadChatAdapters().catch((err) =>
+        console.error("[registry] chat load error:", err),
+      ),
+    ]).then(() => undefined);
+  }
+  return adaptersLoadedPromise;
+}

@@ -1,3 +1,4 @@
+import { loadCommandModules } from "./_loaders";
 import {
   JSON_RPC_ERRORS,
   type CommandHandler,
@@ -9,48 +10,28 @@ import {
   type JsonRpcSuccess,
 } from "./types";
 
-/**
- * Auto-load every `*.commands.ts` file under `./commands/` at build time.
- * Each module's default export must be a `CommandMap` object whose keys are
- * fully-qualified JSON-RPC method names (e.g. `"system.ping"`).
- */
-const commandModules = import.meta.glob<{ default: CommandMap }>(
-  "./commands/*.commands.ts",
-  { eager: true },
-);
+let registryPromise: Promise<CommandMap> | null = null;
+const overrides: CommandMap = {};
 
-function buildRegistry(): CommandMap {
-  const registry: CommandMap = {};
-  for (const [path, mod] of Object.entries(commandModules)) {
-    const map = mod?.default;
-    if (!map || typeof map !== "object") {
-      // eslint-disable-next-line no-console
-      console.error(`[dispatcher] skipping ${path}: missing default export`);
-      continue;
-    }
-    for (const [method, handler] of Object.entries(map)) {
-      if (typeof handler !== "function") continue;
-      if (registry[method]) {
-        console.error(
-          `[dispatcher] duplicate method "${method}" — overriding from ${path}`,
-        );
-      }
-      registry[method] = handler;
-    }
+function getRegistry(): Promise<CommandMap> {
+  if (!registryPromise) {
+    registryPromise = loadCommandModules().catch((err) => {
+      console.error("[dispatcher] failed to load commands:", err);
+      return {} as CommandMap;
+    });
   }
-  return registry;
+  return registryPromise;
 }
-
-const registry: CommandMap = buildRegistry();
 
 /** Register an additional handler at runtime (mostly for tests). */
 export function registerCommand(method: string, handler: CommandHandler): void {
-  registry[method] = handler;
+  overrides[method] = handler;
 }
 
 /** Return the list of currently-registered method names. */
-export function listMethods(): string[] {
-  return Object.keys(registry).sort();
+export async function listMethods(): Promise<string[]> {
+  const registry = await getRegistry();
+  return [...new Set([...Object.keys(registry), ...Object.keys(overrides)])].sort();
 }
 
 function makeError(
@@ -86,7 +67,8 @@ export async function dispatch(
     return makeError(id, JSON_RPC_ERRORS.INVALID_REQUEST, "Invalid Request");
   }
 
-  const handler = registry[request.method];
+  const registry = await getRegistry();
+  const handler = overrides[request.method] ?? registry[request.method];
   if (!handler) {
     if (isNotification) return null;
     return makeError(

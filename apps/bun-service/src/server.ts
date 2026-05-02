@@ -1,4 +1,5 @@
 import { dispatch } from "./dispatcher";
+import { ensureAdaptersLoaded } from "./registry";
 import {
   JSON_RPC_ERRORS,
   type JsonRpcRequest,
@@ -15,7 +16,6 @@ import {
  */
 
 const log = (...args: unknown[]): void => {
-  // eslint-disable-next-line no-console
   console.error("[bun-service]", ...args);
 };
 
@@ -52,8 +52,6 @@ function shutdown(reason: string, code = 0): void {
   if (shuttingDown) return;
   shuttingDown = true;
   log(`shutdown: ${reason}`);
-  // Allow stdout to flush before exit.
-  process.stdout.once?.("drain", () => process.exit(code));
   process.nextTick(() => process.exit(code));
 }
 
@@ -63,10 +61,11 @@ process.on("SIGINT", () => shutdown("SIGINT"));
 async function main(): Promise<void> {
   log("starting (pid", process.pid + ")");
 
+  await ensureAdaptersLoaded();
+
   const decoder = new TextDecoder();
   let buffer = "";
 
-  // Bun exposes stdin as an async-iterable of Uint8Array chunks.
   const stdin = Bun.stdin.stream();
   try {
     for await (const chunk of stdin as AsyncIterable<Uint8Array>) {
@@ -82,7 +81,6 @@ async function main(): Promise<void> {
     log("stdin error:", err);
   }
 
-  // Flush any trailing partial line.
   if (buffer.trim()) await handleLine(buffer);
 
   shutdown("stdin closed");

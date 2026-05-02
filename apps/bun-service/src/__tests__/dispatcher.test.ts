@@ -80,7 +80,8 @@ describe("dispatcher", () => {
     });
   });
 
-  test("listMethods includes system.ping", () => {
-    expect(listMethods()).toContain("system.ping");
+  test("listMethods includes system.ping", async () => {
+    const methods = await listMethods();
+    expect(methods).toContain("system.ping");
   });
 });
