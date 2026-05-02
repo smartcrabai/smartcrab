@@ -416,7 +416,9 @@
 				PRODUCT_BUNDLE_IDENTIFIER = ai.smartcrab.preview;
 				PRODUCT_NAME = SmartCrabPreview;
 				SDKROOT = iphoneos;
-				SUPPORTED_PLATFORMS = "iphonesimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				ONLY_ACTIVE_ARCH = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -441,7 +443,9 @@
 				PRODUCT_BUNDLE_IDENTIFIER = ai.smartcrab.preview;
 				PRODUCT_NAME = SmartCrabPreview;
 				SDKROOT = iphoneos;
-				SUPPORTED_PLATFORMS = "iphonesimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				ONLY_ACTIVE_ARCH = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
