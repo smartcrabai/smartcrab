@@ -185,8 +185,9 @@ public final class BunServiceMock: BunServiceProtocol {
 
     public func chatHistory() async throws -> [ChatMessage] { messages }
     public func chatSend(_ content: String) async throws -> ChatMessage {
-        let userMessage = ChatMessage(role: .user, content: content)
-        messages.append(userMessage)
+        // Real service persists the user message server-side; the mock mirrors
+        // that so a fresh `chatHistory()` call would show both turns.
+        messages.append(ChatMessage(role: .user, content: content))
         let reply = ChatMessage(role: .assistant, content: "Mock response to: \(content)")
         messages.append(reply)
         return reply
