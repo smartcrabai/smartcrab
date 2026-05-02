@@ -17,6 +17,7 @@
   ],
   "scripts": {
     "test": "bun test",
+    "typecheck": "tsc --noEmit",
     "gen:jsonschema": "bun run scripts/gen-jsonschema.ts",
     "gen:swift": "bun run scripts/gen-swift.ts",
     "gen": "bun run gen:jsonschema && bun run gen:swift"

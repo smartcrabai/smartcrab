@@ -16,11 +16,8 @@
     "isolatedModules": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "outDir": "dist",
-    "rootDir": ".",
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true
   },
   "include": ["src/**/*", "scripts/**/*"],
