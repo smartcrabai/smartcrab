@@ -32,10 +32,6 @@ export class ChatRegistry {
     this.adapters.set(adapter.id, adapter);
   }
 
-  unregister(id: string): void {
-    this.adapters.delete(id);
-  }
-
   get(id: string): ChatAdapter | undefined {
     return this.adapters.get(id);
   }
