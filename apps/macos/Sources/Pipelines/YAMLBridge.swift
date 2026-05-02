@@ -43,77 +43,80 @@ extension PipelineGraph {
     /// Loose YAML parser sufficient for the round-trip tests below. Production
     /// code should favour the Bun engine's parser.
     public init(yaml: String) {
-        var nodes: [PipelineGraphNode] = []
-        var edges: [PipelineGraphEdge] = []
-
-        let lines = yaml.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
-        var inNodes = false
-        var current: (id: String, name: String, kind: PipelineNodeKind, action: PipelineNodeAction, next: [String])?
-        let flush: (inout [(id: String, name: String, kind: PipelineNodeKind, action: PipelineNodeAction, next: [String])], _: (id: String, name: String, kind: PipelineNodeKind, action: PipelineNodeAction, next: [String])?) -> Void = { acc, n in
-            if let n { acc.append(n) }
+        struct Parsed {
+            var id: String
+            var name: String
+            var action: PipelineNodeAction
+            var next: [String]
         }
 
-        var collected: [(id: String, name: String, kind: PipelineNodeKind, action: PipelineNodeAction, next: [String])] = []
+        var collected: [Parsed] = []
+        var inNodes = false
 
-        for raw in lines {
+        for raw in yaml.split(separator: "\n", omittingEmptySubsequences: false) {
             let line = raw.trimmingCharacters(in: .whitespaces)
             if line.hasPrefix("nodes:") { inNodes = true; continue }
-            if !inNodes { continue }
+            guard inNodes else { continue }
+
             if line.hasPrefix("- id:") {
-                flush(&collected, current)
-                let id = line.replacingOccurrences(of: "- id:", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
-                current = (id: id, name: id, kind: .hidden, action: .none, next: [])
-            } else if line.hasPrefix("name:"), current != nil {
-                current?.name = line.replacingOccurrences(of: "name:", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
-            } else if line.hasPrefix("next:"), current != nil {
-                let v = line.replacingOccurrences(of: "next:", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
-                current?.next = [v]
-            } else if line.hasPrefix("type: llm_call"), current != nil {
-                current?.action = .llm(provider: "claude")
-            } else if line.hasPrefix("type: http_request"), current != nil {
-                current?.action = .http(method: "GET")
-            } else if line.hasPrefix("type: shell_command"), current != nil {
-                current?.action = .shell
+                let id = line.dropFirst("- id:".count).trimmingCharacters(in: .whitespaces)
+                collected.append(Parsed(id: id, name: id, action: .none, next: []))
+            } else if !collected.isEmpty {
+                let idx = collected.count - 1
+                if line.hasPrefix("name:") {
+                    collected[idx].name = line.dropFirst("name:".count).trimmingCharacters(in: .whitespaces)
+                } else if line.hasPrefix("next:") {
+                    let v = line.dropFirst("next:".count).trimmingCharacters(in: .whitespaces)
+                    if !v.isEmpty { collected[idx].next = [v] }
+                } else if line.hasPrefix("type: llm_call") {
+                    collected[idx].action = .llm(provider: "claude")
+                } else if line.hasPrefix("type: http_request") {
+                    collected[idx].action = .http(method: "GET")
+                } else if line.hasPrefix("type: shell_command") {
+                    collected[idx].action = .shell
+                }
             }
         }
-        flush(&collected, current)
 
         guard !collected.isEmpty else {
             self = .empty
             return
         }
 
-        // Determine kind: first = input, last = output (no `next`), middle = hidden.
-        let outgoing: [String: [String]] = Dictionary(uniqueKeysWithValues: collected.map { ($0.id, $0.next) })
+        // Determine kind: nodes with no incoming = input, no outgoing = output, else hidden.
         let incoming: Set<String> = Set(collected.flatMap { $0.next })
+        let originX: CGFloat = 200
+        let originY: CGFloat = 100
 
-        let x: CGFloat = 200
-        let y: CGFloat = 100
-        for (idx, item) in collected.enumerated() {
-            let hasOutgoing = !(outgoing[item.id]?.isEmpty ?? true)
+        let nodes = collected.enumerated().map { idx, item -> PipelineGraphNode in
+            let hasOutgoing = !item.next.isEmpty
             let hasIncoming = incoming.contains(item.id)
             let kind: PipelineNodeKind
-            if !hasIncoming && hasOutgoing { kind = .input }
-            else if hasIncoming && !hasOutgoing { kind = .output }
-            else { kind = .hidden }
-            nodes.append(.init(
+            switch (hasIncoming, hasOutgoing) {
+            case (false, true): kind = .input
+            case (true, false): kind = .output
+            default: kind = .hidden
+            }
+            return PipelineGraphNode(
                 id: item.id,
                 name: item.name,
                 kind: kind,
                 action: item.action,
-                position: CGPoint(x: x, y: y + CGFloat(idx) * 140)
-            ))
+                position: CGPoint(x: originX, y: originY + CGFloat(idx) * 140)
+            )
         }
-        for item in collected {
-            for (i, target) in item.next.enumerated() where !target.isEmpty {
-                edges.append(.init(
+
+        let edges = collected.flatMap { item in
+            item.next.enumerated().compactMap { i, target -> PipelineGraphEdge? in
+                guard !target.isEmpty else { return nil }
+                return PipelineGraphEdge(
                     id: "\(item.id)->\(target)#\(i)",
                     from: item.id,
                     to: target
-                ))
+                )
             }
         }
-        _ = (x, y)
+
         self = PipelineGraph(nodes: nodes, edges: edges)
     }
 

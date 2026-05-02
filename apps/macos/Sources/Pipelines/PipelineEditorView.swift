@@ -1,5 +1,4 @@
 import SwiftUI
-import CoreGraphics
 
 /// Main canvas for the pipeline graph editor.
 ///
@@ -129,7 +128,7 @@ public struct PipelineEditorView: View {
                         onPortPress: { _ in selectedNodeId = node.id }
                     )
                     .position(transformed(node.position))
-                    .scaleEffect(zoom * pinchZoom)
+                    .scaleEffect(currentScale)
                     .onTapGesture { selectedNodeId = node.id }
                     .gesture(nodeDragGesture(node: node))
                     .gesture(edgeDragGesture(node: node))
@@ -144,15 +143,16 @@ public struct PipelineEditorView: View {
     // MARK: - Drawing helpers
 
     private func drawGrid(in ctx: inout GraphicsContext, size: CGSize) {
-        let step: CGFloat = 24 * (zoom * pinchZoom)
+        let step: CGFloat = 24 * currentScale
+        let pan = currentPan
         var path = Path()
-        var x: CGFloat = (panOffset.width + dragPan.width).truncatingRemainder(dividingBy: step)
+        var x = pan.width.truncatingRemainder(dividingBy: step)
         while x < size.width {
             path.move(to: CGPoint(x: x, y: 0))
             path.addLine(to: CGPoint(x: x, y: size.height))
             x += step
         }
-        var y: CGFloat = (panOffset.height + dragPan.height).truncatingRemainder(dividingBy: step)
+        var y = pan.height.truncatingRemainder(dividingBy: step)
         while y < size.height {
             path.move(to: CGPoint(x: 0, y: y))
             path.addLine(to: CGPoint(x: size.width, y: y))
@@ -203,18 +203,24 @@ public struct PipelineEditorView: View {
 
     // MARK: - Geometry
 
+    private var currentScale: CGFloat { zoom * pinchZoom }
+    private var currentPan: CGSize {
+        CGSize(
+            width: panOffset.width + dragPan.width,
+            height: panOffset.height + dragPan.height
+        )
+    }
+
     private func transformed(_ p: CGPoint) -> CGPoint {
-        let s = zoom * pinchZoom
-        let dx = panOffset.width + dragPan.width
-        let dy = panOffset.height + dragPan.height
-        return CGPoint(x: p.x * s + dx, y: p.y * s + dy)
+        let s = currentScale
+        let pan = currentPan
+        return CGPoint(x: p.x * s + pan.width, y: p.y * s + pan.height)
     }
 
     private func untransformed(_ p: CGPoint) -> CGPoint {
-        let s = zoom * pinchZoom
-        let dx = panOffset.width + dragPan.width
-        let dy = panOffset.height + dragPan.height
-        return CGPoint(x: (p.x - dx) / s, y: (p.y - dy) / s)
+        let s = currentScale
+        let pan = currentPan
+        return CGPoint(x: (p.x - pan.width) / s, y: (p.y - pan.height) / s)
     }
 
     private func portPoint(node: PipelineGraphNode, port: NodeView.Port) -> CGPoint {
@@ -247,7 +253,7 @@ public struct PipelineEditorView: View {
     private func nodeDragGesture(node: PipelineGraphNode) -> some Gesture {
         DragGesture(minimumDistance: 4)
             .onChanged { value in
-                let s = zoom * pinchZoom
+                let s = currentScale
                 graph.updateNode(id: node.id) { n in
                     n.position = CGPoint(
                         x: node.position.x + value.translation.width / s,
@@ -333,8 +339,9 @@ public struct PipelineEditorView: View {
                 service: service
             )
             info = detail.info
-            lastSavedAt = Date()
-            validationMessage = "Saved at \(Self.timestamp.string(from: lastSavedAt!))"
+            let now = Date()
+            lastSavedAt = now
+            validationMessage = "Saved at \(Self.timestamp.string(from: now))"
         } catch {
             validationMessage = "Save failed: \(error.localizedDescription)"
         }
