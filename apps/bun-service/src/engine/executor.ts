@@ -208,24 +208,40 @@ export async function* executePipeline(
   }
   ready.sort();
 
+  // Each task resolves to a TaskResult tagged with its own promise handle so
+  // we can remove the entry from `inflight` by identity after `Promise.race`
+  // returns the value (not the promise).
   type TaskResult = {
     nodeId: string;
     nodeName: string;
     output?: unknown;
     error?: string;
+    handle: Promise<TaskResult>;
   };
-  // Wrap each task so the resolved value carries a reference back to its own
-  // promise; that lets us delete it from the in-flight set after Promise.race
-  // resolves without needing identity tricks.
-  type Tagged = TaskResult & { _self: Promise<Tagged> };
-  const inflight = new Set<Promise<Tagged>>();
+  const inflight = new Set<Promise<TaskResult>>();
   let finalStatus: "completed" | "failed" | "cancelled" = "completed";
   let errorMessage: string | undefined;
+
+  const spawn = (nodeId: string, nodeName: string, nodeInput: unknown): void => {
+    const node = graph.nodes.get(nodeId);
+    if (!node) return;
+    let handle!: Promise<TaskResult>;
+    handle = executeNodeAction(node, nodeInput, deps).then(
+      (output): TaskResult => ({ nodeId, nodeName, output, handle }),
+      (e: unknown): TaskResult => ({
+        nodeId,
+        nodeName,
+        error: e instanceof Error ? e.message : String(e),
+        handle,
+      }),
+    );
+    inflight.add(handle);
+  };
 
   const drain = async (): Promise<void> => {
     while (inflight.size > 0) {
       const settled = await Promise.race(inflight);
-      inflight.delete(settled._self);
+      inflight.delete(settled.handle);
     }
   };
 
@@ -264,24 +280,7 @@ export async function* executePipeline(
         timestamp: nowIso(),
       };
 
-      let selfRef!: Promise<Tagged>;
-      const task: Promise<Tagged> = executeNodeAction(node, nodeInput, deps)
-        .then(
-          (output): Tagged => ({
-            nodeId,
-            nodeName: node.name,
-            output,
-            _self: selfRef,
-          }),
-          (e: unknown): Tagged => ({
-            nodeId,
-            nodeName: node.name,
-            error: e instanceof Error ? e.message : String(e),
-            _self: selfRef,
-          }),
-        );
-      selfRef = task;
-      inflight.add(task);
+      spawn(nodeId, node.name, nodeInput);
     }
 
     if (finalStatus !== "completed") {
@@ -292,7 +291,7 @@ export async function* executePipeline(
     if (inflight.size === 0) break;
 
     const settled = await Promise.race(inflight);
-    inflight.delete(settled._self);
+    inflight.delete(settled.handle);
 
     if (settled.error !== undefined) {
       finalStatus = "failed";

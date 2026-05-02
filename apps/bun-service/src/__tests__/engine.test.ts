@@ -185,8 +185,12 @@ describe("executePipeline", () => {
     for await (const ev of executePipeline(resolved, { ping: true }, {})) {
       events.push(ev);
     }
+    // All three nodes complete: health_check + check_api are linked, and
+    // notify has no incoming edges, so it starts in parallel as a separate
+    // root (matches the original Rust scheduler's "predecessor_count == 0
+    // means ready" rule).
     const completed = events.filter((e) => e.type === "node_completed");
-    expect(completed.length).toBe(2); // health_check + check_api (notify is not reachable)
+    expect(completed.length).toBe(3);
     expect((events.at(-1) as { status: string }).status).toBe("completed");
   });
 });
