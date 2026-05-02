@@ -1,0 +1,16 @@
+{
+  "name": "@smartcrab/bun-service",
+  "type": "module",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "bun-types": "latest",
+    "@types/node": "latest"
+  },
+  "dependencies": {
+    "gray-matter": "^4.0.3"
+  }
+}
