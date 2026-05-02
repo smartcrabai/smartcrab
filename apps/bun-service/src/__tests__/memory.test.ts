@@ -169,4 +169,24 @@ describe("memory.commands", () => {
     await expect(cmds["memory.summarize"]!({})).rejects.toThrow(/LLM/);
     store.close();
   });
+
+  it("memory.summarize accepts an explicit ids list", async () => {
+    const store = new MemoryStore();
+    const a = store.add({ content: "alpha" });
+    const b = store.add({ content: "beta" });
+    store.add({ content: "ignored" });
+    const llm: SummarizerLlm = {
+      complete: mock(async (prompt: string) => {
+        // The prompt should reference exactly the requested entries.
+        expect(prompt).toContain("alpha");
+        expect(prompt).toContain("beta");
+        expect(prompt).not.toContain("ignored");
+        return "scoped summary";
+      }),
+    };
+    const cmds = createMemoryCommands({ store, llm });
+    const out = await cmds["memory.summarize"]!({ ids: [a.id, b.id] });
+    expect(out).toBe("scoped summary");
+    store.close();
+  });
 });

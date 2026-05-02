@@ -101,6 +101,19 @@ export class MemoryStore {
       .all(n);
   }
 
+  getByIds(ids: number[]): MemoryEntry[] {
+    if (ids.length === 0) return [];
+    const placeholders = ids.map(() => "?").join(",");
+    return this.db
+      .query<MemoryEntry, number[]>(
+        `SELECT id, kind, content, metadata, created_at
+         FROM memory
+         WHERE id IN (${placeholders})
+         ORDER BY id DESC`,
+      )
+      .all(...ids);
+  }
+
   delete(id: number): boolean {
     const res = this.db.run(`DELETE FROM memory WHERE id = ?`, [id]);
     return res.changes > 0;
