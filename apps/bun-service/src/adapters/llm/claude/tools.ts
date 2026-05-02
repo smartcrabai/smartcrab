@@ -10,7 +10,7 @@ import type { LlmToolDefinition } from "../types.ts";
 
 /**
  * A locally executable tool. The Claude adapter invokes `handler` when the
- * model returns a `tool_use` block whose `name` matches `definition.name`.
+ * model returns a `tool_use` block matching `definition.name`.
  */
 export interface ClaudeTool {
   readonly definition: LlmToolDefinition;
@@ -18,10 +18,8 @@ export interface ClaudeTool {
 }
 
 /**
- * Returns the current Smartcrab service configuration.
- *
- * Backed by an injectable provider so tests can stub the value without
- * touching real disk / DB state.
+ * Returns the current Smartcrab configuration via an injectable provider so
+ * tests can stub the value without touching real disk / DB state.
  */
 export function makeGetCurrentSmartcrabConfigTool(
   provider: () => Record<string, unknown> | Promise<Record<string, unknown>>,
@@ -45,16 +43,8 @@ export function makeGetCurrentSmartcrabConfigTool(
   };
 }
 
-/**
- * Default no-op config provider used when the adapter is constructed without
- * an explicit one. Returning an empty object keeps the tool schema-valid
- * while making it obvious that no real source has been wired in yet.
- */
-export const defaultSmartcrabConfigProvider = (): Record<string, unknown> => ({});
+const emptyConfig = (): Record<string, unknown> => ({});
 
-/**
- * Convenience builder used by `index.ts` and tests.
- */
 export function defaultClaudeTools(): readonly ClaudeTool[] {
-  return [makeGetCurrentSmartcrabConfigTool(defaultSmartcrabConfigProvider)];
+  return [makeGetCurrentSmartcrabConfigTool(emptyConfig)];
 }

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { beforeEach, describe, expect, it } from "bun:test";
 
 import {
   CLAUDE_ADAPTER_ID,
@@ -59,11 +59,6 @@ describe("ClaudeLlmAdapter — complete()", () => {
   beforeEach(() => {
     sdk = new MockSdk();
     adapter = new ClaudeLlmAdapter({ sdk });
-  });
-
-  afterEach(() => {
-    // Keep the singleton registry untouched across cases — the module-load
-    // registration is what we care about, not per-test state.
   });
 
   it("forwards a single-turn prompt as a user message", async () => {
