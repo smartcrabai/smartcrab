@@ -1,0 +1,16 @@
+{
+  "name": "@smartcrab/bun-service",
+  "type": "module",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "bun-types": "latest",
+    "typescript": "^5.5.0"
+  },
+  "dependencies": {
+    "yaml": "^2.5.0"
+  }
+}
