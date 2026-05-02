@@ -1,0 +1,17 @@
+{
+  "name": "@smartcrab/bun-service",
+  "type": "module",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "test": "bun test",
+    "build": "bun build --compile --outfile=dist/smartcrab-service src/server.ts"
+  },
+  "dependencies": {
+    "cron-parser": "^4.9.0"
+  },
+  "devDependencies": {
+    "bun-types": "latest",
+    "typescript": "^5.5.0"
+  }
+}
