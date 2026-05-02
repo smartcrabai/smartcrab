@@ -1,0 +1,7 @@
+#!/bin/sh
+# Stub Bun service binary placeholder.
+# The real binary is produced by Unit 1 (Bun service build) and copied
+# into apps/macos/Resources/smartcrab-service before bundling SmartCrabMac.
+# Until then, this stub simply echoes stdin back to stdout so that the
+# Swift transport can be smoke-tested with `cat`-style payloads.
+exec cat
