@@ -8,7 +8,7 @@
  * - Command surface dispatch
  */
 
-import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -454,6 +454,3 @@ test("default export exposes all expected commands", () => {
   expect(keys).toContain("skill.auto-generate");
   expect(keys).toContain("skill.reload");
 });
-
-// Silence unused mock import warning (kept for future async stubbing).
-void mock;
