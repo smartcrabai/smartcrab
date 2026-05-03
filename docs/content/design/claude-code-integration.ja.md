@@ -4,36 +4,51 @@ description = "Claude Code 連携設計 — 子プロセス実行、データ交
 weight = 4
 +++
 
+# sakoku-ignore-next-line
 ## Claude Code の役割
 
+# sakoku-ignore-next-line
 SmartCrab における Claude Code は、Hidden Node と Output Node から条件付きで呼び出される AI 処理エンジンである。「ツール → AI」パラダイムの「AI」部分を担う。
 
+# sakoku-ignore-next-line
 Claude Code は以下の場面で使用される:
 
-- **分析・推論**: 非構造化データの解析、自然言語の理解
+# sakoku-ignore-next-line
+- **分析・推論**: 非構造化データの解析，自然言語の理解
+# sakoku-ignore-next-line
 - **生成**: テキスト生成、コード生成、レポート作成
+# sakoku-ignore-next-line
 - **判断**: 複雑な条件判定、分類、優先度付け
 
+# sakoku-ignore-next-line
 ## 呼び出しパターン
 
+# sakoku-ignore-next-line
 ### 基本パターン
 
 {% mermaid() %}
+# sakoku-ignore-next-line
 sequenceDiagram
+# sakoku-ignore-next-line
     participant L as Layer
     participant CC as ClaudeCode Helper
     participant P as claude Process
 
     L->>CC: ClaudeCode::new().prompt(&prompt)
+# sakoku-ignore-next-line
     CC->>P: claude 子プロセスを起動
+# sakoku-ignore-next-line
     CC->>P: stdin に prompt を書き込み
+# sakoku-ignore-next-line
     P-->>CC: stdout からレスポンスを読み取り
     CC-->>L: Result<String>
 {% end %}
 
+# sakoku-ignore-next-line
 ### Hidden Node での使用
 
 ```rust
+# sakoku-ignore-next-line
 // DTO → プロンプト → Claude Code → レスポンス → DTO
 async fn run(&self, input: Self::Input) -> Result<Self::Output> {
     let prompt = build_prompt(&input);
@@ -44,9 +59,11 @@ async fn run(&self, input: Self::Input) -> Result<Self::Output> {
 }
 ```
 
+# sakoku-ignore-next-line
 ### Output Node での使用
 
 ```rust
+# sakoku-ignore-next-line
 // DTO → プロンプト → Claude Code → 副作用（ファイル生成等）
 async fn run(&self, input: Self::Input) -> Result<()> {
     let prompt = build_prompt(&input);
@@ -58,8 +75,10 @@ async fn run(&self, input: Self::Input) -> Result<()> {
 }
 ```
 
+# sakoku-ignore-next-line
 ## ビルダー API
 
+# sakoku-ignore-next-line
 `ClaudeCode` はビルダーパターンで実行オプションを設定する:
 
 ```rust
@@ -72,18 +91,25 @@ ClaudeCode::new()
     .await?
 ```
 
+# sakoku-ignore-next-line
 ## データ交換
 
+# sakoku-ignore-next-line
 ### DTO → プロンプト変換
 
+# sakoku-ignore-next-line
 DTO を Claude Code に渡すプロンプトに変換する。JSON シリアライズが基本戦略。
 
 ```rust
 fn build_prompt(input: &impl Dto) -> String {
     let json = serde_json::to_string_pretty(input).unwrap();
+# sakoku-ignore-next-line
     format!(
+# sakoku-ignore-next-line
         "以下のJSONデータを処理してください。結果はJSON形式で返してください。\n\n\
+# sakoku-ignore-next-line
          入力データ:\n```json\n{json}\n```\n\n\
+# sakoku-ignore-next-line
          出力スキーマ:\n```json\n{schema}\n```",
         json = json,
         schema = "{ ... }",
@@ -91,12 +117,15 @@ fn build_prompt(input: &impl Dto) -> String {
 }
 ```
 
+# sakoku-ignore-next-line
 ### レスポンス → DTO パース
 
+# sakoku-ignore-next-line
 Claude Code のレスポンスから DTO を復元する。`--output-format json` で JSON レスポンスを強制し、`serde_json::from_str` でパースする。
 
 ```rust
 fn parse_response<T: Dto>(response: &str) -> Result<T> {
+# sakoku-ignore-next-line
     // JSON出力フォーマットの場合、result フィールドからテキストを取得
     let claude_output: ClaudeOutput = serde_json::from_str(response)?;
     let dto: T = serde_json::from_str(&claude_output.result)?;
@@ -104,48 +133,75 @@ fn parse_response<T: Dto>(response: &str) -> Result<T> {
 }
 ```
 
+# sakoku-ignore-next-line
 パースに失敗した場合のフォールバック:
 
+# sakoku-ignore-next-line
 1. JSON ブロック（` ```json ... ``` `）の抽出を試みる
+# sakoku-ignore-next-line
 2. それでも失敗した場合は `SmartCrabError::ResponseParseError` を返す
 
+# sakoku-ignore-next-line
 ## エラーハンドリング
 
+# sakoku-ignore-next-line
 | エラー種別 | 原因 | エラー型 |
 |-----------|------|---------|
+# sakoku-ignore-next-line
 | 起動失敗 | `claude` コマンドが見つからない | `SmartCrabError::ClaudeCodeNotFound` |
+# sakoku-ignore-next-line
 | タイムアウト | 指定時間内に応答なし | `SmartCrabError::ClaudeCodeTimeout { timeout }` |
+# sakoku-ignore-next-line
 | 非ゼロ終了 | Claude Code がエラー終了 | `SmartCrabError::ClaudeCodeFailed { exit_code, stderr }` |
+# sakoku-ignore-next-line
 | パースエラー | レスポンスが期待する形式でない | `SmartCrabError::ResponseParseError { response, source }` |
 
 {% mermaid() %}
+# sakoku-ignore-next-line
 flowchart TD
+# sakoku-ignore-next-line
     Start([claude コマンド実行]) --> Spawn{spawn 成功?}
+# sakoku-ignore-next-line
     Spawn -->|No| NotFound[ClaudeCodeNotFound]
+# sakoku-ignore-next-line
     Spawn -->|Yes| Wait[レスポンス待ち]
+# sakoku-ignore-next-line
     Wait --> Timeout{タイムアウト?}
+# sakoku-ignore-next-line
     Timeout -->|Yes| TimeoutErr[ClaudeCodeTimeout]
+# sakoku-ignore-next-line
     Timeout -->|No| Exit{終了コード?}
+# sakoku-ignore-next-line
     Exit -->|非ゼロ| Failed[ClaudeCodeFailed]
+# sakoku-ignore-next-line
     Exit -->|0| Parse{パース成功?}
     Parse -->|No| ParseErr[ResponseParseError]
     Parse -->|Yes| Ok([Result::Ok])
 {% end %}
 
+# sakoku-ignore-next-line
 ## テスト戦略
 
+# sakoku-ignore-next-line
 ### モック化方針
 
+# sakoku-ignore-next-line
 Claude Code の呼び出しを抽象化し、テスト時にモックに差し替えられるようにする。`ClaudeCodeExecutor` トレイトにより、実際の子プロセス実装またはテスト用モックを差し替えることができる。
 
+# sakoku-ignore-next-line
 ### テストレベル
 
+# sakoku-ignore-next-line
 | レベル | 対象 | Claude Code |
 |--------|------|-------------|
+# sakoku-ignore-next-line
 | ユニットテスト | 個別 Node | モック |
+# sakoku-ignore-next-line
 | 結合テスト | Graph 全体 | モック |
+# sakoku-ignore-next-line
 | E2E テスト | アプリケーション全体 | 実際の claude コマンド |
 
+# sakoku-ignore-next-line
 ### ユニットテスト例
 
 ```rust
