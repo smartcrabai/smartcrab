@@ -1,10 +1,5 @@
-/**
- * Lightweight chat adapter registry stub.
- *
- * This stub exists so Unit 12 (Discord) can self-register without depending
- * on Unit 4's full registry implementation. When the real registry lands,
- * the global symbol-keyed singleton ensures existing adapters keep working.
- */
+import { chatRegistry as coreRegistry } from "../../registry";
+
 export interface ChatCapabilities {
   streaming: boolean;
   channels: string[];
@@ -30,6 +25,7 @@ export class ChatRegistry {
 
   register(adapter: ChatAdapter): void {
     this.adapters.set(adapter.id, adapter);
+    coreRegistry.register(adapter);
   }
 
   get(id: string): ChatAdapter | undefined {
@@ -42,6 +38,7 @@ export class ChatRegistry {
 
   clear(): void {
     this.adapters.clear();
+    coreRegistry.clear();
   }
 }
 

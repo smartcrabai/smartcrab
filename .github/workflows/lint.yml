@@ -21,9 +21,8 @@ jobs:
       - name: Install workspace dependencies
         run: bun install --frozen-lockfile
 
-      - name: Run package tests (only stable packages for now)
-        run: |
-          bun test packages/ipc-protocol packages/seher-config-schema
+      - name: Run Bun workspace tests
+        run: bun test
 
       - name: Install swiftformat
         run: brew install swiftformat
