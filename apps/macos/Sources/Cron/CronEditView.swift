@@ -36,7 +36,9 @@ public struct CronEditView: View {
         _isActive = State(initialValue: existing?.isActive ?? true)
     }
 
-    private var isEditing: Bool { existing != nil }
+    private var isEditing: Bool {
+        existing != nil
+    }
 
     private var preview: CronExpressionPreview.Result {
         CronExpressionPreview.evaluate(expression)

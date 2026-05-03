@@ -11,7 +11,7 @@ public struct AdapterSettings: View {
 
     private let service: BunServiceProtocol
 
-    @State private var discord: DiscordAdapterConfig = DiscordAdapterConfig()
+    @State private var discord: DiscordAdapterConfig = .init()
     @State private var isLoading: Bool = true
     @State private var isSaving: Bool = false
     @State private var errorMessage: String?
@@ -36,8 +36,8 @@ public struct AdapterSettings: View {
                     )
                     .textFieldStyle(.roundedBorder)
                     #if os(iOS)
-                    .textInputAutocapitalization(.characters)
-                    .autocorrectionDisabled(true)
+                        .textInputAutocapitalization(.characters)
+                        .autocorrectionDisabled(true)
                     #endif
 
                     TextField(
@@ -47,8 +47,8 @@ public struct AdapterSettings: View {
                     )
                     .textFieldStyle(.roundedBorder)
                     #if os(iOS)
-                    .keyboardType(.numberPad)
-                    .autocorrectionDisabled(true)
+                        .keyboardType(.numberPad)
+                        .autocorrectionDisabled(true)
                     #endif
                 } header: {
                     Text("Discord")

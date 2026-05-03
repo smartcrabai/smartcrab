@@ -39,7 +39,9 @@ public struct ChatMessageRow: View {
 
     // MARK: Style
 
-    private var isFromUser: Bool { message.role == .user }
+    private var isFromUser: Bool {
+        message.role == .user
+    }
 
     private var alignment: HorizontalAlignment {
         isFromUser ? .trailing : .leading

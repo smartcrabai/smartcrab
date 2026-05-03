@@ -9,24 +9,24 @@ struct SmartCrabApp: App {
 
     var body: some Scene {
         #if os(macOS)
-        WindowGroup("SmartCrab") {
-            AppRoot()
-                .environmentObject(bun)
-                .frame(minWidth: 900, minHeight: 600)
-                .task {
-                    await bun.start()
-                }
-        }
-        .windowStyle(.titleBar)
-        .windowToolbarStyle(.unified)
+            WindowGroup("SmartCrab") {
+                AppRoot()
+                    .environmentObject(bun)
+                    .frame(minWidth: 900, minHeight: 600)
+                    .task {
+                        await bun.start()
+                    }
+            }
+            .windowStyle(.titleBar)
+            .windowToolbarStyle(.unified)
         #else
-        WindowGroup {
-            AppRoot()
-                .environmentObject(bun)
-                .task {
-                    await bun.start()
-                }
-        }
+            WindowGroup {
+                AppRoot()
+                    .environmentObject(bun)
+                    .task {
+                        await bun.start()
+                    }
+            }
         #endif
     }
 }
@@ -39,9 +39,9 @@ final class BunServiceContainer: ObservableObject {
 
     init() {
         #if os(macOS)
-        self.service = BunServiceMacOS()
+            service = BunServiceMacOS()
         #else
-        self.service = BunServiceMock()
+            service = BunServiceMock()
         #endif
     }
 

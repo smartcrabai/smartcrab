@@ -34,11 +34,11 @@ public enum JSONValue: Codable, Sendable, Equatable {
         var c = encoder.singleValueContainer()
         switch self {
         case .null: try c.encodeNil()
-        case .bool(let b): try c.encode(b)
-        case .number(let n): try c.encode(n)
-        case .string(let s): try c.encode(s)
-        case .array(let a): try c.encode(a)
-        case .object(let o): try c.encode(o)
+        case let .bool(b): try c.encode(b)
+        case let .number(n): try c.encode(n)
+        case let .string(s): try c.encode(s)
+        case let .array(a): try c.encode(a)
+        case let .object(o): try c.encode(o)
         }
     }
 }
@@ -63,8 +63,8 @@ public enum JSONRPCId: Codable, Sendable, Equatable {
         var c = encoder.singleValueContainer()
         switch self {
         case .null: try c.encodeNil()
-        case .string(let s): try c.encode(s)
-        case .number(let n): try c.encode(n)
+        case let .string(s): try c.encode(s)
+        case let .number(n): try c.encode(n)
         }
     }
 }
@@ -84,35 +84,35 @@ public struct JSONRPCError: Codable, Sendable, Equatable {
 
 /// Pipeline trigger source.
 public enum ExecutionTrigger: String, Codable, Sendable, CaseIterable {
-    case manual = "manual"
-    case cron = "cron"
-    case chat = "chat"
-    case api = "api"
+    case manual
+    case cron
+    case chat
+    case api
 }
 
 /// Pipeline execution status.
 public enum ExecutionStatus: String, Codable, Sendable, CaseIterable {
-    case pending = "pending"
-    case running = "running"
-    case succeeded = "succeeded"
-    case failed = "failed"
-    case cancelled = "cancelled"
+    case pending
+    case running
+    case succeeded
+    case failed
+    case cancelled
 }
 
 /// Log severity.
 public enum LogLevel: String, Codable, Sendable, CaseIterable {
-    case trace = "trace"
-    case debug = "debug"
-    case info = "info"
-    case warn = "warn"
-    case error = "error"
+    case trace
+    case debug
+    case info
+    case warn
+    case error
 }
 
 /// Skill kind.
 public enum SkillType: String, Codable, Sendable, CaseIterable {
-    case pipeline = "pipeline"
-    case script = "script"
-    case builtin = "builtin"
+    case pipeline
+    case script
+    case builtin
 }
 
 /// Pipeline definition.
@@ -389,4 +389,3 @@ public enum RPCMethod: String, CaseIterable, Sendable {
     case settingsGet = "settings.get"
     case settingsSave = "settings.save"
 }
-
