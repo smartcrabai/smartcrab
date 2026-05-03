@@ -9,6 +9,9 @@
     "start": "bun run src/server.ts",
     "test": "bun test"
   },
+  "dependencies": {
+    "yaml": "^2.6.1"
+  },
   "devDependencies": {
     "bun-types": "latest"
   },
