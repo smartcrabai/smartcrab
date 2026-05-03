@@ -1,17 +1,20 @@
 {
   "name": "@smartcrab/bun-service",
-  "type": "module",
-  "private": true,
   "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "module": "src/server.ts",
   "scripts": {
-    "test": "bun test",
-    "build": "bun build --compile --outfile=dist/smartcrab-service src/server.ts"
-  },
-  "dependencies": {
-    "cron-parser": "^4.9.0"
+    "build": "bun run scripts/build.ts",
+    "start": "bun run src/server.ts",
+    "test": "bun test"
   },
   "devDependencies": {
-    "bun-types": "latest",
-    "typescript": "^5.5.0"
+    "bun-types": "latest"
+  },
+  "optionalDependencies": {
+    "seher-ts": "*",
+    "@smartcrab/ipc-protocol": "*",
+    "@smartcrab/seher-config-schema": "*"
   }
 }
