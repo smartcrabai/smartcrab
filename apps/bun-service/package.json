@@ -10,7 +10,11 @@
     "test": "bun test"
   },
   "dependencies": {
-    "yaml": "^2.6.1"
+    "yaml": "^2.6.1",
+    "cron-parser": "^4.9.0",
+    "gray-matter": "^4.0.3",
+    "discord.js": "^14.16.0",
+    "@anthropic-ai/claude-agent-sdk": "^0.1.0"
   },
   "devDependencies": {
     "bun-types": "latest"
