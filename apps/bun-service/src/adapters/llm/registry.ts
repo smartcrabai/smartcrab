@@ -1,11 +1,4 @@
-/**
- * Lightweight LLM adapter registry.
- *
- * Adapters self-register at module load so downstream code can look them up
- * by id without static imports. Replaceable once Unit 4's
- * `AdapterRegistry<T>` lands.
- */
-
+import { llmRegistry as coreRegistry } from "../../registry";
 import type { LlmAdapter } from "./types.ts";
 
 const adapters = new Map<string, LlmAdapter>();
@@ -13,6 +6,7 @@ const adapters = new Map<string, LlmAdapter>();
 export const llmRegistry = {
   register(adapter: LlmAdapter): void {
     adapters.set(adapter.id, adapter);
+    coreRegistry.register(adapter);
   },
 
   get(id: string): LlmAdapter | undefined {
@@ -23,11 +17,32 @@ export const llmRegistry = {
     return [...adapters.values()];
   },
 
+  default(): LlmAdapter | undefined {
+    return adapters.values().next().value;
+  },
+
   unregister(id: string): boolean {
     return adapters.delete(id);
   },
 
   clear(): void {
     adapters.clear();
+    coreRegistry.clear();
   },
 } as const;
+
+export function registerLlmAdapter(adapter: LlmAdapter): void {
+  llmRegistry.register(adapter);
+}
+
+export function clearLlmAdapters(): void {
+  llmRegistry.clear();
+}
+
+export function getLlmAdapter(id: string): LlmAdapter | undefined {
+  return llmRegistry.get(id);
+}
+
+export function listLlmAdapters(): readonly LlmAdapter[] {
+  return llmRegistry.list();
+}

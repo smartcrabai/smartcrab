@@ -1,0 +1,16 @@
+import { invoke } from '@tauri-apps/api/core';
+export const listPipelines = () => invoke('list_pipelines');
+export const getPipeline = (id) => invoke('get_pipeline', { id });
+export const createPipeline = (name, yamlContent) => invoke('create_pipeline', { name, yamlContent });
+export const updatePipeline = (id, yamlContent) => invoke('update_pipeline', { id, yamlContent });
+export const deletePipeline = (id) => invoke('delete_pipeline', { id });
+export const togglePipeline = (id, isActive) => invoke('toggle_pipeline', { id, isActive });
+export const listExecutions = (pipelineId) => invoke('list_executions', { pipelineId });
+export const getExecution = (id) => invoke('get_execution', { id });
+export const cancelExecution = (id) => invoke('cancel_execution', { id });
+export const listAdapters = () => invoke('list_adapters');
+export const getAdapterStatus = (adapterType) => invoke('get_adapter_status', { adapterType });
+export const updateAdapterConfig = (config) => invoke('update_adapter_config', { config });
+export const listCronJobs = () => invoke('list_cron_jobs');
+export const listSkills = () => invoke('list_skills');
+export const invokeSkill = (skillId, input) => invoke('invoke_skill', { skillId, input });
