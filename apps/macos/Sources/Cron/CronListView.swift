@@ -122,8 +122,8 @@ public struct CronListView: View {
                 .foregroundStyle(.secondary)
             Text("No cron jobs yet").font(.headline)
             Text(pipelines.isEmpty
-                 ? "Create a pipeline first, then schedule it here."
-                 : "Click Add to schedule a pipeline.")
+                ? "Create a pipeline first, then schedule it here."
+                : "Click Add to schedule a pipeline.")
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -191,12 +191,12 @@ enum CronEditTarget: Identifiable {
     var id: String {
         switch self {
         case .new: return "__new__"
-        case .existing(let job): return job.id
+        case let .existing(job): return job.id
         }
     }
 
     var job: CronJob? {
-        if case .existing(let job) = self { return job }
+        if case let .existing(job) = self { return job }
         return nil
     }
 }

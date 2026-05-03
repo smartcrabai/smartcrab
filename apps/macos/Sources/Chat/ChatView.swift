@@ -28,9 +28,9 @@ public struct ChatView: View {
         }
         .navigationTitle("Chat")
         #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
         #endif
-        .task { await load() }
+            .task { await load() }
     }
 
     @ViewBuilder

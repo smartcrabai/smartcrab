@@ -1,5 +1,5 @@
-import Foundation
 import CoreGraphics
+import Foundation
 
 // In-memory graph model for the SwiftUI Canvas editor. This is intentionally
 // decoupled from YAML — a `YAMLBridge` round-trips between this and the Bun

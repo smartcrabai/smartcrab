@@ -5,7 +5,7 @@ import SwiftUI
 public struct NodeView: View {
     public let node: PipelineGraphNode
     public var selected: Bool = false
-    public var onPortPress: ((Port) -> Void)? = nil
+    public var onPortPress: ((Port) -> Void)?
 
     public enum Port { case input, output }
 

@@ -24,7 +24,7 @@ public struct ChatComposer: View {
     public var body: some View {
         HStack(alignment: .bottom, spacing: 8) {
             TextField("Message", text: $draft, axis: .vertical)
-                .lineLimit(1...6)
+                .lineLimit(1 ... 6)
                 .textFieldStyle(.roundedBorder)
                 .focused($isFocused)
                 .disabled(isSending)

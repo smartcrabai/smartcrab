@@ -170,7 +170,9 @@ enum StatusFilter: String, CaseIterable, Identifiable {
     case failed
     case cancelled
 
-    var id: String { rawValue }
+    var id: String {
+        rawValue
+    }
 
     var label: String {
         switch self {

@@ -256,7 +256,9 @@ private struct TagPill: View {
 
 struct SkillInvocationRun: Identifiable {
     let skill: SkillInfo
-    var id: String { skill.id }
+    var id: String {
+        skill.id
+    }
 }
 
 private struct SkillInvocationSheet: View {

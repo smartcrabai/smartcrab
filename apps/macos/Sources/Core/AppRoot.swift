@@ -11,7 +11,9 @@ enum SidebarTab: String, CaseIterable, Identifiable, Hashable {
     case history = "History"
     case settings = "Settings"
 
-    var id: String { rawValue }
+    var id: String {
+        rawValue
+    }
 
     var systemImage: String {
         switch self {
@@ -36,7 +38,7 @@ struct AppRoot: View {
             }
             .navigationTitle("SmartCrab")
             #if os(macOS)
-            .frame(minWidth: 180)
+                .frame(minWidth: 180)
             #endif
         } detail: {
             detailView(for: selection ?? .chat)

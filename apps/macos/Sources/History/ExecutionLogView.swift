@@ -45,18 +45,18 @@ public struct ExecutionLogView: View {
 
     private func content(detail: ExecutionDetail) -> some View {
         #if os(macOS)
-        VSplitView {
-            metadataAndNodes(detail: detail)
-            logsSection(detail: detail)
-        }
-        #else
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
+            VSplitView {
                 metadataAndNodes(detail: detail)
-                Divider()
                 logsSection(detail: detail)
             }
-        }
+        #else
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    metadataAndNodes(detail: detail)
+                    Divider()
+                    logsSection(detail: detail)
+                }
+            }
         #endif
     }
 
@@ -175,7 +175,8 @@ public struct ExecutionLogView: View {
         logs.filter { log in
             if let nodeFilter, log.nodeId != nodeFilter { return false }
             if let required = logLevelFilter.rpcValue,
-               log.level.lowercased() != required {
+               log.level.lowercased() != required
+            {
                 return false
             }
             return true
@@ -202,7 +203,9 @@ enum LogLevelFilter: String, CaseIterable, Identifiable {
     case warn
     case error
 
-    var id: String { rawValue }
+    var id: String {
+        rawValue
+    }
 
     var label: String {
         switch self {
@@ -213,7 +216,9 @@ enum LogLevelFilter: String, CaseIterable, Identifiable {
         }
     }
 
-    var rpcValue: String? { self == .all ? nil : rawValue }
+    var rpcValue: String? {
+        self == .all ? nil : rawValue
+    }
 }
 
 // MARK: - Rows
