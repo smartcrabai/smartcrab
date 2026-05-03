@@ -1,15 +1,6 @@
+/target
 .env*
 /testcrab/
 /.claude/
+node_modules/
 
-# macOS Xcode build artifacts
-apps/macos/build/
-
-# Bun service build artifacts
-apps/bun-service/dist/
-
-# Node modules in any workspace
-**/node_modules
-
-# Built service binary embedded into the macOS app at CI build time
-apps/macos/Resources/smartcrab-service
