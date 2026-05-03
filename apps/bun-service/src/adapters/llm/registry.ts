@@ -1,27 +1,33 @@
 /**
- * Minimal adapter registry. Will be superseded by the generic
- * `AdapterRegistry<T>` from Unit 4 (`apps/bun-service/src/registry.ts`).
- * Self-registration in Unit 11 calls `registerLlmAdapter(...)` so swapping
- * is mechanical.
+ * Lightweight LLM adapter registry.
+ *
+ * Adapters self-register at module load so downstream code can look them up
+ * by id without static imports. Replaceable once Unit 4's
+ * `AdapterRegistry<T>` lands.
  */
 
 import type { LlmAdapter } from "./types.ts";
 
-const registry = new Map<string, LlmAdapter>();
+const adapters = new Map<string, LlmAdapter>();
 
-export function registerLlmAdapter(adapter: LlmAdapter): void {
-  registry.set(adapter.id, adapter);
-}
+export const llmRegistry = {
+  register(adapter: LlmAdapter): void {
+    adapters.set(adapter.id, adapter);
+  },
 
-export function getLlmAdapter(id: string): LlmAdapter | undefined {
-  return registry.get(id);
-}
+  get(id: string): LlmAdapter | undefined {
+    return adapters.get(id);
+  },
 
-export function listLlmAdapters(): LlmAdapter[] {
-  return [...registry.values()];
-}
+  list(): readonly LlmAdapter[] {
+    return [...adapters.values()];
+  },
 
-/** Test helper. */
-export function clearLlmAdapters(): void {
-  registry.clear();
-}
+  unregister(id: string): boolean {
+    return adapters.delete(id);
+  },
+
+  clear(): void {
+    adapters.clear();
+  },
+} as const;

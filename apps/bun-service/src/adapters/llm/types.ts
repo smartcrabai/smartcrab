@@ -1,40 +1,52 @@
 /**
- * Local fallback `LlmAdapter` interface.
- *
- * Once `@smartcrab/ipc-protocol` (Unit 2) is merged, this file can be replaced
- * by a re-export from that package. Kept here so Unit 11 can compile + test
- * independently of the protocol package's shape.
- *
- * Mirrors the Rust trait at
- * `crates/smartcrab-app/src-tauri/src/adapters/llm/mod.rs`.
+ * Inline `LlmAdapter` port. Replaceable with a re-export from
+ * `@smartcrab/ipc-protocol` once Unit 2 lands.
  */
 
 export interface LlmCapabilities {
-  /** Streaming supported. */
-  streaming: boolean;
-  /** Native tool/function calling supported. */
-  tools: boolean;
-  /** Adapter-native flavor tag (e.g. `"kimi"`, `"copilot"`). */
-  native?: string;
-  /** Maximum context tokens (best-effort, may be undefined). */
-  maxContextTokens?: number;
+  readonly streaming: boolean;
+  readonly tools: boolean;
+  readonly maxContextTokens: number;
+}
+
+export interface LlmMessage {
+  readonly role: "system" | "user" | "assistant" | "tool";
+  readonly content: string;
+}
+
+/**
+ * Mirrors the JSON Schema-based tool shape used by
+ * `@anthropic-ai/claude-agent-sdk` so adapters can pass it through directly.
+ */
+export interface LlmToolDefinition {
+  readonly name: string;
+  readonly description: string;
+  readonly input_schema: Record<string, unknown>;
 }
 
 export interface LlmRequest {
-  prompt: string;
-  timeoutSecs?: number;
-  metadata?: Record<string, unknown>;
+  readonly prompt?: string;
+  readonly messages?: readonly LlmMessage[];
+  readonly tools?: readonly LlmToolDefinition[];
+  readonly options?: Readonly<Record<string, unknown>>;
+  /** Hard deadline in seconds; adapters should abort the call when exceeded. */
+  readonly timeoutSecs?: number;
 }
 
 export interface LlmResponse {
-  content: string;
-  metadata?: Record<string, unknown>;
+  readonly content: string;
+  readonly toolCalls?: readonly LlmToolCall[];
+  readonly metadata?: Readonly<Record<string, unknown>>;
+}
+
+export interface LlmToolCall {
+  readonly id: string;
+  readonly name: string;
+  readonly input: unknown;
 }
 
 export interface LlmAdapter {
   readonly id: string;
-  readonly name: string;
   readonly capabilities: LlmCapabilities;
-  executePrompt(req: LlmRequest): Promise<LlmResponse>;
-  streamPrompt?(req: LlmRequest): Promise<LlmResponse>;
+  complete(request: LlmRequest): Promise<LlmResponse>;
 }
