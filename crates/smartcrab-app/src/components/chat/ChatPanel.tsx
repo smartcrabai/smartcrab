@@ -1,13 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
 import type { ChatMessage as ChatMessageType } from '../../types';
 import { toErrorMessage } from '../../lib/error';
 
-export function ChatPanel({ onOpenInEditor }: { onOpenInEditor?: (yaml: string) => void }) {
+export function ChatPanel() {
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   async function sendMessage(content: string) {
     const userMsg: ChatMessageType = {
@@ -56,11 +61,12 @@ export function ChatPanel({ onOpenInEditor }: { onOpenInEditor?: (yaml: string) 
           </div>
         )}
         {messages.map((msg, i) => (
-          <ChatMessage key={`${msg.timestamp}-${i}`} message={msg} onOpenInEditor={onOpenInEditor} />
+          <ChatMessage key={`${msg.timestamp}-${i}`} message={msg} />
         ))}
         {isLoading && (
           <div className="text-gray-400 animate-pulse" role="status" aria-live="polite">Claude is thinking...</div>
         )}
+        <div ref={bottomRef} />
       </div>
       <ChatInput onSend={sendMessage} disabled={isLoading} />
     </div>
