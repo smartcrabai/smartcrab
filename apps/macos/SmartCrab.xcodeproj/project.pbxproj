@@ -1,0 +1,488 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A001000000000000000000A1 /* SmartCrabApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A1 /* SmartCrabApp.swift */; };
+		A001000000000000000000A2 /* AppRoot.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A2 /* AppRoot.swift */; };
+		A001000000000000000000A3 /* RPCTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A3 /* RPCTypes.swift */; };
+		A001000000000000000000A4 /* BunServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A4 /* BunServiceProtocol.swift */; };
+		A001000000000000000000A5 /* BunServiceMacOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A5 /* BunServiceMacOS.swift */; };
+		A001000000000000000000A6 /* BunServiceMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A6 /* BunServiceMock.swift */; };
+		A001000000000000000000A7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A7 /* Assets.xcassets */; };
+		A001000000000000000000A8 /* smartcrab-service in Resources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A8 /* smartcrab-service */; };
+		A001000000000000000000B1 /* SmartCrabApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A1 /* SmartCrabApp.swift */; };
+		A001000000000000000000B2 /* AppRoot.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A2 /* AppRoot.swift */; };
+		A001000000000000000000B3 /* RPCTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A3 /* RPCTypes.swift */; };
+		A001000000000000000000B4 /* BunServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A4 /* BunServiceProtocol.swift */; };
+		A001000000000000000000B5 /* BunServiceMacOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A5 /* BunServiceMacOS.swift */; };
+		A001000000000000000000B6 /* BunServiceMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A6 /* BunServiceMock.swift */; };
+		A001000000000000000000B7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A7 /* Assets.xcassets */; };
+		A001000000000000000000C1 /* Chat in Resources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000C1 /* Chat */; };
+		A001000000000000000000C2 /* Settings in Resources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000C2 /* Settings */; };
+		A001000000000000000000C3 /* Pipelines in Resources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000C3 /* Pipelines */; };
+		A001000000000000000000C4 /* Cron in Resources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000C4 /* Cron */; };
+		A001000000000000000000C5 /* Skills in Resources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000C5 /* Skills */; };
+		A001000000000000000000C6 /* History in Resources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000C6 /* History */; };
+		A001000000000000000000D1 /* Chat in Resources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000C1 /* Chat */; };
+		A001000000000000000000D2 /* Settings in Resources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000C2 /* Settings */; };
+		A001000000000000000000D3 /* Pipelines in Resources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000C3 /* Pipelines */; };
+		A001000000000000000000D4 /* Cron in Resources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000C4 /* Cron */; };
+		A001000000000000000000D5 /* Skills in Resources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000C5 /* Skills */; };
+		A001000000000000000000D6 /* History in Resources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000C6 /* History */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		B001000000000000000000A1 /* SmartCrabApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartCrabApp.swift; sourceTree = "<group>"; };
+		B001000000000000000000A2 /* AppRoot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRoot.swift; sourceTree = "<group>"; };
+		B001000000000000000000A3 /* RPCTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RPCTypes.swift; sourceTree = "<group>"; };
+		B001000000000000000000A4 /* BunServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BunServiceProtocol.swift; sourceTree = "<group>"; };
+		B001000000000000000000A5 /* BunServiceMacOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BunServiceMacOS.swift; sourceTree = "<group>"; };
+		B001000000000000000000A6 /* BunServiceMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BunServiceMock.swift; sourceTree = "<group>"; };
+		B001000000000000000000A7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B001000000000000000000A8 /* smartcrab-service */ = {isa = PBXFileReference; lastKnownFileType = text; path = "smartcrab-service"; sourceTree = "<group>"; };
+		B001000000000000000000A9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B001000000000000000000AA /* SmartCrab.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SmartCrab.entitlements; sourceTree = "<group>"; };
+		B001000000000000000000AB /* Preview-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Preview-Info.plist"; sourceTree = "<group>"; };
+		B001000000000000000000AC /* Preview.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Preview.entitlements; sourceTree = "<group>"; };
+		B001000000000000000000C1 /* Chat */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Chat; sourceTree = "<group>"; };
+		B001000000000000000000C2 /* Settings */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Settings; sourceTree = "<group>"; };
+		B001000000000000000000C3 /* Pipelines */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Pipelines; sourceTree = "<group>"; };
+		B001000000000000000000C4 /* Cron */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Cron; sourceTree = "<group>"; };
+		B001000000000000000000C5 /* Skills */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Skills; sourceTree = "<group>"; };
+		B001000000000000000000C6 /* History */ = {isa = PBXFileReference; lastKnownFileType = folder; path = History; sourceTree = "<group>"; };
+		E001000000000000000000A1 /* SmartCrab.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SmartCrab.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E001000000000000000000A2 /* SmartCrabPreview.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SmartCrabPreview.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		F001000000000000000000A0 /* SmartCrab */ = {
+			isa = PBXGroup;
+			children = (
+				F001000000000000000000A1 /* apps */,
+				F001000000000000000000F0 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		F001000000000000000000A1 /* apps */ = {
+			isa = PBXGroup;
+			children = (
+				F001000000000000000000A2 /* macos */,
+			);
+			name = apps;
+			path = ..;
+			sourceTree = "<group>";
+		};
+		F001000000000000000000A2 /* macos */ = {
+			isa = PBXGroup;
+			children = (
+				F001000000000000000000A3 /* SmartCrab */,
+				F001000000000000000000A4 /* Sources */,
+				F001000000000000000000A5 /* Resources */,
+			);
+			path = macos;
+			sourceTree = "<group>";
+		};
+		F001000000000000000000A3 /* SmartCrab */ = {
+			isa = PBXGroup;
+			children = (
+				B001000000000000000000A9 /* Info.plist */,
+				B001000000000000000000AA /* SmartCrab.entitlements */,
+				B001000000000000000000AB /* Preview-Info.plist */,
+				B001000000000000000000AC /* Preview.entitlements */,
+				B001000000000000000000A7 /* Assets.xcassets */,
+			);
+			path = SmartCrab;
+			sourceTree = "<group>";
+		};
+		F001000000000000000000A4 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				F001000000000000000000B1 /* Core */,
+				F001000000000000000000B2 /* Services */,
+				B001000000000000000000C1 /* Chat */,
+				B001000000000000000000C2 /* Settings */,
+				B001000000000000000000C3 /* Pipelines */,
+				B001000000000000000000C4 /* Cron */,
+				B001000000000000000000C5 /* Skills */,
+				B001000000000000000000C6 /* History */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		F001000000000000000000A5 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				B001000000000000000000A8 /* smartcrab-service */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		F001000000000000000000B1 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				B001000000000000000000A1 /* SmartCrabApp.swift */,
+				B001000000000000000000A2 /* AppRoot.swift */,
+				F001000000000000000000B3 /* Generated */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		F001000000000000000000B2 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				B001000000000000000000A4 /* BunServiceProtocol.swift */,
+				B001000000000000000000A5 /* BunServiceMacOS.swift */,
+				B001000000000000000000A6 /* BunServiceMock.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		F001000000000000000000B3 /* Generated */ = {
+			isa = PBXGroup;
+			children = (
+				B001000000000000000000A3 /* RPCTypes.swift */,
+			);
+			path = Generated;
+			sourceTree = "<group>";
+		};
+		F001000000000000000000F0 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E001000000000000000000A1 /* SmartCrab.app */,
+				E001000000000000000000A2 /* SmartCrabPreview.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXSourcesBuildPhase section */
+		C001000000000000000000A1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A001000000000000000000A1 /* SmartCrabApp.swift in Sources */,
+				A001000000000000000000A2 /* AppRoot.swift in Sources */,
+				A001000000000000000000A3 /* RPCTypes.swift in Sources */,
+				A001000000000000000000A4 /* BunServiceProtocol.swift in Sources */,
+				A001000000000000000000A5 /* BunServiceMacOS.swift in Sources */,
+				A001000000000000000000A6 /* BunServiceMock.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C001000000000000000000B1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A001000000000000000000B1 /* SmartCrabApp.swift in Sources */,
+				A001000000000000000000B2 /* AppRoot.swift in Sources */,
+				A001000000000000000000B3 /* RPCTypes.swift in Sources */,
+				A001000000000000000000B4 /* BunServiceProtocol.swift in Sources */,
+				A001000000000000000000B5 /* BunServiceMacOS.swift in Sources */,
+				A001000000000000000000B6 /* BunServiceMock.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C001000000000000000000A2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A001000000000000000000A7 /* Assets.xcassets in Resources */,
+				A001000000000000000000A8 /* smartcrab-service in Resources */,
+				A001000000000000000000C1 /* Chat in Resources */,
+				A001000000000000000000C2 /* Settings in Resources */,
+				A001000000000000000000C3 /* Pipelines in Resources */,
+				A001000000000000000000C4 /* Cron in Resources */,
+				A001000000000000000000C5 /* Skills in Resources */,
+				A001000000000000000000C6 /* History in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C001000000000000000000B2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A001000000000000000000B7 /* Assets.xcassets in Resources */,
+				A001000000000000000000D1 /* Chat in Resources */,
+				A001000000000000000000D2 /* Settings in Resources */,
+				A001000000000000000000D3 /* Pipelines in Resources */,
+				A001000000000000000000D4 /* Cron in Resources */,
+				A001000000000000000000D5 /* Skills in Resources */,
+				A001000000000000000000D6 /* History in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		D001000000000000000000A1 /* SmartCrabMac */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = G001000000000000000000A1 /* Build configuration list for PBXNativeTarget "SmartCrabMac" */;
+			buildPhases = (
+				C001000000000000000000A1 /* Sources */,
+				C001000000000000000000A2 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SmartCrabMac;
+			productName = SmartCrab;
+			productReference = E001000000000000000000A1 /* SmartCrab.app */;
+			productType = "com.apple.product-type.application";
+		};
+		D001000000000000000000A2 /* SmartCrabPreview */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = G001000000000000000000A2 /* Build configuration list for PBXNativeTarget "SmartCrabPreview" */;
+			buildPhases = (
+				C001000000000000000000B1 /* Sources */,
+				C001000000000000000000B2 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SmartCrabPreview;
+			productName = SmartCrabPreview;
+			productReference = E001000000000000000000A2 /* SmartCrabPreview.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		H001000000000000000000A1 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					D001000000000000000000A1 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+					D001000000000000000000A2 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = G001000000000000000000A0 /* Build configuration list for PBXProject "SmartCrab" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = F001000000000000000000A0;
+			productRefGroup = F001000000000000000000F0 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				D001000000000000000000A1 /* SmartCrabMac */,
+				D001000000000000000000A2 /* SmartCrabPreview */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin XCBuildConfiguration section */
+		I001000000000000000000A1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		I001000000000000000000A2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		I001000000000000000000B1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = SmartCrab/SmartCrab.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "-";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = SmartCrab/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ai.smartcrab.app;
+				PRODUCT_NAME = SmartCrab;
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		I001000000000000000000B2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = SmartCrab/SmartCrab.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "-";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = SmartCrab/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ai.smartcrab.app;
+				PRODUCT_NAME = SmartCrab;
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		I001000000000000000000C1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = SmartCrab/Preview.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGNING_ALLOWED = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = SmartCrab/Preview-Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ai.smartcrab.preview;
+				PRODUCT_NAME = SmartCrabPreview;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				ONLY_ACTIVE_ARCH = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		I001000000000000000000C2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = SmartCrab/Preview.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGNING_ALLOWED = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = SmartCrab/Preview-Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ai.smartcrab.preview;
+				PRODUCT_NAME = SmartCrabPreview;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				ONLY_ACTIVE_ARCH = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		G001000000000000000000A0 /* Build configuration list for PBXProject "SmartCrab" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				I001000000000000000000A1 /* Debug */,
+				I001000000000000000000A2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		G001000000000000000000A1 /* Build configuration list for PBXNativeTarget "SmartCrabMac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				I001000000000000000000B1 /* Debug */,
+				I001000000000000000000B2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		G001000000000000000000A2 /* Build configuration list for PBXNativeTarget "SmartCrabPreview" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				I001000000000000000000C1 /* Debug */,
+				I001000000000000000000C2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = H001000000000000000000A1 /* Project object */;
+}
