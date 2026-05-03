@@ -1,0 +1,13 @@
+{
+  "name": "smartcrab-monorepo",
+  "private": true,
+  "version": "0.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "bun test",
+    "build": "echo TODO"
+  }
+}
