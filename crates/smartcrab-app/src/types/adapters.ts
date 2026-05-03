@@ -1,18 +1,3 @@
-export interface ChatCapabilities {
-  threads: boolean;
-  reactions: boolean;
-  fileUpload: boolean;
-  streaming: boolean;
-  directMessage: boolean;
-  groupMessage: boolean;
-}
-
-export interface LlmCapabilities {
-  streaming: boolean;
-  functionCalling: boolean;
-  maxContextTokens: number;
-}
-
 export interface AdapterInfo {
   adapterType: string;
   name: string;
