@@ -39,10 +39,10 @@ public enum YAMLBridge {
     }
 }
 
-extension PipelineGraph {
+public extension PipelineGraph {
     /// Loose YAML parser sufficient for the round-trip tests below. Production
     /// code should favour the Bun engine's parser.
-    public init(yaml: String) {
+    init(yaml: String) {
         struct Parsed {
             var id: String
             var name: String
@@ -122,7 +122,7 @@ extension PipelineGraph {
 
     /// Best-effort YAML serializer (sufficient for the Bun engine round-trip
     /// in tests and previews).
-    public func toYAML(name: String = "pipeline", description: String? = nil) -> String {
+    func toYAML(name: String = "pipeline", description: String? = nil) -> String {
         var lines: [String] = []
         lines.append("name: \(name)")
         if let description, !description.isEmpty {
@@ -160,7 +160,9 @@ extension PipelineGraph {
                 lines.append("    next: \(only.to)")
             } else if outgoing.count > 1 {
                 lines.append("    next:")
-                for e in outgoing { lines.append("      - \(e.to)") }
+                for e in outgoing {
+                    lines.append("      - \(e.to)")
+                }
             }
         }
         return lines.joined(separator: "\n") + "\n"

@@ -3,6 +3,12 @@
     "config:best-practices"
   ],
   dependencyDashboard: false,
+  enabledManagers: [
+    "npm",
+    "bun",
+    "github-actions",
+    "dockerfile"
+  ],
   packageRules: [
     {
       matchUpdateTypes: [
@@ -15,6 +21,18 @@
       addLabels: [
         "automerge"
       ]
+    },
+    {
+      matchManagers: [
+        "npm",
+        "bun"
+      ],
+      matchFileNames: [
+        "apps/**",
+        "packages/**",
+        "package.json"
+      ],
+      groupName: "JavaScript/TypeScript dependencies"
     }
   ]
 }

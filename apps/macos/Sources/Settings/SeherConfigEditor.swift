@@ -10,7 +10,7 @@ import SwiftUI
 public struct SeherConfigEditor: View {
     private let service: BunServiceProtocol
 
-    @State private var config: SeherConfig = SeherConfig()
+    @State private var config: SeherConfig = .init()
     @State private var isLoading: Bool = true
     @State private var saveError: String?
     @State private var isSaving: Bool = false
@@ -112,7 +112,7 @@ public struct SeherConfigEditor: View {
 
             Stepper(
                 value: $config.defaults.rateLimitBackoffSeconds,
-                in: 1...3600
+                in: 1 ... 3600
             ) {
                 LabeledContent("Rate-limit backoff (s)") {
                     Text("\(config.defaults.rateLimitBackoffSeconds)")
@@ -223,7 +223,7 @@ private struct PriorityRow: View {
                         Text(provider.id).tag(provider.id)
                     }
                 }
-                Stepper(value: $rule.weight, in: 0...100) {
+                Stepper(value: $rule.weight, in: 0 ... 100) {
                     LabeledContent("Weight") { Text("\(rule.weight)") }
                 }
                 .frame(maxWidth: 180)
@@ -231,7 +231,7 @@ private struct PriorityRow: View {
 
             HStack(spacing: 4) {
                 Text("Weekdays").font(.caption).foregroundStyle(.secondary)
-                ForEach(0..<7) { day in
+                ForEach(0 ..< 7) { day in
                     Toggle(Self.weekdayLabels[day], isOn: weekdayBinding(day))
                         .toggleStyle(.button)
                         .controlSize(.small)
@@ -239,10 +239,10 @@ private struct PriorityRow: View {
             }
 
             HStack {
-                Stepper(value: $rule.hourStart, in: 0...23) {
+                Stepper(value: $rule.hourStart, in: 0 ... 23) {
                     LabeledContent("From") { Text(String(format: "%02d:00", rule.hourStart)) }
                 }
-                Stepper(value: $rule.hourEnd, in: 0...23) {
+                Stepper(value: $rule.hourEnd, in: 0 ... 23) {
                     LabeledContent("To") { Text(String(format: "%02d:59", rule.hourEnd)) }
                 }
             }

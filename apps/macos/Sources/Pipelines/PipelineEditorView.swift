@@ -203,7 +203,10 @@ public struct PipelineEditorView: View {
 
     // MARK: - Geometry
 
-    private var currentScale: CGFloat { zoom * pinchZoom }
+    private var currentScale: CGFloat {
+        zoom * pinchZoom
+    }
+
     private var currentPan: CGSize {
         CGSize(
             width: panOffset.width + dragPan.width,
@@ -377,9 +380,9 @@ public struct PipelineEditorView: View {
         let yaml = graph.toYAML(name: info.name, description: info.description)
         validationMessage = "YAML (\(yaml.count) chars) ready for export"
         #if os(macOS)
-        // best-effort: copy to clipboard
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(yaml, forType: .string)
+            // best-effort: copy to clipboard
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(yaml, forType: .string)
         #endif
     }
 
@@ -392,7 +395,7 @@ public struct PipelineEditorView: View {
 }
 
 #if canImport(AppKit)
-import AppKit
+    import AppKit
 #endif
 
 #Preview {

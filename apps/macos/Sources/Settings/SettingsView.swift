@@ -16,7 +16,7 @@ import SwiftUI
 /// One LLM provider entry in the seher config.
 public struct SeherProvider: Identifiable, Hashable, Codable {
     public var id: String
-    public var kind: String          // "claude" | "kimi" | "copilot"
+    public var kind: String // "claude" | "kimi" | "copilot"
     public var model: String
     public var envOverrides: [String: String]
 
@@ -35,9 +35,9 @@ public struct SeherPriorityRule: Identifiable, Hashable, Codable {
     public var weight: Int
     /// 0 = Sunday … 6 = Saturday. Empty matches every weekday.
     public var weekdayFilter: [Int]
-    public var hourStart: Int        // 0..23 inclusive
-    public var hourEnd: Int          // 0..23 inclusive
-    public var condition: String     // free-form predicate string
+    public var hourStart: Int // 0..23 inclusive
+    public var hourEnd: Int // 0..23 inclusive
+    public var condition: String // free-form predicate string
 
     public init(
         id: UUID = UUID(),
@@ -140,7 +140,7 @@ public final class BunServiceMock: BunServiceProtocol {
     private var messages: [ChatMessage]
 
     public init() {
-        self.seherConfig = SeherConfig(
+        seherConfig = SeherConfig(
             providers: [
                 SeherProvider(id: "claude-default", kind: "claude", model: "claude-sonnet-4-7"),
                 SeherProvider(id: "kimi-default", kind: "kimi", model: "kimi-k2-0905-preview"),
@@ -159,12 +159,12 @@ public final class BunServiceMock: BunServiceProtocol {
             ],
             defaults: SeherDefaults(fallbackProviderId: "claude-default", rateLimitBackoffSeconds: 60)
         )
-        self.discord = DiscordAdapterConfig(
+        discord = DiscordAdapterConfig(
             botTokenEnv: "DISCORD_BOT_TOKEN",
             notificationChannelId: "1234567890",
             enabled: false
         )
-        self.messages = [
+        messages = [
             ChatMessage(role: .assistant, content: "Welcome to SmartCrab. How can I help today?",
                         createdAt: Date(timeIntervalSinceNow: -300)),
             ChatMessage(role: .user, content: "Show me the pipelines I have configured.",
@@ -175,15 +175,26 @@ public final class BunServiceMock: BunServiceProtocol {
         ]
     }
 
-    public func settingsLoad() async throws -> SeherConfig { seherConfig }
-    public func settingsSave(_ config: SeherConfig) async throws { seherConfig = config }
+    public func settingsLoad() async throws -> SeherConfig {
+        seherConfig
+    }
 
-    public func adapterLoad(adapterId _: String) async throws -> DiscordAdapterConfig { discord }
+    public func settingsSave(_ config: SeherConfig) async throws {
+        seherConfig = config
+    }
+
+    public func adapterLoad(adapterId _: String) async throws -> DiscordAdapterConfig {
+        discord
+    }
+
     public func adapterSave(adapterId _: String, config: DiscordAdapterConfig) async throws {
         discord = config
     }
 
-    public func chatHistory() async throws -> [ChatMessage] { messages }
+    public func chatHistory() async throws -> [ChatMessage] {
+        messages
+    }
+
     public func chatSend(_ content: String) async throws -> ChatMessage {
         // Real service persists the user message server-side; the mock mirrors
         // that so a fresh `chatHistory()` call would show both turns.
@@ -201,7 +212,9 @@ public struct SettingsView: View {
         case seher = "LLM routing"
         case adapters = "Chat adapters"
 
-        public var id: String { rawValue }
+        public var id: String {
+            rawValue
+        }
     }
 
     private let service: BunServiceProtocol
@@ -234,7 +247,7 @@ public struct SettingsView: View {
         }
         .navigationTitle("Settings")
         #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
         #endif
     }
 }
