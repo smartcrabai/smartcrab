@@ -84,6 +84,30 @@ async function main(): Promise<void> {
   setCronStore(new SqliteCronStore(db));
   configureSkillsCommands({ registry: new SkillsRegistry({ db: new BunSqliteSkillsDb(db) }) });
 
+  // Have the Discord adapter read its config from the chat_adapter_config
+  // table (populated by the SwiftUI Settings tab via settings.adapter-save)
+  // instead of the env-only literal default.
+  //
+  // Dynamic import on purpose: importing the discord module at the top of
+  // server.ts before the dispatcher has finished walking adapter glob
+  // imports triggers a circular-init crash through the LLM registry proxy.
+  void import("./adapters/chat/discord").then(({ setDiscordConfigLoader }) => {
+    setDiscordConfigLoader(() => {
+      const row = db
+        .query<{ config_json: string; enabled: number }, [string]>(
+          "SELECT config_json, enabled FROM chat_adapter_config WHERE adapter_id = ?1",
+        )
+        .get("discord");
+      if (!row) return null;
+      const cfg = JSON.parse(row.config_json) as Record<string, unknown>;
+      // Translate the GUI shape (camelCase) to the adapter's expected snake_case.
+      return {
+        bot_token_env: cfg.botTokenEnv ?? "DISCORD_BOT_TOKEN",
+        notification_channel_id: cfg.notificationChannelId,
+      };
+    });
+  });
+
   // MemoryStore manages its own schema, so it gets its own SQLite handle
   // backed by the same on-disk file (separate connection, separate migration
   // path). When we eventually consolidate the schemas, this can be replaced

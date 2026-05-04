@@ -110,16 +110,30 @@ export class DiscordChatAdapter implements ChatAdapter {
   }
 
   private async loadConfig(): Promise<DiscordConfig> {
-    const source = this.options.configSource ?? {
-      kind: "literal",
-      config: {
-        bot_token_env: "DISCORD_BOT_TOKEN",
-      },
-    };
-    if (source.kind === "literal") return source.config;
-    const raw = await source.load();
-    return parseDiscordConfig(raw);
+    if (this.options.configSource) {
+      const source = this.options.configSource;
+      if (source.kind === "literal") return source.config;
+      const raw = await source.load();
+      return parseDiscordConfig(raw);
+    }
+    // Module-level loader (set by server.ts at boot to read the persisted
+    // config out of SQLite via settings.adapter-load). Falls back to the
+    // env-only default when no loader is wired (tests, dev runs).
+    const fromDefault = await defaultLoader?.();
+    if (fromDefault) return parseDiscordConfig(fromDefault);
+    return { bot_token_env: "DISCORD_BOT_TOKEN" };
   }
+}
+
+let defaultLoader: (() => Promise<unknown> | unknown) | null = null;
+
+/** Wire the module-level default config loader. server.ts uses this to pull
+ *  the saved Discord config out of SQLite (settings.adapter-load row) so the
+ *  GUI's Settings tab actually drives the adapter. */
+export function setDiscordConfigLoader(
+  loader: (() => Promise<unknown> | unknown) | null,
+): void {
+  defaultLoader = loader;
 }
 
 // Self-register so dispatcher's eager glob auto-imports wire this up.
