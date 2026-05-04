@@ -47,10 +47,35 @@ export class SqlitePipelineDatabase implements PipelineDatabase {
     }));
   }
 
-  getPipeline(_id: string): PipelineRow | null {
-    throw notImplemented("getPipeline");
+  getPipeline(id: string): PipelineRow | null {
+    type Row = {
+      id: string;
+      name: string;
+      description: string | null;
+      yaml_content: string;
+      max_loop_count: number;
+      enabled: number;
+      created_at: number;
+      updated_at: number;
+    };
+    const r = this.db
+      .query<Row, [string]>(
+        "SELECT id, name, description, yaml_content, max_loop_count, enabled, created_at, updated_at FROM pipelines WHERE id = ?1",
+      )
+      .get(id);
+    if (!r) return null;
+    return {
+      id: r.id,
+      name: r.name,
+      description: r.description,
+      yaml_content: r.yaml_content,
+      max_loop_count: r.max_loop_count,
+      is_active: r.enabled === 1,
+      created_at: new Date(r.created_at * 1000).toISOString(),
+      updated_at: new Date(r.updated_at * 1000).toISOString(),
+    };
   }
-  savePipeline(_input: {
+  savePipeline(input: {
     id?: string;
     name: string;
     description?: string | null;
@@ -58,10 +83,20 @@ export class SqlitePipelineDatabase implements PipelineDatabase {
     max_loop_count?: number;
     is_active?: boolean;
   }): PipelineRow {
-    throw notImplemented("savePipeline");
+    const id = input.id ?? crypto.randomUUID();
+    const description = input.description ?? null;
+    const maxLoop = input.max_loop_count ?? 10;
+    const enabled = input.is_active === false ? 0 : 1;
+    const now = Math.floor(Date.now() / 1000);
+    this.db
+      .query(
+        "INSERT INTO pipelines (id, name, description, yaml_content, max_loop_count, enabled, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?7) ON CONFLICT(id) DO UPDATE SET name = excluded.name, description = excluded.description, yaml_content = excluded.yaml_content, max_loop_count = excluded.max_loop_count, enabled = excluded.enabled, updated_at = excluded.updated_at",
+      )
+      .run(id, input.name, description, input.yaml_content, maxLoop, enabled, now);
+    return this.getPipeline(id) as PipelineRow;
   }
-  deletePipeline(_id: string): void {
-    throw notImplemented("deletePipeline");
+  deletePipeline(id: string): void {
+    this.db.query("DELETE FROM pipelines WHERE id = ?1").run(id);
   }
   insertExecution(_row: {
     id: string;

@@ -141,19 +141,65 @@
         private struct EmptyParams: Encodable {}
 
         public func pipelineGet(id: String) async throws -> PipelineDetail {
-            try await fallback.pipelineGet(id: id)
+            struct Params: Encodable, Sendable { let id: String }
+            struct WireRow: Decodable {
+                let id: String
+                let name: String
+                let description: String?
+                let yamlContent: String
+                let maxLoopCount: Int
+                let isActive: Bool
+            }
+            let row: WireRow = try await call(method: "pipeline.get", params: Params(id: id))
+            return PipelineDetail(
+                info: PipelineSummary(id: row.id, name: row.name, description: row.description, isActive: row.isActive),
+                yamlContent: row.yamlContent,
+                maxLoopCount: row.maxLoopCount
+            )
         }
 
         public func pipelineSave(_ detail: PipelineDetail) async throws -> PipelineDetail {
-            try await fallback.pipelineSave(detail)
+            struct Params: Encodable, Sendable {
+                let id: String?
+                let name: String
+                let description: String?
+                let yamlContent: String
+                let maxLoopCount: Int
+                let isActive: Bool
+            }
+            struct WireRow: Decodable {
+                let id: String
+                let name: String
+                let description: String?
+                let yamlContent: String
+                let maxLoopCount: Int
+                let isActive: Bool
+            }
+            let params = Params(
+                id: detail.info.id.isEmpty ? nil : detail.info.id,
+                name: detail.info.name,
+                description: detail.info.description,
+                yamlContent: detail.yamlContent,
+                maxLoopCount: detail.maxLoopCount,
+                isActive: detail.info.isActive
+            )
+            let row: WireRow = try await call(method: "pipeline.save", params: params)
+            return PipelineDetail(
+                info: PipelineSummary(id: row.id, name: row.name, description: row.description, isActive: row.isActive),
+                yamlContent: row.yamlContent,
+                maxLoopCount: row.maxLoopCount
+            )
         }
 
         public func pipelineValidate(yaml: String) async throws -> PipelineValidation {
+            // pipeline.save validates YAML on the Bun side; no dedicated validate RPC yet.
             try await fallback.pipelineValidate(yaml: yaml)
         }
 
         public func pipelineExecute(id: String) async throws {
-            try await fallback.pipelineExecute(id: id)
+            struct Params: Encodable, Sendable { let id: String }
+            struct WireResp: Decodable { let executionId: String }
+            let _: WireResp = try await call(method: "pipeline.execute", params: Params(id: id))
         }
 
         // MARK: - Cron
