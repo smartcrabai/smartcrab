@@ -1,58 +1,84 @@
-import { llmRegistry, type LlmAdapterLike } from "./registry";
-
 /**
- * Router shell.
+ * LLM router built on top of `seher-ts`.
  *
- * The eventual implementation will:
- *  1. Take a smartcrab config (defined in `@smartcrab/seher-config-schema`),
- *  2. Translate it to a seher-ts settings shape,
- *  3. Build a seher-ts router that picks an LLM adapter per request
- *     (priority / time-window / fallback rules from the smartcrab schema).
- *
- * For now we keep the surface minimal: try to import seher-ts at runtime;
- * if it isn't installed (it's an optional dependency), fall back to a
- * direct lookup against `llmRegistry`.
- *
- * TODO(Unit 3 + seher integration): replace the fallback with a real
- * seher-ts router built from `translate(smartcrabConfig)`.
+ * `seher-ts` resolves the highest-priority available coding agent
+ * (Claude / Kimi / Copilot / Codex) based on the user's settings
+ * (`~/.config/seher/settings.jsonc` by default — overridable via
+ * `SMARTCRAB_SEHER_CONFIG`). When seher-ts is unavailable or no agent
+ * resolves, we fall back to the first registered adapter in
+ * `llmRegistry` so the chat tab stays usable.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SmartcrabConfig = any;
+import { llmRegistry } from "./adapters/llm/registry";
 
-export interface Router {
-  pick(hint?: { provider?: string }): LlmAdapterLike;
-  list(): string[];
+export interface RouteRequest {
+  prompt: string;
+  systemPrompt?: string;
+  model?: string;
+  maxTokens?: number;
 }
 
-export async function buildRouter(
-  smartcrabConfig?: SmartcrabConfig,
-): Promise<Router> {
-  // Attempt to dynamically pull in seher-ts. We swallow the error because
-  // the package is declared as `optionalDependencies` and may legitimately
-  // be missing in tests / dev environments.
+export interface RouteResponse {
+  text: string;
+  /** "claude" | "kimi" | "copilot" | "codex" | "registry-fallback" */
+  kind: string;
+}
+
+interface SeherModule {
+  SeherSDK: new (opts?: { configPath?: string; noWait?: boolean }) => {
+    run: (opts: {
+      prompt: string;
+      model?: string;
+      systemPrompt?: string;
+      maxTokens?: number;
+    }) => Promise<{ text: string; kind: string; raw: unknown }>;
+  };
+}
+
+let cachedSdk: SeherModule | null | undefined;
+
+async function loadSeher(): Promise<SeherModule | null> {
+  if (cachedSdk !== undefined) return cachedSdk;
   try {
-    // @ts-expect-error optional peer
-    await import("seher-ts");
-    // TODO: build seher router from translated config and route through it.
+    cachedSdk = (await import("seher-ts")) as unknown as SeherModule;
   } catch {
-    // fall through to direct registry lookup
+    cachedSdk = null;
+  }
+  return cachedSdk;
+}
+
+export async function route(request: RouteRequest): Promise<RouteResponse> {
+  const seher = await loadSeher();
+  if (seher) {
+    try {
+      const sdk = new seher.SeherSDK({
+        configPath: process.env.SMARTCRAB_SEHER_CONFIG,
+        // Fail fast if all configured agents are rate-limited rather than
+        // sleeping the chat thread until a reset.
+        noWait: true,
+      });
+      const result = await sdk.run({
+        prompt: request.prompt,
+        systemPrompt: request.systemPrompt,
+        model: request.model,
+        maxTokens: request.maxTokens,
+      });
+      return { text: result.text, kind: result.kind };
+    } catch (err) {
+      console.error("[router] seher-ts run failed; falling back:", err);
+    }
   }
 
-  void smartcrabConfig; // reserved for future use
-
-  return {
-    pick(hint) {
-      const requested = hint?.provider;
-      if (requested) return llmRegistry.require(requested);
-      const [first] = llmRegistry.list();
-      if (!first) {
-        throw new Error("router: no LLM adapters registered");
-      }
-      return llmRegistry.require(first);
-    },
-    list() {
-      return llmRegistry.list();
-    },
-  };
+  // Fallback: pick the first registered LLM adapter and call it directly.
+  // Used in dev environments without a seher settings file.
+  const adapter = llmRegistry.default();
+  if (!adapter) {
+    throw new Error(
+      "router: seher-ts unavailable and no LLM adapter registered (configure ~/.config/seher/settings.jsonc).",
+    );
+  }
+  const response = await adapter.complete({
+    messages: [{ role: "user", content: request.prompt }],
+  });
+  return { text: response.content, kind: "registry-fallback" };
 }
