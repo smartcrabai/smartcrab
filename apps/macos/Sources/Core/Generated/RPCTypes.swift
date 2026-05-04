@@ -70,7 +70,7 @@ public enum JSONRPCId: Codable, Sendable, Equatable {
 }
 
 /// JSON-RPC error payload.
-public struct JSONRPCError: Codable, Sendable, Equatable {
+public struct JSONRPCError: Codable, Sendable, Equatable, Error {
     public var code: Int
     public var message: String
     public var data: JSONValue?
@@ -80,6 +80,29 @@ public struct JSONRPCError: Codable, Sendable, Equatable {
         self.message = message
         self.data = data
     }
+}
+
+/// JSON-RPC 2.0 request envelope. Generic over the params payload.
+public struct RPCRequest<P: Encodable & Sendable>: Encodable, Sendable {
+    public let jsonrpc: String
+    public let id: String
+    public let method: String
+    public let params: P
+
+    public init(id: String, method: String, params: P) {
+        jsonrpc = JSONRPC_VERSION
+        self.id = id
+        self.method = method
+        self.params = params
+    }
+}
+
+/// JSON-RPC 2.0 response envelope. Generic over the result payload.
+public struct RPCResponse<R: Decodable & Sendable>: Decodable, Sendable {
+    public let jsonrpc: String
+    public let id: String?
+    public let result: R?
+    public let error: JSONRPCError?
 }
 
 /// Pipeline trigger source.
@@ -355,6 +378,48 @@ public struct ChatCapabilities: Codable, Sendable, Equatable {
         self.streaming = streaming
         self.directMessage = directMessage
         self.groupMessage = groupMessage
+    }
+}
+
+/// Ping request payload.
+public struct PingRequest: Codable, Sendable, Equatable {
+    public var nonce: String
+
+    public init(nonce: String) {
+        self.nonce = nonce
+    }
+}
+
+/// Ping response payload (echoes nonce + server time).
+public struct PingResponse: Codable, Sendable, Equatable {
+    public var nonce: String
+    public var serverTime: String
+
+    public init(nonce: String, serverTime: String) {
+        self.nonce = nonce
+        self.serverTime = serverTime
+    }
+}
+
+/// Send a chat message into a conversation.
+public struct ChatSendRequest: Codable, Sendable, Equatable {
+    public var conversationId: String?
+    public var body: String
+
+    public init(conversationId: String? = nil, body: String) {
+        self.conversationId = conversationId
+        self.body = body
+    }
+}
+
+/// Result of a chat send (assistant reply + conversation id).
+public struct ChatSendResponse: Codable, Sendable, Equatable {
+    public var conversationId: String
+    public var message: ChatMessage
+
+    public init(conversationId: String, message: ChatMessage) {
+        self.conversationId = conversationId
+        self.message = message
     }
 }
 
