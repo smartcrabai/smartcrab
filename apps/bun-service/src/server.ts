@@ -1,8 +1,13 @@
+import { setCronStore } from "./commands/cron.commands";
 import { configurePipelineCommands } from "./commands/pipeline.commands";
 import { configureSettingsCommands } from "./commands/settings.commands";
+import { configureSkillsCommands } from "./commands/skills.commands";
 import { openDb, runMigrations } from "./db";
+import { SqliteCronStore } from "./db/cron";
 import { SqlitePipelineDatabase } from "./db/pipelines";
+import { BunSqliteSkillsDb } from "./db/skills";
 import { rebindSharedToDb } from "./memory/shared-store";
+import { SkillsRegistry } from "./skills/registry";
 import { dispatch } from "./dispatcher";
 import { ensureAdaptersLoaded } from "./registry";
 import {
@@ -75,6 +80,10 @@ async function main(): Promise<void> {
     },
   });
   configureSettingsCommands({ db });
+
+  setCronStore(new SqliteCronStore(db));
+  configureSkillsCommands({ registry: new SkillsRegistry({ db: new BunSqliteSkillsDb(db) }) });
+
   // MemoryStore manages its own schema, so it gets its own SQLite handle
   // backed by the same on-disk file (separate connection, separate migration
   // path). When we eventually consolidate the schemas, this can be replaced

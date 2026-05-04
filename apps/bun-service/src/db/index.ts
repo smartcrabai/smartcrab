@@ -9,6 +9,7 @@ import { dirname, join } from "node:path";
 import init000 from "./migrations/000-init.sql" with { type: "text" };
 import memory001 from "./migrations/001-memory.sql" with { type: "text" };
 import seher002 from "./migrations/002-seher-config.sql" with { type: "text" };
+import skillsRealign003 from "./migrations/003-skills-realign.sql" with { type: "text" };
 
 interface Migration {
   name: string;
@@ -19,6 +20,7 @@ const MIGRATIONS: readonly Migration[] = [
   { name: "000-init", sql: init000 },
   { name: "001-memory", sql: memory001 },
   { name: "002-seher-config", sql: seher002 },
+  { name: "003-skills-realign", sql: skillsRealign003 },
 ];
 
 export interface OpenOptions {
