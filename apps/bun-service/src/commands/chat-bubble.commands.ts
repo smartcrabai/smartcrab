@@ -11,8 +11,8 @@
  * adapter error as an assistant bubble so the chat stays responsive.
  */
 
-import { llmRegistry } from "../adapters/llm/registry.ts";
 import { getSharedMemoryStore } from "../memory/shared-store.ts";
+import { route } from "../router.ts";
 
 interface ChatBubble {
   id: string;
@@ -52,19 +52,12 @@ const handlers = {
     };
     bubbles.push(userBubble);
 
-    const adapter = llmRegistry.default();
     let assistantText: string;
-    if (!adapter) {
-      assistantText = "(no LLM adapter registered — set ANTHROPIC_API_KEY and restart)";
-    } else {
-      try {
-        const response = await adapter.complete({
-          messages: [{ role: "user", content }],
-        });
-        assistantText = response.content;
-      } catch (err) {
-        assistantText = `LLM error: ${(err as Error).message}`;
-      }
+    try {
+      const result = await route({ prompt: content });
+      assistantText = result.text;
+    } catch (err) {
+      assistantText = `LLM error: ${(err as Error).message}`;
     }
     const assistantBubble: ChatBubble = {
       id: crypto.randomUUID(),
