@@ -15,7 +15,7 @@ import type {
   LlmToolDefinition,
 } from "../types.ts";
 import {
-  DefaultClaudeSdkClient,
+  ClaudeMessagesSdkClient,
   type ClaudeSdkClient,
   type ClaudeSdkRequest,
 } from "./sdk.ts";
@@ -49,7 +49,7 @@ export class ClaudeLlmAdapter implements LlmAdapter {
   private readonly model: string;
 
   constructor(opts: ClaudeLlmAdapterOptions = {}) {
-    this.sdk = opts.sdk ?? new DefaultClaudeSdkClient();
+    this.sdk = opts.sdk ?? new ClaudeMessagesSdkClient();
     this.tools = opts.tools ?? defaultClaudeTools();
     this.model = opts.model ?? DEFAULT_MODEL;
   }
