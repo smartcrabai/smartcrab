@@ -195,17 +195,54 @@ const executionLogs: Handler<
 > = async (params, ctx) => await ctx.db.listExecutionLogs(params.execution_id);
 
 // ---------------------------------------------------------------------------
+// Module-level context injection
+// ---------------------------------------------------------------------------
+//
+// The dispatcher invokes handlers as `(params)` only, so handlers that need
+// a `CommandContext` resolve it from a singleton set at startup via
+// `configurePipelineCommands(ctx)`. Tests can call this to inject mocks.
+
+let currentContext: CommandContext | null = null;
+
+export function configurePipelineCommands(ctx: CommandContext): void {
+  currentContext = ctx;
+}
+
+function requireContext(): CommandContext {
+  if (!currentContext) {
+    throw new Error(
+      "pipeline.commands not configured: call configurePipelineCommands(ctx) at startup",
+    );
+  }
+  return currentContext;
+}
+
+// ---------------------------------------------------------------------------
 // Default export: the RPC handler map
 // ---------------------------------------------------------------------------
 
 const handlers = {
-  "pipeline.list": pipelineList,
-  "pipeline.get": pipelineGet,
-  "pipeline.save": pipelineSave,
-  "pipeline.delete": pipelineDelete,
-  "pipeline.execute": pipelineExecute,
-  "execution.history": executionHistory,
-  "execution.logs": executionLogs,
+  "pipeline.list": (params: void) => pipelineList(params, requireContext()),
+  "pipeline.get": (params: { id: string }) => pipelineGet(params, requireContext()),
+  "pipeline.save": (params: {
+    id?: string;
+    name: string;
+    description?: string | null;
+    yaml_content: string;
+    max_loop_count?: number;
+    is_active?: boolean;
+  }) => pipelineSave(params, requireContext()),
+  "pipeline.delete": (params: { id: string }) =>
+    pipelineDelete(params, requireContext()),
+  "pipeline.execute": (params: {
+    id: string;
+    trigger_type?: string;
+    trigger_data?: string | null;
+  }) => pipelineExecute(params, requireContext()),
+  "execution.history": (params: { pipeline_id?: string; limit?: number }) =>
+    executionHistory(params, requireContext()),
+  "execution.logs": (params: { execution_id: string }) =>
+    executionLogs(params, requireContext()),
 } as const;
 
 export type PipelineCommandMap = typeof handlers;

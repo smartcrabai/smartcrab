@@ -92,8 +92,17 @@
         // MARK: - Pipelines
 
         public func pipelineList() async throws -> [PipelineSummary] {
-            try await fallback.pipelineList()
+            struct WirePipeline: Decodable {
+                let id: String
+                let name: String
+                let description: String?
+                let isActive: Bool
+            }
+            let rows: [WirePipeline] = try await call(method: "pipeline.list", params: EmptyParams())
+            return rows.map { PipelineSummary(id: $0.id, name: $0.name, description: $0.description, isActive: $0.isActive) }
         }
+
+        private struct EmptyParams: Encodable {}
 
         public func pipelineGet(id: String) async throws -> PipelineDetail {
             try await fallback.pipelineGet(id: id)
@@ -193,7 +202,9 @@
                 }
             }
 
-            let decoded = try JSONDecoder().decode(RPCResponseEnvelope<R>.self, from: raw)
+            let decoder = JSONDecoder()
+            decoder.keyDecodingStrategy = .convertFromSnakeCase
+            let decoded = try decoder.decode(RPCResponseEnvelope<R>.self, from: raw)
             if let err = decoded.error { throw err }
             guard let value = decoded.result else { throw BunServiceError.malformedResponse }
             return value
