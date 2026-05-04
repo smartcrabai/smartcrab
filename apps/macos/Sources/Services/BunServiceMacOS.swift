@@ -22,6 +22,36 @@
 
         public init() {}
 
+        /// Spawn the user's login shell once and capture `$PATH` so the
+        /// bun-service subprocess sees the same paths the user gets in a
+        /// terminal (mise, Homebrew, ~/.local/bin, etc.). Memoised because
+        /// shell startup costs are non-trivial.
+        private static let loginPathCache: String? = computeLoginShellPath()
+
+        private static func loginShellPath() -> String? {
+            loginPathCache
+        }
+
+        private static func computeLoginShellPath() -> String? {
+            let shell = ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
+            let p = Process()
+            p.executableURL = URL(fileURLWithPath: shell)
+            p.arguments = ["-lc", "printf %s \"$PATH\""]
+            let out = Pipe()
+            p.standardOutput = out
+            p.standardError = Pipe()
+            do {
+                try p.run()
+                p.waitUntilExit()
+                guard p.terminationStatus == 0 else { return nil }
+                let data = out.fileHandleForReading.readDataToEndOfFile()
+                let path = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+                return (path?.isEmpty == false) ? path : nil
+            } catch {
+                return nil
+            }
+        }
+
         // MARK: - Lifecycle
 
         public func start() async throws {
@@ -34,6 +64,17 @@
                 process.standardInput = stdinPipe
                 process.standardOutput = stdoutPipe
                 process.standardError = stderrPipe
+
+                // GUI-launched apps (Finder, Launchpad) inherit a minimal
+                // PATH that doesn't contain Homebrew, npm-global, mise, etc.,
+                // so the embedded bun-service can't `Bun.which("claude")`
+                // when seher-ts dispatches to the Claude Code CLI.
+                // Capture the user's login-shell PATH and forward it.
+                var env = ProcessInfo.processInfo.environment
+                if let loginPath = Self.loginShellPath() {
+                    env["PATH"] = loginPath
+                }
+                process.environment = env
 
                 stdoutPipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
                     let chunk = handle.availableData
