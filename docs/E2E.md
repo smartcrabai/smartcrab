@@ -75,7 +75,15 @@ and captures a screenshot per tab into `.build/preview-screenshots/`:
 ```
 
 If the matching iOS Simulator runtime isn't installed yet, run
-`xcodebuild -downloadPlatform iOS` once.
+`xcodebuild -downloadPlatform iOS` once. The first boot of a freshly
+downloaded runtime takes 2-3 min for data migration; the script waits
+for `simctl bootstatus -b` to confirm the device is ready before
+installing the app.
+
+Pin a specific runtime with the second arg, e.g.
+`./scripts/e2e/preview-sim.sh "iPhone 17 Pro" 26-4`. When multiple
+runtimes are installed (e.g. iOS 18 + iOS 26.x) the script otherwise
+picks the alphabetically-largest match — which is the newest iOS.
 
 For interactive driving (tapping into a specific tab from an AI agent),
 keep `serve-sim` running and issue `npx serve-sim gesture tap <x> <y>`
