@@ -33,6 +33,14 @@ interface MemoryCommandDeps {
   llm?: SummarizerLlm;
 }
 
+let sharedSummarizerLlm: SummarizerLlm | null = null;
+
+/** Wire the SummarizerLlm used by `memory.summarize` and the auto-learn loop.
+ *  server.ts calls this with a seher-backed adapter at boot. */
+export function configureMemorySummarizer(llm: SummarizerLlm | null): void {
+  sharedSummarizerLlm = llm;
+}
+
 export function createMemoryCommands(deps: MemoryCommandDeps = {}): CommandMap {
   // Resolve the store lazily so server.ts can call `rebindSharedToDb(...)` AFTER
   // this module is loaded by the dispatcher. Pass `deps.store` to pin a specific
@@ -41,6 +49,7 @@ export function createMemoryCommands(deps: MemoryCommandDeps = {}): CommandMap {
   const store = new Proxy({} as MemoryStore, {
     get: (_, key: string) => (getStore() as unknown as Record<string, unknown>)[key],
   });
+  const getLlm = (): SummarizerLlm | null => deps.llm ?? sharedSummarizerLlm;
 
   return {
     "memory.add": (params) => {
@@ -70,14 +79,15 @@ export function createMemoryCommands(deps: MemoryCommandDeps = {}): CommandMap {
     },
 
     "memory.summarize": async (params) => {
-      if (!deps.llm) {
+      const llm = getLlm();
+      if (!llm) {
         throw new Error("memory.summarize requires an LLM dependency");
       }
       const p = (params ?? {}) as SummarizeParams;
       const entries = p.ids
         ? store.getByIds(p.ids)
         : store.getRecent(p.windowSize ?? 50);
-      return summarize(entries, deps.llm);
+      return summarize(entries, llm);
     },
   };
 }

@@ -159,6 +159,35 @@ async function main(): Promise<void> {
   // content), so we can now bind the shared store to the main app DB.
   rebindSharedToDb(db);
 
+  // Wire seher-ts as the summarizer LLM and run the hermes-style learn
+  // loop every 30 minutes. Dynamic-import for the same circular-init
+  // reason chat-bubble / discord / pipeline.execute use it.
+  void import("./commands/memory.commands").then(({ configureMemorySummarizer }) => {
+    configureMemorySummarizer({
+      async complete(prompt: string) {
+        const r = await routePrompt({ prompt });
+        return r.text;
+      },
+    });
+  });
+  setInterval(async () => {
+    try {
+      const { runLearnLoop } = await import("./memory/learner");
+      const { getSharedMemoryStore } = await import("./memory/shared-store");
+      const result = await runLearnLoop({
+        store: getSharedMemoryStore(),
+        llm: { async complete(prompt: string) { const r = await routePrompt({ prompt }); return r.text; } },
+        windowSize: 50,
+        minEntries: 5,
+      });
+      if (result.summarized > 0) {
+        log(`learn-loop: summarized ${result.summarized} entries`);
+      }
+    } catch (err) {
+      log("learn-loop error:", err);
+    }
+  }, 30 * 60_000);
+
   await ensureAdaptersLoaded();
 
   const decoder = new TextDecoder();
