@@ -1,4 +1,6 @@
-import { setCronStore } from "./commands/cron.commands";
+import { setCronStore, setCronJobCallback } from "./commands/cron.commands";
+import { bootstrapCronRunner } from "./cron/runner";
+import { CronScheduler } from "./cron/scheduler";
 import { configurePipelineCommands } from "./commands/pipeline.commands";
 import { configureSettingsCommands } from "./commands/settings.commands";
 import { configureSkillsCommands } from "./commands/skills.commands";
@@ -100,7 +102,25 @@ async function main(): Promise<void> {
   });
   configureSettingsCommands({ db });
 
-  setCronStore(new SqliteCronStore(db));
+  const cronStore = new SqliteCronStore(db);
+  setCronStore(cronStore);
+  // Cron firing → pipeline.execute. Runs in the same process so the executor's
+  // ExecutorDeps (with the seher LLM bridge) is available.
+  const cronCallback = (job: { id: string; pipeline_id: string }) => async () => {
+    cronStore.markRun(job.id, new Date().toISOString());
+    try {
+      const { default: pipelineHandlers } = await import("./commands/pipeline.commands");
+      await pipelineHandlers["pipeline.execute"]({ id: job.pipeline_id });
+    } catch (err) {
+      console.error(`[cron] job ${job.id} pipeline.execute failed:`, err);
+    }
+  };
+  setCronJobCallback(cronCallback);
+  bootstrapCronRunner({
+    store: cronStore,
+    scheduler: new CronScheduler(),
+    callback: cronCallback,
+  });
   configureSkillsCommands({ registry: new SkillsRegistry({ db: new BunSqliteSkillsDb(db) }) });
 
   // Dynamic import: chat-bubble.commands → router → llmRegistry proxy
