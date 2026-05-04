@@ -209,15 +209,26 @@
         }
 
         public func cronCreate(pipelineId: String, schedule: String) async throws -> CronJob {
-            try await fallback.cronCreate(pipelineId: pipelineId, schedule: schedule)
+            struct Params: Encodable, Sendable {
+                let pipelineId: String
+                let schedule: String
+            }
+            return try await call(method: "cron.create", params: Params(pipelineId: pipelineId, schedule: schedule))
         }
 
         public func cronUpdate(id: String, schedule: String?, isActive: Bool?) async throws -> CronJob {
-            try await fallback.cronUpdate(id: id, schedule: schedule, isActive: isActive)
+            struct Params: Encodable, Sendable {
+                let id: String
+                let schedule: String?
+                let isActive: Bool?
+            }
+            return try await call(method: "cron.update", params: Params(id: id, schedule: schedule, isActive: isActive))
         }
 
         public func cronDelete(id: String) async throws {
-            try await fallback.cronDelete(id: id)
+            struct Params: Encodable, Sendable { let id: String }
+            struct WireResp: Decodable { let ok: Bool? }
+            let _: WireResp = try await call(method: "cron.delete", params: Params(id: id))
         }
 
         // MARK: - Skills
@@ -227,15 +238,22 @@
         }
 
         public func skillAutoGenerate(pipelineId: String) async throws -> SkillInfo {
-            try await fallback.skillAutoGenerate(pipelineId: pipelineId)
+            struct Params: Encodable, Sendable { let pipelineId: String }
+            return try await call(method: "skill.auto-generate", params: Params(pipelineId: pipelineId))
         }
 
         public func skillInvoke(skillId: String, input: String) async throws -> SkillInvocationResult {
-            try await fallback.skillInvoke(skillId: skillId, input: input)
+            struct Params: Encodable, Sendable {
+                let id: String
+                let input: String
+            }
+            return try await call(method: "skill.invoke", params: Params(id: skillId, input: input))
         }
 
         public func skillDelete(id: String) async throws {
-            try await fallback.skillDelete(id: id)
+            struct Params: Encodable, Sendable { let id: String }
+            struct WireResp: Decodable { let ok: Bool? }
+            let _: WireResp = try await call(method: "skill.delete", params: Params(id: id))
         }
 
         // MARK: - Execution history
