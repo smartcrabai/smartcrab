@@ -59,24 +59,38 @@
             try await call(method: "system.ping", params: PingRequestEnvelope(nonce: nonce))
         }
 
-        // MARK: - Settings (TODO: real wire-format wiring)
+        // MARK: - Settings
 
         public func settingsLoad() async throws -> SeherConfig {
-            try await fallback.settingsLoad()
+            let loaded: SeherConfig? = try await callOptional(method: "settings.app-load", params: EmptyParams())
+            return loaded ?? SeherConfig()
         }
 
         public func settingsSave(_ config: SeherConfig) async throws {
-            try await fallback.settingsSave(config)
+            struct Params: Encodable, Sendable { let config: SeherConfig }
+            struct Result: Decodable, Sendable { let saved: Bool }
+            let _: Result = try await call(method: "settings.app-save", params: Params(config: config))
         }
 
         // MARK: - Adapters
 
         public func adapterLoad(adapterId: String) async throws -> DiscordAdapterConfig {
-            try await fallback.adapterLoad(adapterId: adapterId)
+            struct Params: Encodable, Sendable { let adapterId: String }
+            let loaded: DiscordAdapterConfig? = try await callOptional(method: "settings.adapter-load", params: Params(adapterId: adapterId))
+            return loaded ?? DiscordAdapterConfig()
         }
 
         public func adapterSave(adapterId: String, config: DiscordAdapterConfig) async throws {
-            try await fallback.adapterSave(adapterId: adapterId, config: config)
+            struct Params: Encodable, Sendable {
+                let adapterId: String
+                let adapterType: String
+                let config: DiscordAdapterConfig
+            }
+            struct Result: Decodable, Sendable { let saved: Bool }
+            let _: Result = try await call(
+                method: "settings.adapter-save",
+                params: Params(adapterId: adapterId, adapterType: adapterId, config: config)
+            )
         }
 
         // MARK: - Chat
@@ -191,9 +205,18 @@
         }
 
         private func call<P: Encodable & Sendable, R: Decodable & Sendable>(method: String, params: P) async throws -> R {
+            guard let value: R = try await callOptional(method: method, params: params) else {
+                throw BunServiceError.malformedResponse
+            }
+            return value
+        }
+
+        private func callOptional<P: Encodable & Sendable, R: Decodable & Sendable>(method: String, params: P) async throws -> R? {
             let id = nextId()
             let envelope = RPCRequestEnvelope(id: id, method: method, params: params)
-            var data = try JSONEncoder().encode(envelope)
+            let encoder = JSONEncoder()
+            encoder.keyEncodingStrategy = .convertToSnakeCase
+            var data = try encoder.encode(envelope)
             data.append(0x0A)
 
             let raw: Data = try await withCheckedThrowingContinuation { continuation in
@@ -221,8 +244,7 @@
             decoder.keyDecodingStrategy = .convertFromSnakeCase
             let decoded = try decoder.decode(RPCResponseEnvelope<R>.self, from: raw)
             if let err = decoded.error { throw err }
-            guard let value = decoded.result else { throw BunServiceError.malformedResponse }
-            return value
+            return decoded.result
         }
 
         private func ingest(_ chunk: Data) {
