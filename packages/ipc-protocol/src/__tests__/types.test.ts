@@ -300,4 +300,17 @@ describe("RpcMethods surface", () => {
     void _check;
     expect(true).toBe(true);
   });
+
+  test("Swift generator catalog covers every RPC method", async () => {
+    const swiftPath = `${import.meta.dir}/../../../../apps/macos/Sources/Core/Generated/RPCTypes.swift`;
+    const swiftSource = await Bun.file(swiftPath).text();
+    for (const method of RPC_METHOD_NAMES) {
+      const base = method
+        .split(/[.\-]/)
+        .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+        .join("");
+      expect(swiftSource).toContain(`public struct ${base}Params`);
+      expect(swiftSource).toContain(`public struct ${base}Result`);
+    }
+  });
 });
