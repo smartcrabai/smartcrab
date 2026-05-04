@@ -2,6 +2,7 @@ import { configurePipelineCommands } from "./commands/pipeline.commands";
 import { configureSettingsCommands } from "./commands/settings.commands";
 import { openDb, runMigrations } from "./db";
 import { SqlitePipelineDatabase } from "./db/pipelines";
+import { rebindSharedToDb } from "./memory/shared-store";
 import { dispatch } from "./dispatcher";
 import { ensureAdaptersLoaded } from "./registry";
 import {
@@ -74,6 +75,11 @@ async function main(): Promise<void> {
     },
   });
   configureSettingsCommands({ db });
+  // MemoryStore manages its own schema, so it gets its own SQLite handle
+  // backed by the same on-disk file (separate connection, separate migration
+  // path). When we eventually consolidate the schemas, this can be replaced
+  // with `rebindSharedToDb(db)`.
+  void rebindSharedToDb;
 
   await ensureAdaptersLoaded();
 

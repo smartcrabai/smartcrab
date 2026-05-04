@@ -12,12 +12,20 @@
  */
 
 import { llmRegistry } from "../adapters/llm/registry.ts";
+import { getSharedMemoryStore } from "../memory/shared-store.ts";
 
 interface ChatBubble {
   id: string;
   role: "user" | "assistant" | "system";
   content: string;
   createdAt: string;
+}
+
+/// Self-learning hook is opt-out. Tests can flip this off via setMemoryHookEnabled(false).
+let memoryHookEnabled = true;
+
+export function setMemoryHookEnabled(enabled: boolean): void {
+  memoryHookEnabled = enabled;
 }
 
 const bubbles: ChatBubble[] = [
@@ -65,6 +73,21 @@ const handlers = {
       createdAt: new Date().toISOString(),
     };
     bubbles.push(assistantBubble);
+
+    // hermes-style self-learning hook: record the turn into the shared memory
+    // store so a later memory.summarize call can distil reusable knowledge.
+    if (memoryHookEnabled) {
+      try {
+        getSharedMemoryStore().add({
+          kind: "chat",
+          content: `user: ${content}\nassistant: ${assistantText}`,
+          metadata: { userBubbleId: userBubble.id, assistantBubbleId: assistantBubble.id },
+        });
+      } catch (err) {
+        console.error("[chat-bubble] memory.add failed:", err);
+      }
+    }
+
     return assistantBubble;
   },
 } as const;
