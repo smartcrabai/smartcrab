@@ -55,6 +55,32 @@ interface SdkModule {
   }) => AsyncIterable<SdkEvent>;
 }
 
+/**
+ * Locate the Claude Code CLI on the host so the agent SDK can spawn it.
+ *
+ * The SDK normally derives `pathToClaudeCodeExecutable` from
+ * `import.meta.url + "../cli.js"`, which resolves to a bunfs virtual path
+ * (`/$bunfs/root/cli.js`) inside a `bun build --compile` binary and fails
+ * to spawn. Resolving against the host PATH is the canonical fix and also
+ * keeps the user's Claude Pro / Max subscription (the API-key path on
+ * `@anthropic-ai/sdk` does not).
+ *
+ * Override order:
+ *   1. `SMARTCRAB_CLAUDE_PATH` env var (explicit pin)
+ *   2. `Bun.which("claude")` — picks up `~/.local/bin/claude`,
+ *      Homebrew, npm-global, etc.
+ */
+function resolveClaudeExecutable(): string {
+  const override = process.env.SMARTCRAB_CLAUDE_PATH;
+  if (override) return override;
+  const found = Bun.which("claude");
+  if (found) return found;
+  throw new Error(
+    "Claude Code CLI not found in PATH. Install via `npm i -g @anthropic-ai/claude-code` " +
+      "or set SMARTCRAB_CLAUDE_PATH to the absolute path of the binary.",
+  );
+}
+
 export class DefaultClaudeSdkClient implements ClaudeSdkClient {
   async query(request: ClaudeSdkRequest): Promise<ClaudeSdkResponse> {
     let sdk: SdkModule;
@@ -74,6 +100,8 @@ export class DefaultClaudeSdkClient implements ClaudeSdkClient {
       );
     }
 
+    const pathToClaudeCodeExecutable = resolveClaudeExecutable();
+
     let text = "";
     const toolUses: Array<{ id: string; name: string; input: unknown }> = [];
 
@@ -84,6 +112,7 @@ export class DefaultClaudeSdkClient implements ClaudeSdkClient {
         system: request.system,
         tools: request.tools,
         maxTokens: request.maxTokens,
+        pathToClaudeCodeExecutable,
       },
     })) {
       if (request.signal?.aborted) {
@@ -109,85 +138,3 @@ function renderPrompt(request: ClaudeSdkRequest): string {
     .join("\n\n");
 }
 
-/**
- * Subprocess-free Messages-API client built on `@anthropic-ai/sdk`.
- *
- * Unlike DefaultClaudeSdkClient (which spawns the Claude Code CLI and is
- * incompatible with `bun build --compile`'s bunfs virtual filesystem), this
- * client talks to https://api.anthropic.com directly over HTTPS so it works
- * inside the compiled standalone binary.
- *
- * Reads the API key from `ANTHROPIC_API_KEY` (or `apiKey` on construction).
- */
-interface AnthropicMessageBlock {
-  type: string;
-  text?: string;
-  id?: string;
-  name?: string;
-  input?: unknown;
-}
-
-interface AnthropicMessage {
-  content: AnthropicMessageBlock[];
-}
-
-interface AnthropicSdkInstance {
-  messages: {
-    create(params: {
-      model: string;
-      system?: string;
-      messages: ReadonlyArray<{ role: "user" | "assistant"; content: string }>;
-      tools?: unknown;
-      max_tokens: number;
-    }): Promise<AnthropicMessage>;
-  };
-}
-
-interface AnthropicConstructor {
-  new (opts: { apiKey: string }): AnthropicSdkInstance;
-}
-
-const DEFAULT_MODEL = "claude-sonnet-4-7";
-const DEFAULT_MAX_TOKENS = 4096;
-
-export class ClaudeMessagesSdkClient implements ClaudeSdkClient {
-  constructor(private readonly opts: { apiKey?: string } = {}) {}
-
-  async query(request: ClaudeSdkRequest): Promise<ClaudeSdkResponse> {
-    const apiKey = this.opts.apiKey ?? process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      throw new Error(
-        "ANTHROPIC_API_KEY is not set; configure it in Settings or as an environment variable.",
-      );
-    }
-
-    let mod: { default: AnthropicConstructor };
-    try {
-      mod = (await import("@anthropic-ai/sdk")) as unknown as { default: AnthropicConstructor };
-    } catch (cause) {
-      throw new Error("@anthropic-ai/sdk is not installed.", { cause: cause as Error });
-    }
-
-    const Anthropic = mod.default;
-    const client = new Anthropic({ apiKey });
-
-    const message = await client.messages.create({
-      model: request.model ?? DEFAULT_MODEL,
-      system: request.system,
-      messages: request.messages.map((m) => ({ role: m.role, content: m.content })),
-      tools: request.tools,
-      max_tokens: request.maxTokens ?? DEFAULT_MAX_TOKENS,
-    });
-
-    let text = "";
-    const toolUses: Array<{ id: string; name: string; input: unknown }> = [];
-    for (const block of message.content) {
-      if (block.type === "text" && typeof block.text === "string") {
-        text += block.text;
-      } else if (block.type === "tool_use" && block.id && block.name) {
-        toolUses.push({ id: block.id, name: block.name, input: block.input });
-      }
-    }
-    return { text, toolUses: toolUses.length > 0 ? toolUses : undefined };
-  }
-}
