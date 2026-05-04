@@ -84,6 +84,13 @@ async function main(): Promise<void> {
   setCronStore(new SqliteCronStore(db));
   configureSkillsCommands({ registry: new SkillsRegistry({ db: new BunSqliteSkillsDb(db) }) });
 
+  // Dynamic import: chat-bubble.commands → router → llmRegistry proxy
+  // triggers a circular init when statically imported here, same as the
+  // discord adapter wiring above.
+  void import("./commands/chat-bubble.commands").then(({ configureChatBubbleCommands }) => {
+    configureChatBubbleCommands({ db });
+  });
+
   // Have the Discord adapter read its config from the chat_adapter_config
   // table (populated by the SwiftUI Settings tab via settings.adapter-save)
   // instead of the env-only literal default.
