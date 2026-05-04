@@ -1,4 +1,5 @@
 import { MemoryStore, type NewMemoryEntry } from "../memory/store.ts";
+import { getSharedMemoryStore } from "../memory/shared-store.ts";
 import { summarize, type SummarizerLlm } from "../memory/summarizer.ts";
 
 // Inline CommandMap shape — kept compatible with the Unit 4 contract in
@@ -33,7 +34,13 @@ interface MemoryCommandDeps {
 }
 
 export function createMemoryCommands(deps: MemoryCommandDeps = {}): CommandMap {
-  const store = deps.store ?? new MemoryStore();
+  // Resolve the store lazily so server.ts can call `rebindSharedToDb(...)` AFTER
+  // this module is loaded by the dispatcher. Pass `deps.store` to pin a specific
+  // instance (used by tests).
+  const getStore = (): MemoryStore => deps.store ?? getSharedMemoryStore();
+  const store = new Proxy({} as MemoryStore, {
+    get: (_, key: string) => (getStore() as unknown as Record<string, unknown>)[key],
+  });
 
   return {
     "memory.add": (params) => {
