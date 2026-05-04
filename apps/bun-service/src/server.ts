@@ -115,11 +115,10 @@ async function main(): Promise<void> {
     });
   });
 
-  // MemoryStore manages its own schema, so it gets its own SQLite handle
-  // backed by the same on-disk file (separate connection, separate migration
-  // path). When we eventually consolidate the schemas, this can be replaced
-  // with `rebindSharedToDb(db)`.
-  void rebindSharedToDb;
+  // Migration 005-memory-realign aligned the on-disk memory schema with
+  // MemoryStore's expected shape (id INTEGER, content/metadata + FTS5 on
+  // content), so we can now bind the shared store to the main app DB.
+  rebindSharedToDb(db);
 
   await ensureAdaptersLoaded();
 
