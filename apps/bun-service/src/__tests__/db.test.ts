@@ -89,42 +89,34 @@ describe("db", () => {
 
   test("memory FTS5 trigger keeps index in sync", () => {
     const db = openDb({ path: ":memory:" });
-    const now = Date.now();
 
-    db.query(
-      "INSERT INTO memory (id, kind, body, tags, created_at) VALUES (?, ?, ?, ?, ?)",
-    ).run("m1", "note", "the quick brown fox", "lex", now);
+    db.query("INSERT INTO memory (kind, content) VALUES (?, ?)").run("note", "the quick brown fox");
 
     const hits = db
-      .query<{ id: string }, [string]>(
-        `SELECT m.id FROM memory_fts f JOIN memory m ON m.rowid = f.rowid WHERE memory_fts MATCH ?`,
+      .query<{ id: number }, [string]>(
+        `SELECT m.id FROM memory_fts f JOIN memory m ON m.id = f.rowid WHERE memory_fts MATCH ?`,
       )
       .all("quick");
-    expect(hits.map((h) => h.id)).toEqual(["m1"]);
+    expect(hits.map((h) => h.id)).toEqual([1]);
 
-    db.query("UPDATE memory SET body = ? WHERE id = ?").run(
-      "lazy dog jumps",
-      "m1",
-    );
+    db.query("UPDATE memory SET content = ? WHERE id = ?").run("lazy dog jumps", 1);
     const stale = db
-      .query<{ id: string }, [string]>(
-        `SELECT m.id FROM memory_fts f JOIN memory m ON m.rowid = f.rowid WHERE memory_fts MATCH ?`,
+      .query<{ id: number }, [string]>(
+        `SELECT m.id FROM memory_fts f JOIN memory m ON m.id = f.rowid WHERE memory_fts MATCH ?`,
       )
       .all("quick");
     expect(stale).toEqual([]);
 
     const fresh = db
-      .query<{ id: string }, [string]>(
-        `SELECT m.id FROM memory_fts f JOIN memory m ON m.rowid = f.rowid WHERE memory_fts MATCH ?`,
+      .query<{ id: number }, [string]>(
+        `SELECT m.id FROM memory_fts f JOIN memory m ON m.id = f.rowid WHERE memory_fts MATCH ?`,
       )
       .all("lazy");
-    expect(fresh.map((h) => h.id)).toEqual(["m1"]);
+    expect(fresh.map((h) => h.id)).toEqual([1]);
 
-    db.query("DELETE FROM memory WHERE id = ?").run("m1");
+    db.query("DELETE FROM memory WHERE id = ?").run(1);
     const gone = db
-      .query<{ rowid: number }, []>(
-        "SELECT rowid FROM memory_fts WHERE memory_fts MATCH 'lazy'",
-      )
+      .query<{ rowid: number }, []>("SELECT rowid FROM memory_fts WHERE memory_fts MATCH 'lazy'")
       .all();
     expect(gone).toEqual([]);
 
