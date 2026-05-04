@@ -73,10 +73,29 @@ async function main(): Promise<void> {
 
   const db = openDb();
   runMigrations(db);
+  // Pipeline llm_call nodes route through the seher SDK so the same
+  // multi-provider auto-resolution that powers chat-bubble drives
+  // pipeline execution. Register the bridge under every provider id we
+  // care about — the actual agent is picked by seher at run time based
+  // on the user's settings.
+  const { route: routePrompt } = await import("./router");
+  const seherLlmAdapter = {
+    async executePrompt(req: { prompt: string; timeoutSecs?: number }) {
+      const result = await routePrompt({ prompt: req.prompt });
+      return { content: result.text };
+    },
+  };
+  const llmRegistry = new Map<string, typeof seherLlmAdapter>();
+  for (const id of ["seher", "default", "claude", "kimi", "copilot", "codex"]) {
+    llmRegistry.set(id, seherLlmAdapter);
+  }
+
   configurePipelineCommands({
     db: new SqlitePipelineDatabase(db),
     deps: {
       fetch: globalThis.fetch,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      llmRegistry: llmRegistry as any,
     },
   });
   configureSettingsCommands({ db });

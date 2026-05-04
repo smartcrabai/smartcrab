@@ -98,18 +98,24 @@ export class SqlitePipelineDatabase implements PipelineDatabase {
   deletePipeline(id: string): void {
     this.db.query("DELETE FROM pipelines WHERE id = ?1").run(id);
   }
-  insertExecution(_row: {
+  insertExecution(row: {
     id: string;
     pipeline_id: string;
     trigger_type: string;
     trigger_data: string | null;
-    status: string;
-    started_at: string;
   }): void {
-    throw notImplemented("insertExecution");
+    const startedAtSec = Math.floor(Date.now() / 1000);
+    this.db
+      .query(
+        "INSERT INTO pipeline_executions (id, pipeline_id, trigger_type, trigger_data, status, started_at) VALUES (?1, ?2, ?3, ?4, 'running', ?5)",
+      )
+      .run(row.id, row.pipeline_id, row.trigger_type, row.trigger_data, startedAtSec);
   }
-  finalizeExecution(_id: string, _status: string, _errorMessage?: string): void {
-    throw notImplemented("finalizeExecution");
+  finalizeExecution(id: string, status: string, errorMessage?: string): void {
+    const endedAtSec = Math.floor(Date.now() / 1000);
+    this.db
+      .query("UPDATE pipeline_executions SET status = ?2, ended_at = ?3, error = ?4 WHERE id = ?1")
+      .run(id, status, endedAtSec, errorMessage ?? null);
   }
   listExecutions(opts: { pipelineId?: string; limit: number }): ExecutionRow[] {
     const sql = opts.pipelineId
