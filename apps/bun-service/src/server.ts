@@ -1,4 +1,5 @@
 import { configurePipelineCommands } from "./commands/pipeline.commands";
+import { configureSettingsCommands } from "./commands/settings.commands";
 import { openDb, runMigrations } from "./db";
 import { SqlitePipelineDatabase } from "./db/pipelines";
 import { dispatch } from "./dispatcher";
@@ -72,6 +73,7 @@ async function main(): Promise<void> {
       fetch: globalThis.fetch,
     },
   });
+  configureSettingsCommands({ db });
 
   await ensureAdaptersLoaded();
 
