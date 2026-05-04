@@ -123,7 +123,7 @@
         // MARK: - Cron
 
         public func cronList() async throws -> [CronJob] {
-            try await fallback.cronList()
+            try await call(method: "cron.list", params: EmptyParams())
         }
 
         public func cronCreate(pipelineId: String, schedule: String) async throws -> CronJob {
@@ -141,7 +141,7 @@
         // MARK: - Skills
 
         public func skillList() async throws -> [SkillInfo] {
-            try await fallback.skillList()
+            try await call(method: "skill.list", params: EmptyParams())
         }
 
         public func skillAutoGenerate(pipelineId: String) async throws -> SkillInfo {
@@ -158,8 +158,23 @@
 
         // MARK: - Execution history
 
-        public func executionHistory(limit: Int, offset: Int, statusFilter: String?) async throws -> [ExecutionSummary] {
-            try await fallback.executionHistory(limit: limit, offset: offset, statusFilter: statusFilter)
+        public func executionHistory(limit: Int, offset _: Int, statusFilter _: String?) async throws -> [ExecutionSummary] {
+            struct Params: Encodable, Sendable { let limit: Int }
+            struct WireExecution: Decodable {
+                let id: String
+                let pipelineId: String
+                let pipelineName: String
+                let triggerType: String
+                let status: String
+                let startedAt: String
+                let completedAt: String?
+            }
+            let rows: [WireExecution] = try await call(method: "execution.history", params: Params(limit: limit))
+            return rows.map {
+                ExecutionSummary(id: $0.id, pipelineId: $0.pipelineId, pipelineName: $0.pipelineName,
+                                 triggerType: $0.triggerType, status: $0.status,
+                                 startedAt: $0.startedAt, completedAt: $0.completedAt)
+            }
         }
 
         public func executionDetail(id: String) async throws -> ExecutionDetail {
