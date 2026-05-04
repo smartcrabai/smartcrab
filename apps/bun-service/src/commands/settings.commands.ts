@@ -12,6 +12,11 @@
 
 import type { Database } from "bun:sqlite";
 
+import {
+  writeSeherSettings,
+  type InAppSeherConfig,
+} from "../seher/write-settings.ts";
+
 interface SettingsContext {
   db: Database;
 }
@@ -44,6 +49,13 @@ const handlers = {
     db.query(
       "INSERT INTO seher_config (id, config_json, updated_at) VALUES (1, ?1, ?2) ON CONFLICT(id) DO UPDATE SET config_json = excluded.config_json, updated_at = excluded.updated_at",
     ).run(json, now);
+    // Mirror the saved config out to a seher-ts-compatible settings.jsonc so
+    // `router.ts`'s SeherSDK reads it on the next chat.bubble-send.
+    try {
+      writeSeherSettings(params.config as InAppSeherConfig);
+    } catch (err) {
+      console.error("[settings] failed to write seher-settings.jsonc:", err);
+    }
     return { saved: true };
   },
   "settings.adapter-load": (params: { adapter_id: string }): unknown => {
