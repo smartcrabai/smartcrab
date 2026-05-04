@@ -62,18 +62,17 @@ prefixed `[bun-service]` and `[discord-listener]` to follow the round trip.
 The `SmartCrabPreview` scheme is iOS-only and uses a mock BunService so each
 SwiftUI view renders sample data without spawning a subprocess.
 
-```sh
-xcodebuild build \
-  -project apps/macos/SmartCrab.xcodeproj \
-  -scheme SmartCrabPreview \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
-  -derivedDataPath /tmp/dd-ios
+Use the helper script — it builds, installs, launches, attaches `serve-sim`,
+and captures a screenshot per tab into `.build/preview-screenshots/`:
 
-xcrun simctl boot 'iPhone 17 Pro' 2>/dev/null || true
-xcrun simctl install booted /tmp/dd-ios/Build/Products/Debug-iphonesimulator/SmartCrabPreview.app
-xcrun simctl launch booted ai.smartcrab.preview
-npx serve-sim --detach          # MJPEG stream + gesture API for AI agents
+```sh
+./scripts/e2e/preview-sim.sh "iPhone 17 Pro"
 ```
 
-Capture screenshots with `xcrun simctl io booted screenshot /tmp/<view>.png`
-or drive interactions through `serve-sim gesture …`.
+If the matching iOS Simulator runtime isn't installed yet, run
+`xcodebuild -downloadPlatform iOS` once.
+
+For interactive driving (tapping into a specific tab from an AI agent),
+keep `serve-sim` running and issue `npx serve-sim gesture tap <x> <y>`
+after the screenshot of the previous view. The MJPEG stream is on
+`http://localhost:3200` by default.
