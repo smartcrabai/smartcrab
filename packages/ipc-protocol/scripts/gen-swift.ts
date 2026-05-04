@@ -353,6 +353,40 @@ const TYPES: TypeDef[] = [
       { name: "groupMessage", type: t.bool },
     ],
   },
+  // Per-method request/response shapes used by SwiftUI ↔ Bun bridge.
+  {
+    kind: "struct",
+    name: "PingRequest",
+    doc: "Ping request payload.",
+    fields: [{ name: "nonce", type: t.string }],
+  },
+  {
+    kind: "struct",
+    name: "PingResponse",
+    doc: "Ping response payload (echoes nonce + server time).",
+    fields: [
+      { name: "nonce", type: t.string },
+      { name: "serverTime", type: t.date },
+    ],
+  },
+  {
+    kind: "struct",
+    name: "ChatSendRequest",
+    doc: "Send a chat message into a conversation.",
+    fields: [
+      { name: "conversationId", type: t.optional(t.string) },
+      { name: "body", type: t.string },
+    ],
+  },
+  {
+    kind: "struct",
+    name: "ChatSendResponse",
+    doc: "Result of a chat send (assistant reply + conversation id).",
+    fields: [
+      { name: "conversationId", type: t.string },
+      { name: "message", type: t.named("ChatMessage") },
+    ],
+  },
 ];
 
 // ─── Preamble (JSON-RPC envelope + JSONValue helper) ──────────────────────
@@ -429,7 +463,7 @@ public enum JSONRPCId: Codable, Sendable, Equatable {
 }
 
 /// JSON-RPC error payload.
-public struct JSONRPCError: Codable, Sendable, Equatable {
+public struct JSONRPCError: Codable, Sendable, Equatable, Error {
     public var code: Int
     public var message: String
     public var data: JSONValue?
@@ -439,6 +473,29 @@ public struct JSONRPCError: Codable, Sendable, Equatable {
         self.message = message
         self.data = data
     }
+}
+
+/// JSON-RPC 2.0 request envelope. Generic over the params payload.
+public struct RPCRequest<P: Encodable & Sendable>: Encodable, Sendable {
+    public let jsonrpc: String
+    public let id: String
+    public let method: String
+    public let params: P
+
+    public init(id: String, method: String, params: P) {
+        self.jsonrpc = JSONRPC_VERSION
+        self.id = id
+        self.method = method
+        self.params = params
+    }
+}
+
+/// JSON-RPC 2.0 response envelope. Generic over the result payload.
+public struct RPCResponse<R: Decodable & Sendable>: Decodable, Sendable {
+    public let jsonrpc: String
+    public let id: String?
+    public let result: R?
+    public let error: JSONRPCError?
 }
 `;
 
