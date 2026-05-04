@@ -13,17 +13,19 @@ public struct ChatView: View {
     @State private var isLoading: Bool = true
     @State private var isSending: Bool = false
     @State private var errorMessage: String?
+    @State private var needsProviderSetup: Bool = false
+    @AppStorage("smartcrab.welcomeDismissed") private var welcomeDismissed: Bool = false
 
     public init(service: BunServiceProtocol) {
         self.service = service
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
-            messageList
-            Divider()
-            ChatComposer(isSending: isSending) { content in
-                await send(content)
+        Group {
+            if needsProviderSetup && !welcomeDismissed {
+                welcomeView
+            } else {
+                chatView
             }
         }
         .navigationTitle("Chat")
@@ -31,6 +33,39 @@ public struct ChatView: View {
             .navigationBarTitleDisplayMode(.inline)
         #endif
             .task { await load() }
+    }
+
+    private var chatView: some View {
+        VStack(spacing: 0) {
+            messageList
+            Divider()
+            ChatComposer(isSending: isSending) { content in
+                await send(content)
+            }
+        }
+    }
+
+    private var welcomeView: some View {
+        VStack(spacing: 16) {
+            Spacer()
+            Image(systemName: "sparkles")
+                .font(.system(size: 48))
+                .foregroundStyle(Color.accentColor)
+            Text("Welcome to SmartCrab")
+                .font(.title2)
+                .fontWeight(.semibold)
+            Text("Open Settings (⌘6) and add an LLM provider so the chat can route through your Claude / Kimi / Copilot subscription.")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 420)
+            Button("Continue without setup") { welcomeDismissed = true }
+                .buttonStyle(.borderless)
+                .padding(.top, 8)
+            Spacer()
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     @ViewBuilder
@@ -93,6 +128,12 @@ public struct ChatView: View {
             messages = try await service.chatHistory()
         } catch {
             errorMessage = "Failed to load history: \(error.localizedDescription)"
+        }
+        // Show the welcome banner if the user hasn't configured any LLM
+        // providers yet. Best-effort: if settingsLoad fails for any reason,
+        // assume they're fine and don't block the chat.
+        if let cfg = try? await service.settingsLoad() {
+            needsProviderSetup = cfg.providers.isEmpty
         }
     }
 
