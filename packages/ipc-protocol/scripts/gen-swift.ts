@@ -389,6 +389,242 @@ const TYPES: TypeDef[] = [
   },
 ];
 
+// ─── Per-method Params / Result catalog ───────────────────────────────────
+// Mirrors `RpcMethods` in src/methods.ts. Each entry produces:
+//   `<MethodSwiftName>Params`  and  `<MethodSwiftName>Result`
+// where MethodSwiftName is the camelCased method id ("pipeline.list" → "PipelineList").
+//
+// Keep this aligned with src/methods.ts; the test in src/__tests__/types.test.ts
+// asserts coverage for every entry in RPC_METHOD_NAMES.
+
+interface MethodShape {
+  method: string;
+  params: StructField[];
+  result: StructField[];
+}
+
+const METHOD_SHAPES: MethodShape[] = [
+  {
+    method: "system.ping",
+    params: [{ name: "message", type: t.optional(t.string) }],
+    result: [
+      { name: "pong", type: t.bool },
+      { name: "receivedAt", type: t.date },
+    ],
+  },
+  {
+    method: "pipeline.list",
+    params: [{ name: "activeOnly", type: t.optional(t.bool) }],
+    result: [{ name: "pipelines", type: t.array(t.named("Pipeline")) }],
+  },
+  {
+    method: "pipeline.get",
+    params: [{ name: "id", type: t.string }],
+    result: [{ name: "pipeline", type: t.named("Pipeline") }],
+  },
+  {
+    method: "pipeline.save",
+    params: [
+      { name: "id", type: t.optional(t.string) },
+      { name: "name", type: t.string },
+      { name: "description", type: t.optional(t.string) },
+      { name: "yamlContent", type: t.string },
+      { name: "maxLoopCount", type: t.optional(t.int) },
+      { name: "isActive", type: t.optional(t.bool) },
+    ],
+    result: [{ name: "pipeline", type: t.named("Pipeline") }],
+  },
+  {
+    method: "pipeline.execute",
+    params: [
+      { name: "id", type: t.string },
+      { name: "triggerType", type: t.optional(t.named("ExecutionTrigger")) },
+      { name: "triggerData", type: t.optional(t.string) },
+    ],
+    result: [{ name: "executionId", type: t.string }],
+  },
+  {
+    method: "pipeline.delete",
+    params: [{ name: "id", type: t.string }],
+    result: [{ name: "deleted", type: t.bool }],
+  },
+  {
+    method: "execution.history",
+    params: [
+      { name: "pipelineId", type: t.optional(t.string) },
+      { name: "status", type: t.optional(t.named("ExecutionStatus")) },
+      { name: "limit", type: t.optional(t.int) },
+      { name: "offset", type: t.optional(t.int) },
+    ],
+    result: [{ name: "executions", type: t.array(t.named("Execution")) }],
+  },
+  {
+    method: "execution.logs",
+    params: [
+      { name: "executionId", type: t.string },
+      { name: "nodeId", type: t.optional(t.string) },
+      { name: "level", type: t.optional(t.named("LogLevel")) },
+      { name: "limit", type: t.optional(t.int) },
+    ],
+    result: [{ name: "logs", type: t.array(t.named("ExecutionLog")) }],
+  },
+  {
+    method: "cron.list",
+    params: [],
+    result: [{ name: "jobs", type: t.array(t.named("CronJob")) }],
+  },
+  {
+    method: "cron.create",
+    params: [
+      { name: "pipelineId", type: t.string },
+      { name: "schedule", type: t.string },
+      { name: "isActive", type: t.optional(t.bool) },
+    ],
+    result: [{ name: "job", type: t.named("CronJob") }],
+  },
+  {
+    method: "cron.update",
+    params: [
+      { name: "id", type: t.string },
+      { name: "schedule", type: t.optional(t.string) },
+      { name: "isActive", type: t.optional(t.bool) },
+    ],
+    result: [{ name: "job", type: t.named("CronJob") }],
+  },
+  {
+    method: "cron.delete",
+    params: [{ name: "id", type: t.string }],
+    result: [{ name: "deleted", type: t.bool }],
+  },
+  {
+    method: "cron.run-now",
+    params: [{ name: "id", type: t.string }],
+    result: [{ name: "executionId", type: t.string }],
+  },
+  {
+    method: "chat.send",
+    params: [
+      { name: "adapterId", type: t.string },
+      { name: "channelId", type: t.string },
+      { name: "content", type: t.string },
+    ],
+    result: [{ name: "sent", type: t.bool }],
+  },
+  {
+    method: "chat.start",
+    params: [{ name: "adapterId", type: t.string }],
+    result: [{ name: "running", type: t.bool }],
+  },
+  {
+    method: "chat.stop",
+    params: [{ name: "adapterId", type: t.string }],
+    result: [{ name: "running", type: t.bool }],
+  },
+  {
+    method: "chat.status",
+    params: [{ name: "adapterId", type: t.optional(t.string) }],
+    result: [{ name: "adapters", type: t.array(t.named("ChatAdapterStatus")) }],
+  },
+  {
+    method: "skill.list",
+    params: [{ name: "type", type: t.optional(t.named("SkillType")) }],
+    result: [{ name: "skills", type: t.array(t.named("Skill")) }],
+  },
+  {
+    method: "skill.invoke",
+    params: [
+      { name: "id", type: t.string },
+      { name: "input", type: t.optional(t.jsonObject) },
+    ],
+    result: [{ name: "output", type: t.named("JSONValue") }],
+  },
+  {
+    method: "skill.create",
+    params: [
+      { name: "name", type: t.string },
+      { name: "description", type: t.optional(t.string) },
+      { name: "filePath", type: t.string },
+      { name: "skillType", type: t.named("SkillType") },
+      { name: "pipelineId", type: t.optional(t.string) },
+    ],
+    result: [{ name: "skill", type: t.named("Skill") }],
+  },
+  {
+    method: "skill.delete",
+    params: [{ name: "id", type: t.string }],
+    result: [{ name: "deleted", type: t.bool }],
+  },
+  {
+    method: "memory.search",
+    params: [
+      { name: "query", type: t.string },
+      { name: "limit", type: t.optional(t.int) },
+      { name: "tags", type: t.optional(t.array(t.string)) },
+    ],
+    result: [{ name: "entries", type: t.array(t.named("MemoryEntry")) }],
+  },
+  {
+    method: "memory.add",
+    params: [
+      { name: "content", type: t.string },
+      { name: "tags", type: t.optional(t.array(t.string)) },
+    ],
+    result: [{ name: "entry", type: t.named("MemoryEntry") }],
+  },
+  {
+    method: "memory.summarize",
+    params: [
+      { name: "entryIds", type: t.array(t.string) },
+      { name: "instruction", type: t.optional(t.string) },
+    ],
+    result: [{ name: "summary", type: t.string }],
+  },
+  {
+    method: "settings.get",
+    params: [],
+    result: [{ name: "settings", type: t.named("Settings") }],
+  },
+  {
+    method: "settings.save",
+    params: [{ name: "settings", type: t.named("Settings") }],
+    result: [{ name: "settings", type: t.named("Settings") }],
+  },
+];
+
+// Side struct used by chat.status — flatten the inline literal in methods.ts.
+TYPES.push({
+  kind: "struct",
+  name: "ChatAdapterStatus",
+  doc: "Per-adapter chat running status (used by chat.status result).",
+  fields: [
+    { name: "id", type: t.string },
+    { name: "running", type: t.bool },
+  ],
+});
+
+function pascalCaseMethod(method: string): string {
+  return method
+    .split(/[.\-]/)
+    .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+    .join("");
+}
+
+for (const shape of METHOD_SHAPES) {
+  const base = pascalCaseMethod(shape.method);
+  TYPES.push({
+    kind: "struct",
+    name: `${base}Params`,
+    doc: `Params for the \`${shape.method}\` RPC method.`,
+    fields: shape.params,
+  });
+  TYPES.push({
+    kind: "struct",
+    name: `${base}Result`,
+    doc: `Result for the \`${shape.method}\` RPC method.`,
+    fields: shape.result,
+  });
+}
+
 // ─── Preamble (JSON-RPC envelope + JSONValue helper) ──────────────────────
 
 const PREAMBLE = `// ============================================================================

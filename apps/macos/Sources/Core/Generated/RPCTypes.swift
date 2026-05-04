@@ -423,6 +423,535 @@ public struct ChatSendResponse: Codable, Sendable, Equatable {
     }
 }
 
+/// Per-adapter chat running status (used by chat.status result).
+public struct ChatAdapterStatus: Codable, Sendable, Equatable {
+    public var id: String
+    public var running: Bool
+
+    public init(id: String, running: Bool) {
+        self.id = id
+        self.running = running
+    }
+}
+
+/// Params for the `system.ping` RPC method.
+public struct SystemPingParams: Codable, Sendable, Equatable {
+    public var message: String?
+
+    public init(message: String? = nil) {
+        self.message = message
+    }
+}
+
+/// Result for the `system.ping` RPC method.
+public struct SystemPingResult: Codable, Sendable, Equatable {
+    public var pong: Bool
+    public var receivedAt: String
+
+    public init(pong: Bool, receivedAt: String) {
+        self.pong = pong
+        self.receivedAt = receivedAt
+    }
+}
+
+/// Params for the `pipeline.list` RPC method.
+public struct PipelineListParams: Codable, Sendable, Equatable {
+    public var activeOnly: Bool?
+
+    public init(activeOnly: Bool? = nil) {
+        self.activeOnly = activeOnly
+    }
+}
+
+/// Result for the `pipeline.list` RPC method.
+public struct PipelineListResult: Codable, Sendable, Equatable {
+    public var pipelines: [Pipeline]
+
+    public init(pipelines: [Pipeline]) {
+        self.pipelines = pipelines
+    }
+}
+
+/// Params for the `pipeline.get` RPC method.
+public struct PipelineGetParams: Codable, Sendable, Equatable {
+    public var id: String
+
+    public init(id: String) {
+        self.id = id
+    }
+}
+
+/// Result for the `pipeline.get` RPC method.
+public struct PipelineGetResult: Codable, Sendable, Equatable {
+    public var pipeline: Pipeline
+
+    public init(pipeline: Pipeline) {
+        self.pipeline = pipeline
+    }
+}
+
+/// Params for the `pipeline.save` RPC method.
+public struct PipelineSaveParams: Codable, Sendable, Equatable {
+    public var id: String?
+    public var name: String
+    public var description: String?
+    public var yamlContent: String
+    public var maxLoopCount: Int?
+    public var isActive: Bool?
+
+    public init(id: String? = nil, name: String, description: String? = nil, yamlContent: String, maxLoopCount: Int? = nil, isActive: Bool? = nil) {
+        self.id = id
+        self.name = name
+        self.description = description
+        self.yamlContent = yamlContent
+        self.maxLoopCount = maxLoopCount
+        self.isActive = isActive
+    }
+}
+
+/// Result for the `pipeline.save` RPC method.
+public struct PipelineSaveResult: Codable, Sendable, Equatable {
+    public var pipeline: Pipeline
+
+    public init(pipeline: Pipeline) {
+        self.pipeline = pipeline
+    }
+}
+
+/// Params for the `pipeline.execute` RPC method.
+public struct PipelineExecuteParams: Codable, Sendable, Equatable {
+    public var id: String
+    public var triggerType: ExecutionTrigger?
+    public var triggerData: String?
+
+    public init(id: String, triggerType: ExecutionTrigger? = nil, triggerData: String? = nil) {
+        self.id = id
+        self.triggerType = triggerType
+        self.triggerData = triggerData
+    }
+}
+
+/// Result for the `pipeline.execute` RPC method.
+public struct PipelineExecuteResult: Codable, Sendable, Equatable {
+    public var executionId: String
+
+    public init(executionId: String) {
+        self.executionId = executionId
+    }
+}
+
+/// Params for the `pipeline.delete` RPC method.
+public struct PipelineDeleteParams: Codable, Sendable, Equatable {
+    public var id: String
+
+    public init(id: String) {
+        self.id = id
+    }
+}
+
+/// Result for the `pipeline.delete` RPC method.
+public struct PipelineDeleteResult: Codable, Sendable, Equatable {
+    public var deleted: Bool
+
+    public init(deleted: Bool) {
+        self.deleted = deleted
+    }
+}
+
+/// Params for the `execution.history` RPC method.
+public struct ExecutionHistoryParams: Codable, Sendable, Equatable {
+    public var pipelineId: String?
+    public var status: ExecutionStatus?
+    public var limit: Int?
+    public var offset: Int?
+
+    public init(pipelineId: String? = nil, status: ExecutionStatus? = nil, limit: Int? = nil, offset: Int? = nil) {
+        self.pipelineId = pipelineId
+        self.status = status
+        self.limit = limit
+        self.offset = offset
+    }
+}
+
+/// Result for the `execution.history` RPC method.
+public struct ExecutionHistoryResult: Codable, Sendable, Equatable {
+    public var executions: [Execution]
+
+    public init(executions: [Execution]) {
+        self.executions = executions
+    }
+}
+
+/// Params for the `execution.logs` RPC method.
+public struct ExecutionLogsParams: Codable, Sendable, Equatable {
+    public var executionId: String
+    public var nodeId: String?
+    public var level: LogLevel?
+    public var limit: Int?
+
+    public init(executionId: String, nodeId: String? = nil, level: LogLevel? = nil, limit: Int? = nil) {
+        self.executionId = executionId
+        self.nodeId = nodeId
+        self.level = level
+        self.limit = limit
+    }
+}
+
+/// Result for the `execution.logs` RPC method.
+public struct ExecutionLogsResult: Codable, Sendable, Equatable {
+    public var logs: [ExecutionLog]
+
+    public init(logs: [ExecutionLog]) {
+        self.logs = logs
+    }
+}
+
+/// Params for the `cron.list` RPC method.
+public struct CronListParams: Codable, Sendable, Equatable {
+    public init() {}
+}
+
+/// Result for the `cron.list` RPC method.
+public struct CronListResult: Codable, Sendable, Equatable {
+    public var jobs: [CronJob]
+
+    public init(jobs: [CronJob]) {
+        self.jobs = jobs
+    }
+}
+
+/// Params for the `cron.create` RPC method.
+public struct CronCreateParams: Codable, Sendable, Equatable {
+    public var pipelineId: String
+    public var schedule: String
+    public var isActive: Bool?
+
+    public init(pipelineId: String, schedule: String, isActive: Bool? = nil) {
+        self.pipelineId = pipelineId
+        self.schedule = schedule
+        self.isActive = isActive
+    }
+}
+
+/// Result for the `cron.create` RPC method.
+public struct CronCreateResult: Codable, Sendable, Equatable {
+    public var job: CronJob
+
+    public init(job: CronJob) {
+        self.job = job
+    }
+}
+
+/// Params for the `cron.update` RPC method.
+public struct CronUpdateParams: Codable, Sendable, Equatable {
+    public var id: String
+    public var schedule: String?
+    public var isActive: Bool?
+
+    public init(id: String, schedule: String? = nil, isActive: Bool? = nil) {
+        self.id = id
+        self.schedule = schedule
+        self.isActive = isActive
+    }
+}
+
+/// Result for the `cron.update` RPC method.
+public struct CronUpdateResult: Codable, Sendable, Equatable {
+    public var job: CronJob
+
+    public init(job: CronJob) {
+        self.job = job
+    }
+}
+
+/// Params for the `cron.delete` RPC method.
+public struct CronDeleteParams: Codable, Sendable, Equatable {
+    public var id: String
+
+    public init(id: String) {
+        self.id = id
+    }
+}
+
+/// Result for the `cron.delete` RPC method.
+public struct CronDeleteResult: Codable, Sendable, Equatable {
+    public var deleted: Bool
+
+    public init(deleted: Bool) {
+        self.deleted = deleted
+    }
+}
+
+/// Params for the `cron.run-now` RPC method.
+public struct CronRunNowParams: Codable, Sendable, Equatable {
+    public var id: String
+
+    public init(id: String) {
+        self.id = id
+    }
+}
+
+/// Result for the `cron.run-now` RPC method.
+public struct CronRunNowResult: Codable, Sendable, Equatable {
+    public var executionId: String
+
+    public init(executionId: String) {
+        self.executionId = executionId
+    }
+}
+
+/// Params for the `chat.send` RPC method.
+public struct ChatSendParams: Codable, Sendable, Equatable {
+    public var adapterId: String
+    public var channelId: String
+    public var content: String
+
+    public init(adapterId: String, channelId: String, content: String) {
+        self.adapterId = adapterId
+        self.channelId = channelId
+        self.content = content
+    }
+}
+
+/// Result for the `chat.send` RPC method.
+public struct ChatSendResult: Codable, Sendable, Equatable {
+    public var sent: Bool
+
+    public init(sent: Bool) {
+        self.sent = sent
+    }
+}
+
+/// Params for the `chat.start` RPC method.
+public struct ChatStartParams: Codable, Sendable, Equatable {
+    public var adapterId: String
+
+    public init(adapterId: String) {
+        self.adapterId = adapterId
+    }
+}
+
+/// Result for the `chat.start` RPC method.
+public struct ChatStartResult: Codable, Sendable, Equatable {
+    public var running: Bool
+
+    public init(running: Bool) {
+        self.running = running
+    }
+}
+
+/// Params for the `chat.stop` RPC method.
+public struct ChatStopParams: Codable, Sendable, Equatable {
+    public var adapterId: String
+
+    public init(adapterId: String) {
+        self.adapterId = adapterId
+    }
+}
+
+/// Result for the `chat.stop` RPC method.
+public struct ChatStopResult: Codable, Sendable, Equatable {
+    public var running: Bool
+
+    public init(running: Bool) {
+        self.running = running
+    }
+}
+
+/// Params for the `chat.status` RPC method.
+public struct ChatStatusParams: Codable, Sendable, Equatable {
+    public var adapterId: String?
+
+    public init(adapterId: String? = nil) {
+        self.adapterId = adapterId
+    }
+}
+
+/// Result for the `chat.status` RPC method.
+public struct ChatStatusResult: Codable, Sendable, Equatable {
+    public var adapters: [ChatAdapterStatus]
+
+    public init(adapters: [ChatAdapterStatus]) {
+        self.adapters = adapters
+    }
+}
+
+/// Params for the `skill.list` RPC method.
+public struct SkillListParams: Codable, Sendable, Equatable {
+    public var type: SkillType?
+
+    public init(type: SkillType? = nil) {
+        self.type = type
+    }
+}
+
+/// Result for the `skill.list` RPC method.
+public struct SkillListResult: Codable, Sendable, Equatable {
+    public var skills: [Skill]
+
+    public init(skills: [Skill]) {
+        self.skills = skills
+    }
+}
+
+/// Params for the `skill.invoke` RPC method.
+public struct SkillInvokeParams: Codable, Sendable, Equatable {
+    public var id: String
+    public var input: [String: JSONValue]?
+
+    public init(id: String, input: [String: JSONValue]? = nil) {
+        self.id = id
+        self.input = input
+    }
+}
+
+/// Result for the `skill.invoke` RPC method.
+public struct SkillInvokeResult: Codable, Sendable, Equatable {
+    public var output: JSONValue
+
+    public init(output: JSONValue) {
+        self.output = output
+    }
+}
+
+/// Params for the `skill.create` RPC method.
+public struct SkillCreateParams: Codable, Sendable, Equatable {
+    public var name: String
+    public var description: String?
+    public var filePath: String
+    public var skillType: SkillType
+    public var pipelineId: String?
+
+    public init(name: String, description: String? = nil, filePath: String, skillType: SkillType, pipelineId: String? = nil) {
+        self.name = name
+        self.description = description
+        self.filePath = filePath
+        self.skillType = skillType
+        self.pipelineId = pipelineId
+    }
+}
+
+/// Result for the `skill.create` RPC method.
+public struct SkillCreateResult: Codable, Sendable, Equatable {
+    public var skill: Skill
+
+    public init(skill: Skill) {
+        self.skill = skill
+    }
+}
+
+/// Params for the `skill.delete` RPC method.
+public struct SkillDeleteParams: Codable, Sendable, Equatable {
+    public var id: String
+
+    public init(id: String) {
+        self.id = id
+    }
+}
+
+/// Result for the `skill.delete` RPC method.
+public struct SkillDeleteResult: Codable, Sendable, Equatable {
+    public var deleted: Bool
+
+    public init(deleted: Bool) {
+        self.deleted = deleted
+    }
+}
+
+/// Params for the `memory.search` RPC method.
+public struct MemorySearchParams: Codable, Sendable, Equatable {
+    public var query: String
+    public var limit: Int?
+    public var tags: [String]?
+
+    public init(query: String, limit: Int? = nil, tags: [String]? = nil) {
+        self.query = query
+        self.limit = limit
+        self.tags = tags
+    }
+}
+
+/// Result for the `memory.search` RPC method.
+public struct MemorySearchResult: Codable, Sendable, Equatable {
+    public var entries: [MemoryEntry]
+
+    public init(entries: [MemoryEntry]) {
+        self.entries = entries
+    }
+}
+
+/// Params for the `memory.add` RPC method.
+public struct MemoryAddParams: Codable, Sendable, Equatable {
+    public var content: String
+    public var tags: [String]?
+
+    public init(content: String, tags: [String]? = nil) {
+        self.content = content
+        self.tags = tags
+    }
+}
+
+/// Result for the `memory.add` RPC method.
+public struct MemoryAddResult: Codable, Sendable, Equatable {
+    public var entry: MemoryEntry
+
+    public init(entry: MemoryEntry) {
+        self.entry = entry
+    }
+}
+
+/// Params for the `memory.summarize` RPC method.
+public struct MemorySummarizeParams: Codable, Sendable, Equatable {
+    public var entryIds: [String]
+    public var instruction: String?
+
+    public init(entryIds: [String], instruction: String? = nil) {
+        self.entryIds = entryIds
+        self.instruction = instruction
+    }
+}
+
+/// Result for the `memory.summarize` RPC method.
+public struct MemorySummarizeResult: Codable, Sendable, Equatable {
+    public var summary: String
+
+    public init(summary: String) {
+        self.summary = summary
+    }
+}
+
+/// Params for the `settings.get` RPC method.
+public struct SettingsGetParams: Codable, Sendable, Equatable {
+    public init() {}
+}
+
+/// Result for the `settings.get` RPC method.
+public struct SettingsGetResult: Codable, Sendable, Equatable {
+    public var settings: Settings
+
+    public init(settings: Settings) {
+        self.settings = settings
+    }
+}
+
+/// Params for the `settings.save` RPC method.
+public struct SettingsSaveParams: Codable, Sendable, Equatable {
+    public var settings: Settings
+
+    public init(settings: Settings) {
+        self.settings = settings
+    }
+}
+
+/// Result for the `settings.save` RPC method.
+public struct SettingsSaveResult: Codable, Sendable, Equatable {
+    public var settings: Settings
+
+    public init(settings: Settings) {
+        self.settings = settings
+    }
+}
+
 // ─── RPC method names ───────────────────────────────────────────────────────
 
 /// All known RPC method names. Mirrors `RPC_METHOD_NAMES` in TypeScript.
