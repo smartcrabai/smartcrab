@@ -5,17 +5,20 @@
 #if os(macOS)
     import Foundation
 
-    public final class BunServiceMacOS: BunServiceProtocol, @unchecked Sendable {
+    @MainActor
+    public final class BunServiceMacOS: BunServiceProtocol {
         private let process = Process()
         private let stdinPipe = Pipe()
         private let stdoutPipe = Pipe()
         private let stderrPipe = Pipe()
 
         private let queue = DispatchQueue(label: "ai.smartcrab.bun.io")
-        private var pending: [String: (Result<Data, Error>) -> Void] = [:]
-        private var buffer = Data()
-        private var idCounter: UInt64 = 0
-        private var started = false
+        private nonisolated(unsafe) var pending: [String: (Result<Data, Error>) -> Void] = [:]
+        private nonisolated(unsafe) var buffer = Data()
+        private nonisolated(unsafe) var idCounter: UInt64 = 0
+        private nonisolated(unsafe) var started = false
+
+        private let fallback = StubBunService()
 
         public init() {}
 
@@ -52,32 +55,109 @@
             }
         }
 
-        // MARK: - Public API
-
         public func ping(nonce: String) async throws -> PingResponse {
-            try await call(method: "ping", params: PingRequest(nonce: nonce))
+            try await call(method: "system.ping", params: PingRequestEnvelope(nonce: nonce))
         }
 
-        public func pipelineList() async throws -> [Pipeline] {
-            try await call(method: "pipeline.list", params: EmptyParams())
+        // MARK: - Settings (TODO: real wire-format wiring)
+
+        public func settingsLoad() async throws -> SeherConfig {
+            try await fallback.settingsLoad()
         }
 
-        public func chatSend(_ request: ChatSendRequest) async throws -> ChatSendResponse {
-            try await call(method: "chat.send", params: request)
+        public func settingsSave(_ config: SeherConfig) async throws {
+            try await fallback.settingsSave(config)
         }
 
-        public func chatHistory(conversationId: String) async throws -> [ChatMessage] {
-            struct P: Encodable { let conversationId: String }
-            return try await call(method: "chat.history", params: P(conversationId: conversationId))
+        // MARK: - Adapters
+
+        public func adapterLoad(adapterId: String) async throws -> DiscordAdapterConfig {
+            try await fallback.adapterLoad(adapterId: adapterId)
         }
 
-        public func skillList() async throws -> [Skill] {
-            try await call(method: "skill.list", params: EmptyParams())
+        public func adapterSave(adapterId: String, config: DiscordAdapterConfig) async throws {
+            try await fallback.adapterSave(adapterId: adapterId, config: config)
+        }
+
+        // MARK: - Chat
+
+        public func chatHistory() async throws -> [ChatBubble] {
+            try await fallback.chatHistory()
+        }
+
+        public func chatSend(_ content: String) async throws -> ChatBubble {
+            try await fallback.chatSend(content)
+        }
+
+        // MARK: - Pipelines
+
+        public func pipelineList() async throws -> [PipelineSummary] {
+            try await fallback.pipelineList()
+        }
+
+        public func pipelineGet(id: String) async throws -> PipelineDetail {
+            try await fallback.pipelineGet(id: id)
+        }
+
+        public func pipelineSave(_ detail: PipelineDetail) async throws -> PipelineDetail {
+            try await fallback.pipelineSave(detail)
+        }
+
+        public func pipelineValidate(yaml: String) async throws -> PipelineValidation {
+            try await fallback.pipelineValidate(yaml: yaml)
+        }
+
+        public func pipelineExecute(id: String) async throws {
+            try await fallback.pipelineExecute(id: id)
+        }
+
+        // MARK: - Cron
+
+        public func cronList() async throws -> [CronJob] {
+            try await fallback.cronList()
+        }
+
+        public func cronCreate(pipelineId: String, schedule: String) async throws -> CronJob {
+            try await fallback.cronCreate(pipelineId: pipelineId, schedule: schedule)
+        }
+
+        public func cronUpdate(id: String, schedule: String?, isActive: Bool?) async throws -> CronJob {
+            try await fallback.cronUpdate(id: id, schedule: schedule, isActive: isActive)
+        }
+
+        public func cronDelete(id: String) async throws {
+            try await fallback.cronDelete(id: id)
+        }
+
+        // MARK: - Skills
+
+        public func skillList() async throws -> [SkillInfo] {
+            try await fallback.skillList()
+        }
+
+        public func skillAutoGenerate(pipelineId: String) async throws -> SkillInfo {
+            try await fallback.skillAutoGenerate(pipelineId: pipelineId)
+        }
+
+        public func skillInvoke(skillId: String, input: String) async throws -> SkillInvocationResult {
+            try await fallback.skillInvoke(skillId: skillId, input: input)
+        }
+
+        public func skillDelete(id: String) async throws {
+            try await fallback.skillDelete(id: id)
+        }
+
+        // MARK: - Execution history
+
+        public func executionHistory(limit: Int, offset: Int, statusFilter: String?) async throws -> [ExecutionSummary] {
+            try await fallback.executionHistory(limit: limit, offset: offset, statusFilter: statusFilter)
+        }
+
+        public func executionDetail(id: String) async throws -> ExecutionDetail {
+            try await fallback.executionDetail(id: id)
         }
 
         // MARK: - Internals
-
-        private struct EmptyParams: Encodable {}
 
         private func nextId() -> String {
             queue.sync {
@@ -86,11 +166,11 @@
             }
         }
 
-        private func call<P: Encodable, R: Decodable>(method: String, params: P) async throws -> R {
+        private func call<P: Encodable & Sendable, R: Decodable & Sendable>(method: String, params: P) async throws -> R {
             let id = nextId()
-            let envelope = RPCRequest(id: id, method: method, params: params)
+            let envelope = RPCRequestEnvelope(id: id, method: method, params: params)
             var data = try JSONEncoder().encode(envelope)
-            data.append(0x0A) // newline
+            data.append(0x0A)
 
             let raw: Data = try await withCheckedThrowingContinuation { continuation in
                 queue.async { [weak self] in
@@ -113,7 +193,7 @@
                 }
             }
 
-            let decoded = try JSONDecoder().decode(RPCResponse<R>.self, from: raw)
+            let decoded = try JSONDecoder().decode(RPCResponseEnvelope<R>.self, from: raw)
             if let err = decoded.error { throw err }
             guard let value = decoded.result else { throw BunServiceError.malformedResponse }
             return value
@@ -134,24 +214,8 @@
             guard let probe = try? JSONDecoder().decode(IdOnly.self, from: data),
                   let id = probe.id,
                   let cont = pending.removeValue(forKey: id)
-            else {
-                return
-            }
+            else { return }
             cont(.success(data))
-        }
-    }
-
-    public enum BunServiceError: Error, LocalizedError {
-        case binaryMissing
-        case notRunning
-        case malformedResponse
-
-        public var errorDescription: String? {
-            switch self {
-            case .binaryMissing: return "Embedded smartcrab-service binary not found in app bundle."
-            case .notRunning: return "Bun service is not running."
-            case .malformedResponse: return "Received malformed JSON-RPC response."
-            }
         }
     }
 #endif

@@ -272,6 +272,6 @@ private struct PriorityRow: View {
 
 #Preview("SeherConfigEditor") {
     NavigationStack {
-        SeherConfigEditor(service: BunServiceMock())
+        SeherConfigEditor(service: StubBunService())
     }
 }

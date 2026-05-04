@@ -28,6 +28,7 @@ enum SidebarTab: String, CaseIterable, Identifiable, Hashable {
 }
 
 struct AppRoot: View {
+    @EnvironmentObject private var bun: BunServiceContainer
     @State private var selection: SidebarTab? = .chat
 
     var body: some View {
@@ -49,35 +50,17 @@ struct AppRoot: View {
     private func detailView(for tab: SidebarTab) -> some View {
         switch tab {
         case .chat:
-            PlaceholderView(title: "Chat", subtitle: "Conversations land here.")
+            ChatView(service: bun.service)
         case .pipelines:
-            PlaceholderView(title: "Pipelines", subtitle: "Manage and execute pipelines.")
+            PipelineListView(service: bun.service)
         case .cron:
-            PlaceholderView(title: "Cron", subtitle: "Scheduled tasks live here.")
+            CronListView(service: bun.service)
         case .skills:
-            PlaceholderView(title: "Skills", subtitle: "Reusable agent skills.")
+            SkillsView(service: bun.service)
         case .history:
-            PlaceholderView(title: "History", subtitle: "Past runs and transcripts.")
+            ExecutionHistoryView(service: bun.service)
         case .settings:
-            PlaceholderView(title: "Settings", subtitle: "Configure SmartCrab.")
+            SettingsView(service: bun.service)
         }
     }
-}
-
-private struct PlaceholderView: View {
-    let title: String
-    let subtitle: String
-
-    var body: some View {
-        VStack(spacing: 12) {
-            Text(title).font(.largeTitle.bold())
-            Text(subtitle).foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .navigationTitle(title)
-    }
-}
-
-#Preview {
-    AppRoot()
 }

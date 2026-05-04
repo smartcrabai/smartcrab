@@ -104,6 +104,6 @@ public struct AdapterSettings: View {
 
 #Preview("AdapterSettings") {
     NavigationStack {
-        AdapterSettings(service: BunServiceMock())
+        AdapterSettings(service: StubBunService())
     }
 }

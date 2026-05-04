@@ -9,7 +9,7 @@ import SwiftUI
 public struct ChatView: View {
     private let service: BunServiceProtocol
 
-    @State private var messages: [ChatMessage] = []
+    @State private var messages: [ChatBubble] = []
     @State private var isLoading: Bool = true
     @State private var isSending: Bool = false
     @State private var errorMessage: String?
@@ -65,7 +65,7 @@ public struct ChatView: View {
                 ScrollView {
                     LazyVStack(spacing: 12) {
                         ForEach(messages) { message in
-                            ChatMessageRow(message: message)
+                            ChatBubbleRow(message: message)
                                 .id(message.id)
                         }
                     }
@@ -102,7 +102,7 @@ public struct ChatView: View {
 
         // Optimistic echo so the user sees their message immediately while the
         // request is in flight. `chatSend` returns only the assistant reply.
-        messages.append(ChatMessage(role: .user, content: trimmed))
+        messages.append(ChatBubble(role: .user, content: trimmed))
 
         isSending = true
         defer { isSending = false }
@@ -117,6 +117,6 @@ public struct ChatView: View {
 
 #Preview("Chat") {
     NavigationStack {
-        ChatView(service: BunServiceMock())
+        ChatView(service: StubBunService())
     }
 }

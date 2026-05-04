@@ -1,69 +1,104 @@
 // BunServiceMock.swift
-// In-memory mock used by the SmartCrabPreview (iOS Simulator) target so that
-// SwiftUI previews and Simulator runs do not require the Bun subprocess.
+// In-memory mock used by SmartCrabPreview (iOS Simulator). Delegates to the
+// StubBunService defined in BunServiceProtocol.swift.
 
 #if os(iOS)
     import Foundation
 
-    public final class BunServiceMock: BunServiceProtocol, @unchecked Sendable {
-        private var conversations: [String: [ChatMessage]] = [:]
+    @MainActor
+    public final class BunServiceMock: BunServiceProtocol {
+        private let stub = StubBunService()
 
         public init() {}
 
-        public func start() async throws { /* no-op */ }
-        public func stop() async { /* no-op */ }
-
+        public func start() async throws {}
+        public func stop() async {}
         public func ping(nonce: String) async throws -> PingResponse {
-            PingResponse(nonce: nonce, serverTime: ISO8601DateFormatter().string(from: Date()))
+            try await stub.ping(nonce: nonce)
         }
 
-        public func pipelineList() async throws -> [Pipeline] {
-            [
-                Pipeline(id: "pl-1", name: "Daily Standup Summary", description: "Aggregates Slack messages."),
-                Pipeline(id: "pl-2", name: "Issue Triage", description: "Classifies new GitHub issues."),
-                Pipeline(id: "pl-3", name: "Release Notes", description: "Drafts release notes from PRs."),
-            ]
+        public func settingsLoad() async throws -> SeherConfig {
+            try await stub.settingsLoad()
         }
 
-        public func chatSend(_ request: ChatSendRequest) async throws -> ChatSendResponse {
-            let convoId = request.conversationId ?? "conv-mock"
-            let now = ISO8601DateFormatter().string(from: Date())
-            let userMsg = ChatMessage(
-                id: "u-\(UUID().uuidString.prefix(6))",
-                role: .user,
-                content: request.content,
-                createdAt: now
-            )
-            let assistantMsg = ChatMessage(
-                id: "a-\(UUID().uuidString.prefix(6))",
-                role: .assistant,
-                content: "Mock reply to: \(request.content)",
-                createdAt: now
-            )
-            conversations[convoId, default: seedMessages()].append(contentsOf: [userMsg, assistantMsg])
-            return ChatSendResponse(conversationId: convoId, message: assistantMsg)
+        public func settingsSave(_ config: SeherConfig) async throws {
+            try await stub.settingsSave(config)
         }
 
-        public func chatHistory(conversationId: String) async throws -> [ChatMessage] {
-            conversations[conversationId] ?? seedMessages()
+        public func adapterLoad(adapterId: String) async throws -> DiscordAdapterConfig {
+            try await stub.adapterLoad(adapterId: adapterId)
         }
 
-        public func skillList() async throws -> [Skill] {
-            [
-                Skill(id: "sk-1", name: "Web Search", summary: "Query the public web."),
-                Skill(id: "sk-2", name: "Code Review", summary: "Inspect a diff and suggest fixes."),
-            ]
+        public func adapterSave(adapterId: String, config: DiscordAdapterConfig) async throws {
+            try await stub.adapterSave(adapterId: adapterId, config: config)
         }
 
-        private func seedMessages() -> [ChatMessage] {
-            let t = ISO8601DateFormatter().string(from: Date())
-            return [
-                ChatMessage(id: "m-1", role: .system, content: "You are SmartCrab.", createdAt: t),
-                ChatMessage(id: "m-2", role: .user, content: "Hi!", createdAt: t),
-                ChatMessage(id: "m-3", role: .assistant, content: "Hello, I am the mock.", createdAt: t),
-                ChatMessage(id: "m-4", role: .user, content: "What can you do?", createdAt: t),
-                ChatMessage(id: "m-5", role: .assistant, content: "Anything you imagine.", createdAt: t),
-            ]
+        public func chatHistory() async throws -> [ChatBubble] {
+            try await stub.chatHistory()
+        }
+
+        public func chatSend(_ content: String) async throws -> ChatBubble {
+            try await stub.chatSend(content)
+        }
+
+        public func pipelineList() async throws -> [PipelineSummary] {
+            try await stub.pipelineList()
+        }
+
+        public func pipelineGet(id: String) async throws -> PipelineDetail {
+            try await stub.pipelineGet(id: id)
+        }
+
+        public func pipelineSave(_ detail: PipelineDetail) async throws -> PipelineDetail {
+            try await stub.pipelineSave(detail)
+        }
+
+        public func pipelineValidate(yaml: String) async throws -> PipelineValidation {
+            try await stub.pipelineValidate(yaml: yaml)
+        }
+
+        public func pipelineExecute(id: String) async throws {
+            try await stub.pipelineExecute(id: id)
+        }
+
+        public func cronList() async throws -> [CronJob] {
+            try await stub.cronList()
+        }
+
+        public func cronCreate(pipelineId: String, schedule: String) async throws -> CronJob {
+            try await stub.cronCreate(pipelineId: pipelineId, schedule: schedule)
+        }
+
+        public func cronUpdate(id: String, schedule: String?, isActive: Bool?) async throws -> CronJob {
+            try await stub.cronUpdate(id: id, schedule: schedule, isActive: isActive)
+        }
+
+        public func cronDelete(id: String) async throws {
+            try await stub.cronDelete(id: id)
+        }
+
+        public func skillList() async throws -> [SkillInfo] {
+            try await stub.skillList()
+        }
+
+        public func skillAutoGenerate(pipelineId: String) async throws -> SkillInfo {
+            try await stub.skillAutoGenerate(pipelineId: pipelineId)
+        }
+
+        public func skillInvoke(skillId: String, input: String) async throws -> SkillInvocationResult {
+            try await stub.skillInvoke(skillId: skillId, input: input)
+        }
+
+        public func skillDelete(id: String) async throws {
+            try await stub.skillDelete(id: id)
+        }
+
+        public func executionHistory(limit: Int, offset: Int, statusFilter: String?) async throws -> [ExecutionSummary] {
+            try await stub.executionHistory(limit: limit, offset: offset, statusFilter: statusFilter)
+        }
+
+        public func executionDetail(id: String) async throws -> ExecutionDetail {
+            try await stub.executionDetail(id: id)
         }
     }
 #endif

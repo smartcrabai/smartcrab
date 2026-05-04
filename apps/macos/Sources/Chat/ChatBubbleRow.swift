@@ -1,14 +1,14 @@
-// ChatMessageRow.swift
+// ChatBubbleRow.swift
 //
 // One message bubble. User messages align trailing with an accent fill;
 // assistant and system messages align leading on a secondary background.
 
 import SwiftUI
 
-public struct ChatMessageRow: View {
-    public let message: ChatMessage
+public struct ChatBubbleRow: View {
+    public let message: ChatBubble
 
-    public init(message: ChatMessage) {
+    public init(message: ChatBubble) {
         self.message = message
     }
 
@@ -75,19 +75,19 @@ public struct ChatMessageRow: View {
     }
 }
 
-#Preview("ChatMessageRow") {
+#Preview("ChatBubbleRow") {
     VStack(alignment: .leading, spacing: 12) {
-        ChatMessageRow(message: ChatMessage(
+        ChatBubbleRow(message: ChatBubble(
             role: .assistant,
             content: "Hi! Ask me anything about your pipelines or skills.",
             createdAt: Date(timeIntervalSinceNow: -120)
         ))
-        ChatMessageRow(message: ChatMessage(
+        ChatBubbleRow(message: ChatBubble(
             role: .user,
             content: "Run the nightly summary now please.",
             createdAt: Date(timeIntervalSinceNow: -60)
         ))
-        ChatMessageRow(message: ChatMessage(
+        ChatBubbleRow(message: ChatBubble(
             role: .system,
             content: "Cron job triggered manually.",
             createdAt: Date(timeIntervalSinceNow: -30)

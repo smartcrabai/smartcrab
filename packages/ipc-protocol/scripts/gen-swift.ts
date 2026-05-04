@@ -217,7 +217,7 @@ const TYPES: TypeDef[] = [
   },
   {
     kind: "struct",
-    name: "NodeExecution",
+    name: "NodeExecutionRPC",
     doc: "Per-node execution record.",
     fields: [
       { name: "id", type: t.string },
@@ -235,7 +235,7 @@ const TYPES: TypeDef[] = [
   },
   {
     kind: "struct",
-    name: "ExecutionLog",
+    name: "ExecutionLogRPC",
     doc: "Execution log entry.",
     fields: [
       { name: "id", type: t.int64 },
@@ -248,7 +248,7 @@ const TYPES: TypeDef[] = [
   },
   {
     kind: "struct",
-    name: "CronJob",
+    name: "CronJobRPC",
     doc: "Cron job entry.",
     fields: [
       { name: "id", type: t.string },
@@ -263,7 +263,7 @@ const TYPES: TypeDef[] = [
   },
   {
     kind: "struct",
-    name: "ChatMessage",
+    name: "ChatMessageRPC",
     doc: "Normalized chat message.",
     fields: [
       { name: "channelId", type: t.string },
@@ -384,7 +384,7 @@ const TYPES: TypeDef[] = [
     doc: "Result of a chat send (assistant reply + conversation id).",
     fields: [
       { name: "conversationId", type: t.string },
-      { name: "message", type: t.named("ChatMessage") },
+      { name: "message", type: t.named("ChatMessageRPC") },
     ],
   },
 ];
@@ -466,12 +466,12 @@ const METHOD_SHAPES: MethodShape[] = [
       { name: "level", type: t.optional(t.named("LogLevel")) },
       { name: "limit", type: t.optional(t.int) },
     ],
-    result: [{ name: "logs", type: t.array(t.named("ExecutionLog")) }],
+    result: [{ name: "logs", type: t.array(t.named("ExecutionLogRPC")) }],
   },
   {
     method: "cron.list",
     params: [],
-    result: [{ name: "jobs", type: t.array(t.named("CronJob")) }],
+    result: [{ name: "jobs", type: t.array(t.named("CronJobRPC")) }],
   },
   {
     method: "cron.create",
@@ -480,7 +480,7 @@ const METHOD_SHAPES: MethodShape[] = [
       { name: "schedule", type: t.string },
       { name: "isActive", type: t.optional(t.bool) },
     ],
-    result: [{ name: "job", type: t.named("CronJob") }],
+    result: [{ name: "job", type: t.named("CronJobRPC") }],
   },
   {
     method: "cron.update",
@@ -489,7 +489,7 @@ const METHOD_SHAPES: MethodShape[] = [
       { name: "schedule", type: t.optional(t.string) },
       { name: "isActive", type: t.optional(t.bool) },
     ],
-    result: [{ name: "job", type: t.named("CronJob") }],
+    result: [{ name: "job", type: t.named("CronJobRPC") }],
   },
   {
     method: "cron.delete",

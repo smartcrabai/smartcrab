@@ -185,7 +185,7 @@ public struct Execution: Codable, Sendable, Equatable {
 }
 
 /// Per-node execution record.
-public struct NodeExecution: Codable, Sendable, Equatable {
+public struct NodeExecutionRPC: Codable, Sendable, Equatable {
     public var id: String
     public var executionId: String
     public var nodeId: String
@@ -214,7 +214,7 @@ public struct NodeExecution: Codable, Sendable, Equatable {
 }
 
 /// Execution log entry.
-public struct ExecutionLog: Codable, Sendable, Equatable {
+public struct ExecutionLogRPC: Codable, Sendable, Equatable {
     public var id: Int64
     public var executionId: String
     public var nodeId: String?
@@ -233,7 +233,7 @@ public struct ExecutionLog: Codable, Sendable, Equatable {
 }
 
 /// Cron job entry.
-public struct CronJob: Codable, Sendable, Equatable {
+public struct CronJobRPC: Codable, Sendable, Equatable {
     public var id: String
     public var pipelineId: String
     public var schedule: String
@@ -256,7 +256,7 @@ public struct CronJob: Codable, Sendable, Equatable {
 }
 
 /// Normalized chat message.
-public struct ChatMessage: Codable, Sendable, Equatable {
+public struct ChatMessageRPC: Codable, Sendable, Equatable {
     public var channelId: String
     public var content: String
     public var author: String?
@@ -415,9 +415,9 @@ public struct ChatSendRequest: Codable, Sendable, Equatable {
 /// Result of a chat send (assistant reply + conversation id).
 public struct ChatSendResponse: Codable, Sendable, Equatable {
     public var conversationId: String
-    public var message: ChatMessage
+    public var message: ChatMessageRPC
 
-    public init(conversationId: String, message: ChatMessage) {
+    public init(conversationId: String, message: ChatMessageRPC) {
         self.conversationId = conversationId
         self.message = message
     }
@@ -599,9 +599,9 @@ public struct ExecutionLogsParams: Codable, Sendable, Equatable {
 
 /// Result for the `execution.logs` RPC method.
 public struct ExecutionLogsResult: Codable, Sendable, Equatable {
-    public var logs: [ExecutionLog]
+    public var logs: [ExecutionLogRPC]
 
-    public init(logs: [ExecutionLog]) {
+    public init(logs: [ExecutionLogRPC]) {
         self.logs = logs
     }
 }
@@ -613,9 +613,9 @@ public struct CronListParams: Codable, Sendable, Equatable {
 
 /// Result for the `cron.list` RPC method.
 public struct CronListResult: Codable, Sendable, Equatable {
-    public var jobs: [CronJob]
+    public var jobs: [CronJobRPC]
 
-    public init(jobs: [CronJob]) {
+    public init(jobs: [CronJobRPC]) {
         self.jobs = jobs
     }
 }
@@ -635,9 +635,9 @@ public struct CronCreateParams: Codable, Sendable, Equatable {
 
 /// Result for the `cron.create` RPC method.
 public struct CronCreateResult: Codable, Sendable, Equatable {
-    public var job: CronJob
+    public var job: CronJobRPC
 
-    public init(job: CronJob) {
+    public init(job: CronJobRPC) {
         self.job = job
     }
 }
@@ -657,9 +657,9 @@ public struct CronUpdateParams: Codable, Sendable, Equatable {
 
 /// Result for the `cron.update` RPC method.
 public struct CronUpdateResult: Codable, Sendable, Equatable {
-    public var job: CronJob
+    public var job: CronJobRPC
 
-    public init(job: CronJob) {
+    public init(job: CronJobRPC) {
         self.job = job
     }
 }
