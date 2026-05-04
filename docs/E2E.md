@@ -57,6 +57,11 @@ Pipelines, Cron, Skills, History, and Settings tabs.
 Check the console (`Console.app` filtering on `SmartCrab`) for log lines
 prefixed `[bun-service]` and `[discord-listener]` to follow the round trip.
 
+## Releasing
+
+See [RELEASE.md](RELEASE.md) for how to ship a code-signed + notarized DMG.
+
+
 ## 5. iOS Simulator preview (UI verification only)
 
 The `SmartCrabPreview` scheme is iOS-only and uses a mock BunService so each
