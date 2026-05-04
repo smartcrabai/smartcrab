@@ -10,6 +10,7 @@
  */
 
 import { llmRegistry } from "./adapters/llm/registry";
+import { defaultSeherConfigPath } from "./seher/write-settings";
 
 export interface RouteRequest {
   prompt: string;
@@ -52,7 +53,9 @@ export async function route(request: RouteRequest): Promise<RouteResponse> {
   if (seher) {
     try {
       const sdk = new seher.SeherSDK({
-        configPath: process.env.SMARTCRAB_SEHER_CONFIG,
+        // settings.app-save writes a seher-ts settings.jsonc here; respect
+        // SMARTCRAB_SEHER_CONFIG for callers who want to override the path.
+        configPath: defaultSeherConfigPath(),
         // Fail fast if all configured agents are rate-limited rather than
         // sleeping the chat thread until a reset.
         noWait: true,
