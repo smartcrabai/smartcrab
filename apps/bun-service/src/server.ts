@@ -1,3 +1,6 @@
+import { configurePipelineCommands } from "./commands/pipeline.commands";
+import { openDb, runMigrations } from "./db";
+import { SqlitePipelineDatabase } from "./db/pipelines";
 import { dispatch } from "./dispatcher";
 import { ensureAdaptersLoaded } from "./registry";
 import {
@@ -60,6 +63,15 @@ process.on("SIGINT", () => shutdown("SIGINT"));
 
 async function main(): Promise<void> {
   log("starting (pid", process.pid + ")");
+
+  const db = openDb();
+  runMigrations(db);
+  configurePipelineCommands({
+    db: new SqlitePipelineDatabase(db),
+    deps: {
+      fetch: globalThis.fetch,
+    },
+  });
 
   await ensureAdaptersLoaded();
 
