@@ -14,6 +14,8 @@ public struct AdapterSettings: View {
     @State private var discord: DiscordAdapterConfig = .init()
     @State private var isLoading: Bool = true
     @State private var isSaving: Bool = false
+    @State private var isToggling: Bool = false
+    @State private var isRunning: Bool = false
     @State private var errorMessage: String?
     @State private var savedMessage: String?
 
@@ -56,6 +58,23 @@ public struct AdapterSettings: View {
                     Text("The bot token is read from the named environment variable at adapter startup; it is never stored in the config database.")
                 }
 
+                Section {
+                    HStack {
+                        Circle()
+                            .fill(isRunning ? Color.green : Color.secondary)
+                            .frame(width: 10, height: 10)
+                        Text(isRunning ? "Running" : "Stopped")
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button(isRunning ? "Stop" : "Start") {
+                            Task { await toggleRunning() }
+                        }
+                        .disabled(isToggling)
+                    }
+                } header: {
+                    Text("Adapter status")
+                }
+
                 if let errorMessage {
                     Section { Text(errorMessage).foregroundStyle(.red) }
                 }
@@ -83,8 +102,24 @@ public struct AdapterSettings: View {
         defer { isLoading = false }
         do {
             discord = try await service.adapterLoad(adapterId: Self.discordAdapterId)
+            isRunning = (try? await service.chatStatus(adapterId: Self.discordAdapterId)) ?? false
         } catch {
             errorMessage = "Failed to load: \(error.localizedDescription)"
+        }
+    }
+
+    private func toggleRunning() async {
+        isToggling = true
+        defer { isToggling = false }
+        errorMessage = nil
+        do {
+            isRunning = if isRunning {
+                try await service.chatStop(adapterId: Self.discordAdapterId)
+            } else {
+                try await service.chatStart(adapterId: Self.discordAdapterId)
+            }
+        } catch {
+            errorMessage = "Adapter error: \(error.localizedDescription)"
         }
     }
 

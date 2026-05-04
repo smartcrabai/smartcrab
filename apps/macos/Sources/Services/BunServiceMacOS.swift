@@ -103,6 +103,28 @@
             try await fallback.chatSend(content)
         }
 
+        public func chatStart(adapterId: String) async throws -> Bool {
+            struct Params: Encodable, Sendable { let adapter: String }
+            struct Result: Decodable, Sendable { let running: Bool }
+            let r: Result = try await call(method: "chat.start", params: Params(adapter: adapterId))
+            return r.running
+        }
+
+        public func chatStop(adapterId: String) async throws -> Bool {
+            struct Params: Encodable, Sendable { let adapter: String }
+            struct Result: Decodable, Sendable { let running: Bool }
+            let r: Result = try await call(method: "chat.stop", params: Params(adapter: adapterId))
+            return r.running
+        }
+
+        public func chatStatus(adapterId: String) async throws -> Bool {
+            struct Params: Encodable, Sendable { let adapter: String }
+            struct Adapter: Decodable, Sendable { let running: Bool }
+            struct Result: Decodable, Sendable { let adapters: [Adapter] }
+            let r: Result = try await call(method: "chat.status", params: Params(adapter: adapterId))
+            return r.adapters.first?.running ?? false
+        }
+
         // MARK: - Pipelines
 
         public func pipelineList() async throws -> [PipelineSummary] {

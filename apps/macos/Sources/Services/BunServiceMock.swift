@@ -41,6 +41,18 @@
             try await stub.chatSend(content)
         }
 
+        public func chatStart(adapterId: String) async throws -> Bool {
+            try await stub.chatStart(adapterId: adapterId)
+        }
+
+        public func chatStop(adapterId: String) async throws -> Bool {
+            try await stub.chatStop(adapterId: adapterId)
+        }
+
+        public func chatStatus(adapterId: String) async throws -> Bool {
+            try await stub.chatStatus(adapterId: adapterId)
+        }
+
         public func pipelineList() async throws -> [PipelineSummary] {
             try await stub.pipelineList()
         }

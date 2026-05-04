@@ -322,6 +322,11 @@ public protocol BunServiceProtocol: AnyObject {
     func chatHistory() async throws -> [ChatBubble]
     func chatSend(_ content: String) async throws -> ChatBubble
 
+    // Chat adapter lifecycle
+    func chatStart(adapterId: String) async throws -> Bool
+    func chatStop(adapterId: String) async throws -> Bool
+    func chatStatus(adapterId: String) async throws -> Bool
+
     // Pipelines
     func pipelineList() async throws -> [PipelineSummary]
     func pipelineGet(id: String) async throws -> PipelineDetail
@@ -394,6 +399,21 @@ public final class StubBunService: BunServiceProtocol {
         let reply = ChatBubble(role: .assistant, content: "Mock response to: \(content)")
         chatBubbles.append(reply)
         return reply
+    }
+
+    private var adapterRunning: [String: Bool] = [:]
+    public func chatStart(adapterId: String) async throws -> Bool {
+        adapterRunning[adapterId] = true
+        return true
+    }
+
+    public func chatStop(adapterId: String) async throws -> Bool {
+        adapterRunning[adapterId] = false
+        return false
+    }
+
+    public func chatStatus(adapterId: String) async throws -> Bool {
+        adapterRunning[adapterId] ?? false
     }
 
     public func pipelineList() async throws -> [PipelineSummary] {
