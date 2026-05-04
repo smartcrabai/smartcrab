@@ -96,11 +96,35 @@
         // MARK: - Chat
 
         public func chatHistory() async throws -> [ChatBubble] {
-            try await fallback.chatHistory()
+            struct WireBubble: Decodable {
+                let id: String
+                let role: String
+                let content: String
+                let createdAt: String
+            }
+            let rows: [WireBubble] = try await call(method: "chat.bubble-history", params: EmptyParams())
+            return rows.compactMap { wire in
+                guard let role = ChatBubble.Role(rawValue: wire.role),
+                      let uuid = UUID(uuidString: wire.id),
+                      let date = ISO8601DateFormatter().date(from: wire.createdAt)
+                else { return nil }
+                return ChatBubble(id: uuid, role: role, content: wire.content, createdAt: date)
+            }
         }
 
         public func chatSend(_ content: String) async throws -> ChatBubble {
-            try await fallback.chatSend(content)
+            struct Params: Encodable, Sendable { let content: String }
+            struct WireBubble: Decodable {
+                let id: String
+                let role: String
+                let content: String
+                let createdAt: String
+            }
+            let wire: WireBubble = try await call(method: "chat.bubble-send", params: Params(content: content))
+            let role = ChatBubble.Role(rawValue: wire.role) ?? .assistant
+            let uuid = UUID(uuidString: wire.id) ?? UUID()
+            let date = ISO8601DateFormatter().date(from: wire.createdAt) ?? Date()
+            return ChatBubble(id: uuid, role: role, content: wire.content, createdAt: date)
         }
 
         public func chatStart(adapterId: String) async throws -> Bool {
