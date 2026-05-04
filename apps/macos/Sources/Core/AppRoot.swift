@@ -25,6 +25,12 @@ enum SidebarTab: String, CaseIterable, Identifiable, Hashable {
         case .settings: return "gearshape"
         }
     }
+
+    /// 1-based shortcut number for the View menu (Cmd+1 ... Cmd+6).
+    var shortcutNumber: Int {
+        guard let idx = SidebarTab.allCases.firstIndex(of: self) else { return 0 }
+        return idx + 1
+    }
 }
 
 struct AppRoot: View {
@@ -44,6 +50,22 @@ struct AppRoot: View {
         } detail: {
             detailView(for: selection ?? .chat)
         }
+        #if os(macOS)
+        // Cmd+1..6 jump straight to a tab. Lets keyboard-driven workflows
+        // (and `scripts/e2e/preview-mac.sh`) navigate without clicking the
+        // sidebar — SwiftUI's List+selection doesn't respond to synthetic
+        // mouse events from System Events / CGEvent reliably.
+        .background(
+            VStack {
+                ForEach(SidebarTab.allCases) { tab in
+                    Button("") { selection = tab }
+                        .keyboardShortcut(KeyEquivalent(Character("\(tab.shortcutNumber)")), modifiers: .command)
+                        .opacity(0)
+                        .frame(width: 0, height: 0)
+                }
+            }
+        )
+        #endif
     }
 
     @ViewBuilder
