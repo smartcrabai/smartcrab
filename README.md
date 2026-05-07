@@ -1,71 +1,72 @@
 # SmartCrab
 
-SmartCrab is a framework implementing the Tool-to-AI paradigm — a desktop application for building, running, and managing AI-powered workflows.
+SmartCrab is a framework implementing the Tool-to-AI paradigm — a macOS desktop application for building, running, and managing AI-powered workflows.
 
-## Architecture (in transition)
+## Architecture
 
-SmartCrab is being migrated from a Tauri (Rust) + React stack to a native macOS app:
-
-- **Frontend**: SwiftUI macOS app (`apps/macos/`). Universal target also supports the iOS Simulator for UI preview, where the service layer is mocked.
-- **Service**: Bun TypeScript service (`apps/bun-service/`) compiled to a single binary via `bun build --compile` and bundled inside the `.app`.
-- **IPC**: Line-delimited JSON-RPC over stdin/stdout between the SwiftUI host process and the Bun service child process.
+- **Frontend**: SwiftUI macOS app (`apps/macos/`). The same Xcode project also produces an iOS Simulator preview target where the service layer is mocked, used purely for UI verification.
+- **Service**: Bun TypeScript service (`apps/bun-service/`) compiled to a single binary via `bun build --compile` and bundled inside the `.app` as `Resources/smartcrab-service`.
+- **IPC**: Line-delimited JSON-RPC 2.0 over stdin/stdout between the SwiftUI host process and the Bun service child process.
 - **Shared packages** (`packages/`):
-  - `ipc-protocol` — JSON-RPC method types + adapter interfaces, with generators for JSON Schema and Swift bindings.
+  - `ipc-protocol` — JSON-RPC method types + adapter interfaces.
   - `seher-config-schema` — SmartCrab provider configuration shape and translator to [`seher-ts`](https://github.com/smartcrabai/seher-ts) router settings.
-- **LLM SDKs**: Claude Agent SDK, Kimi Agent SDK, GitHub Copilot SDK.
-- **Chat adapters**: Discord first, with a pluggable adapter registry.
-- **Self-learning**: FTS5-backed memory + skill auto-generation loop inspired by `hermes-agent`.
+- **LLM routing**: All `llm_call` nodes and chat sends go through [`seher-ts`](https://github.com/smartcrabai/seher-ts), which resolves the highest-priority available coding agent (Claude Code / Kimi / GitHub Copilot / Codex CLI) based on the user's settings.
+- **Chat adapters**: Discord, registered via a self-registering adapter registry.
+- **Self-learning**: FTS5-backed memory + 30-minute summarization loop and skill auto-generation, inspired by `hermes-agent`.
 
-Linux and Windows release targets are being retired; the existing Tauri/Rust crates under `crates/` will be removed once the SwiftUI + Bun stack reaches feature parity.
+macOS is the only supported target. The previous Tauri (Rust) + React stack has been retired.
 
 ## Installation
 
-### macOS
-
-Download the `.dmg` from [GitHub Releases](https://github.com/smartcrabai/smartcrab/releases/latest).
-
-After downloading the DMG and copying `SmartCrab.app` to `/Applications`, run the following in Terminal before the first launch:
+Download the latest `.dmg` from [GitHub Releases](https://github.com/smartcrabai/smartcrab/releases/latest), copy `SmartCrab.app` to `/Applications`, then run:
 
 ```sh
 xattr -cr /Applications/SmartCrab.app
 ```
 
-This removes the Gatekeeper quarantine attribute, allowing the app to launch.
-
-### Windows
-
-Download the `.msi` or `.exe` installer from [GitHub Releases](https://github.com/smartcrabai/smartcrab/releases/latest).
-
-### Linux
-
-Download the `.deb` or `.AppImage` from [GitHub Releases](https://github.com/smartcrabai/smartcrab/releases/latest).
+This removes the Gatekeeper quarantine attribute so the app can launch.
 
 ## Development
 
 ### Prerequisites
 
-- [Rust](https://rustup.rs/) (latest stable)
-- [Node.js](https://nodejs.org/) 24+
-- Linux only: `libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf`
+- macOS 14+
+- Xcode 15+ (`xcode-select --install`)
+- [Bun](https://bun.sh) (the version pinned in `.bun-version`)
 
-### Setup
+### Run the Bun service standalone
 
-```sh
-cd crates/smartcrab-app
-npm install
-```
-
-### Run (development)
+The service speaks line-delimited JSON-RPC on stdio, so you can drive it directly:
 
 ```sh
-npm run tauri dev
+cd apps/bun-service
+bun install
+bun run start
+# then type:  {"jsonrpc":"2.0","id":1,"method":"system.ping"}
 ```
 
-### Build (production)
+### Run the full app
+
+The end-to-end build scripts compile the Bun service into a single binary, copy it into `apps/macos/Resources/`, then build and run the SwiftUI app:
 
 ```sh
-npm run tauri build
+./scripts/e2e/build-app.sh debug
+open .build/dd-mac/Build/Products/Debug/SmartCrab.app
 ```
+
+A no-credentials smoke test of the embedded service:
+
+```sh
+./scripts/e2e/smoke-rpc.sh system.ping
+```
+
+For UI-only iteration the iOS Simulator preview target uses a mock service:
+
+```sh
+./scripts/e2e/preview-sim.sh "iPhone 17 Pro"
+```
+
+See [`docs/E2E.md`](docs/E2E.md) for the full end-to-end verification flow.
 
 ## Documentation
 

@@ -10,55 +10,49 @@ template = "section.html"
 </div>
 
 # sakoku-ignore-next-line
-SmartCrab は「ツール → AI」パラダイムを実現する Rust フレームワークです。非 AI 処理の結果に基づいて AI（Claude Code）を起動するかどうかを Graph の条件分岐で判断します。
+SmartCrab は「ツール → AI」パラダイムを実現する macOS デスクトップアプリケーションです。HTTP リクエスト・cron ティック・チャットイベントといった非 AI 処理を先に走らせ、YAML で定義したパイプラインの条件分岐に基づいて AI エージェント（Claude Code / Kimi / GitHub Copilot / Codex CLI のいずれか。実行時に [`seher-ts`](https://github.com/smartcrabai/seher-ts) が解決）を呼ぶかどうかを決めます。
+
+# sakoku-ignore-next-line
+アプリ本体は SwiftUI ホストプロセスと Bun TypeScript サービスの 2 プロセスから成り、stdio 上の line-delimited JSON-RPC 2.0 で通信します。
 
 # sakoku-ignore-next-line
 ## ドキュメントの読み方
 
 # sakoku-ignore-next-line
-本ドキュメントは **設計（design/）** と **仕様（spec/）** の 2 カテゴリに分かれています。
-
-# sakoku-ignore-next-line
 | カテゴリ | 内容 | 対象読者 |
 |---------|------|---------|
 # sakoku-ignore-next-line
-| **design/** | Why & How — なぜその設計にしたか、どう実現するか | アーキテクチャを理解したい人 |
+| **design/** | Why & How — プロセス構成、実行モデル、ルーティング、学習ループ | アーキテクチャを把握したい人 |
 # sakoku-ignore-next-line
-| **spec/** | What — 具体的なトレイト定義、API、コマンド仕様 | 実装・利用する人 |
+| **spec/** | What — JSON-RPC メソッドのシェイプ、YAML パイプラインスキーマ、DB スキーマ | 実装・連携する人 |
 
 # sakoku-ignore-next-line
-設計を先に読んでから仕様を読むと、背景を踏まえた理解ができます。
-
-# sakoku-ignore-next-line
-## ドキュメント一覧
-
-# sakoku-ignore-next-line
-### 設計ドキュメント（design/）
+## 設計（design/）
 
 # sakoku-ignore-next-line
 | ドキュメント | 概要 |
 |-------------|------|
 # sakoku-ignore-next-line
-| [architecture](/design/architecture/) | アーキテクチャ全体設計 — 「ツール → AI」パラダイム、システム全体像、並行実行モデル |
+| [architecture](/design/architecture/) | プロセスモデル — SwiftUI ホスト、Bun 子プロセス、stdio JSON-RPC、SQLite、起動シーケンス |
 # sakoku-ignore-next-line
-| [data-flow](/design/data-flow/) | データフロー設計 — Node 間のデータの流れ、型安全性、エラーハンドリング |
+| [pipeline-engine](/design/pipeline-engine/) | YAML パイプライン DAG 実行器 — ノードアクション、条件ルーティング、シブリング並列、fan-in |
 # sakoku-ignore-next-line
-| [graph-engine](/design/graph-engine/) | Graph エンジン設計 — 実行エンジン、条件分岐、検証、ライフサイクル |
+| [llm-routing](/design/llm-routing/) | seher-ts ルーターと Settings → `seher-settings.jsonc` の流れ |
 # sakoku-ignore-next-line
-| [claude-code-integration](/design/claude-code-integration/) | Claude Code 連携設計 — 子プロセス実行、データ交換、テスト戦略 |
+| [memory-and-skills](/design/memory-and-skills/) | FTS5 メモリストア、30 分要約ループ、スキル自動生成 |
 
 # sakoku-ignore-next-line
-### 仕様書（spec/）
+## 仕様（spec/）
 
 # sakoku-ignore-next-line
 | ドキュメント | 概要 |
 |-------------|------|
 # sakoku-ignore-next-line
-| [layer](/spec/layer/) | Node 仕様 — Input/Hidden/Output 各 Node のトレイト定義とコード例 |
+| [rpc-methods](/spec/rpc-methods/) | Bun サービスが公開する JSON-RPC メソッドの一覧と params / result シェイプ |
 # sakoku-ignore-next-line
-| [dto](/spec/dto/) | DTO 仕様 — Dto トレイト、命名規約、変換、コード例 |
+| [pipeline-yaml](/spec/pipeline-yaml/) | パイプライン YAML スキーマ（PipelineDefinition、NodeAction、MatchCondition）と例 |
 # sakoku-ignore-next-line
-| [graph](/spec/graph/) | DirectedGraph 仕様 — DirectedGraphBuilder API、実行セマンティクス、バリデーション |
+| [database-schema](/spec/database-schema/) | SQLite テーブル定義と、それを作るマイグレーション順序 |
 
 # sakoku-ignore-next-line
 ## 用語集
@@ -67,24 +61,22 @@ SmartCrab は「ツール → AI」パラダイムを実現する Rust フレー
 | 用語 | 説明 |
 |------|------|
 # sakoku-ignore-next-line
-| **Layer** | グラフ内の処理単位（ノード）。Input / Hidden / Output の 3 種がある |
+| **パイプライン** | YAML で定義された有向グラフ。トリガーが発火すると実行される |
 # sakoku-ignore-next-line
-| **Input Layer** | 外部からのイベントを受けて DTO を生成する Layer。chat / cron / http のサブタイプを持つ |
+| **ノード** | パイプラインの 1 ステップ。`id` / `name` と任意の `action`（`shell_command` / `http_request` / `llm_call` / `chat_send`）を持つ |
 # sakoku-ignore-next-line
-| **Hidden Layer** | DTO を受け取り、変換・加工して DTO を返す中間処理 Layer。Claude Code 呼び出し可能 |
+| **トリガー** | パイプラインを起動する事象。現在は `cron` と `discord` |
 # sakoku-ignore-next-line
-| **Output Layer** | DTO を受け取り、最終的な副作用（通知、保存等）を実行する Layer。Claude Code 呼び出し可能 |
+| **アダプタ** | `apps/bun-service/src/adapters/` 配下の自己登録プラグイン。LLM アダプタは `executePrompt`、チャットアダプタは `sendMessage` と listener ループを公開 |
 # sakoku-ignore-next-line
-| **DTO** | Data Transfer Object。Node 間のデータ受け渡しに使う型安全な Rust 構造体 |
+| **seher-ts** | ユーザー設定に基づいて最優先の利用可能エージェント（Claude / Kimi / Copilot / Codex）を解決する外部ルーター SDK |
 # sakoku-ignore-next-line
-| **DirectedGraph** | 有向グラフ。Node の実行順序と条件分岐を定義する。サイクルもサポート |
+| **スキル** | 再利用可能な Markdown プロンプト本文。実行トレースから自動生成することもできる |
 # sakoku-ignore-next-line
-| **Node** | グラフ内の処理単位。Layer の実装に対応し、Input / Hidden / Output の 3 種がある |
+| **メモリ** | 過去のチャットや実行トレースを格納する FTS5 つき SQLite ストア。定期的に `kind=summary` エントリへ要約される |
+
 # sakoku-ignore-next-line
-| **Edge** | グラフ内のエッジ。Node 間の遷移を表す。条件付きエッジはクロージャで分岐判定を行う |
+## レガシー
+
 # sakoku-ignore-next-line
-| **DirectedGraphBuilder** | DirectedGraph をビルダーパターンで構築するための API |
-# sakoku-ignore-next-line
-| **Claude Code** | Anthropic の AI コーディングツール。Hidden/Output Node から子プロセスとして実行可能 |
-# sakoku-ignore-next-line
-| **SmartCrab.toml** | プロジェクトの設定ファイル |
+旧 Tauri/Rust フレームワーク時代のドキュメント（Layer/DTO/DirectedGraphBuilder、tokio ランタイム、OpenTelemetry エクスポータ、`crab new` CLI）は参考のため [`legacy/`](/legacy/) 配下に残しています。**現在の実装の挙動を表すものではありません。**

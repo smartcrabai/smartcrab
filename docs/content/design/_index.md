@@ -1,8 +1,15 @@
 +++
-title = "Design Documents"
-description = "Why & How — rationale behind design decisions and how they are realized"
+title = "Design"
 sort_by = "weight"
-weight = 1
+weight = 2
+template = "section.html"
 +++
 
-A collection of documents explaining the design philosophy and implementation approach of SmartCrab. Start here if you want to understand the architecture.
+Design documents describe how SmartCrab is put together and why. For concrete API and schema definitions, read the [spec](/spec/) section.
+
+| Document | Summary |
+|----------|---------|
+| [architecture](/design/architecture/) | Process model — SwiftUI host, Bun child, stdio JSON-RPC, SQLite, startup sequence |
+| [pipeline-engine](/design/pipeline-engine/) | YAML pipeline DAG executor — node actions, conditional routing, parallel siblings, fan-in |
+| [llm-routing](/design/llm-routing/) | seher-ts router and how Settings drives `seher-settings.jsonc` |
+| [memory-and-skills](/design/memory-and-skills/) | FTS5 memory store, 30-minute summarization loop, skill auto-generation |
