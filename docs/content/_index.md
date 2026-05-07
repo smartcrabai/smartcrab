@@ -9,50 +9,46 @@ template = "section.html"
   <img src="cover.jpg" alt="SmartCrab">
 </div>
 
-SmartCrab is a Rust framework implementing the "Tool-to-AI" paradigm. It uses conditional branching in a Graph to decide whether to invoke AI (Claude Code) based on the results of non-AI processing.
+SmartCrab is a macOS desktop application implementing the Tool-to-AI paradigm. Non-AI processing — HTTP requests, cron ticks, chat events — runs first, and conditional branches in a YAML-defined pipeline decide whether to invoke an AI agent (Claude Code, Kimi, GitHub Copilot, or Codex CLI, resolved at runtime by [`seher-ts`](https://github.com/smartcrabai/seher-ts)).
+
+The application is split into a SwiftUI host process and a Bun TypeScript service that communicate over line-delimited JSON-RPC 2.0 on stdio.
 
 ## How to Read This Documentation
 
-This documentation is divided into two categories: **Design (design/)** and **Specification (spec/)**.
-
 | Category | Content | Audience |
 |---------|---------|---------|
-| **design/** | Why & How — rationale behind design decisions and how they are realized | Those who want to understand the architecture |
-| **spec/** | What — concrete trait definitions, APIs, and command specifications | Those who implement or use the framework |
+| **design/** | Why & How — system structure, execution model, routing, learning loop | Readers who want to understand the architecture |
+| **spec/** | What — JSON-RPC method shapes, YAML pipeline schema, database schema | Implementers and integrators |
 
-Reading the design docs first, then the spec docs, gives you context-grounded understanding.
-
-## Document Index
-
-### Design Documents (design/)
+## Design
 
 | Document | Summary |
-|-------------|------|
-| [architecture](/design/architecture/) | Overall architecture — the "Tool-to-AI" paradigm, system overview, concurrent execution model |
-| [data-flow](/design/data-flow/) | Data flow design — data flow between Layers, type safety, error handling |
-| [graph-engine](/design/graph-engine/) | Graph engine design — execution engine, conditional branching, validation, lifecycle |
-| [claude-code-integration](/design/claude-code-integration/) | Claude Code integration design — subprocess execution, data exchange, test strategy |
+|----------|---------|
+| [architecture](/design/architecture/) | Process model — SwiftUI host, Bun child, stdio JSON-RPC, SQLite, startup sequence |
+| [pipeline-engine](/design/pipeline-engine/) | YAML pipeline DAG executor — node actions, conditional routing, parallel siblings, fan-in |
+| [llm-routing](/design/llm-routing/) | seher-ts router and how Settings drives `seher-settings.jsonc` |
+| [memory-and-skills](/design/memory-and-skills/) | FTS5 memory store, 30-minute summarization loop, skill auto-generation |
 
-### Specification Documents (spec/)
+## Specification
 
 | Document | Summary |
-|-------------|------|
-| [layer](/spec/layer/) | Node specification — trait definitions and code examples for Input/Hidden/Output Nodes |
-| [dto](/spec/dto/) | DTO specification — the Dto trait, naming conventions, conversions, and code examples |
-| [graph](/spec/graph/) | DirectedGraph specification — DirectedGraphBuilder API, execution semantics, validation |
+|----------|---------|
+| [rpc-methods](/spec/rpc-methods/) | Every JSON-RPC method exposed by the Bun service, with params and result shapes |
+| [pipeline-yaml](/spec/pipeline-yaml/) | Pipeline YAML schema (PipelineDefinition, NodeAction, MatchCondition) with examples |
+| [database-schema](/spec/database-schema/) | SQLite tables and the migration order that produces them |
 
 ## Glossary
 
 | Term | Description |
-|------|------|
-| **Layer** | A processing unit (node) in the graph. There are three kinds: Input, Hidden, and Output |
-| **Input Layer** | A Node that receives external events and produces a DTO. Has subtypes: chat, cron, and http |
-| **Hidden Layer** | An intermediate processing Node that receives a DTO, transforms it, and returns a DTO. Can invoke Claude Code |
-| **Output Layer** | A Node that receives a DTO and performs final side effects (notifications, persistence, etc.). Can invoke Claude Code |
-| **DTO** | Data Transfer Object. A type-safe Rust struct used to pass data between Nodes |
-| **DirectedGraph** | A directed graph that defines the execution order and conditional branching of Nodes. Supports cycles |
-| **Node** | A processing unit in the graph. Corresponds to one Layer implementation. There are three kinds: Input, Hidden, and Output |
-| **Edge** | An edge in the graph. Represents a transition between Nodes. Conditional edges use closures for branching logic |
-| **DirectedGraphBuilder** | API for constructing a DirectedGraph using the builder pattern |
-| **Claude Code** | Anthropic's AI coding tool. Can be invoked as a subprocess from Hidden/Output Layers |
-| **SmartCrab.toml** | Project configuration file |
+|------|-------------|
+| **Pipeline** | A YAML-defined directed graph of nodes that executes when a trigger fires |
+| **Node** | One step in a pipeline. Has an `id`, a `name`, and an optional `action` (`shell_command`, `http_request`, `llm_call`, or `chat_send`) |
+| **Trigger** | What starts a pipeline run — currently `cron` or `discord` |
+| **Adapter** | A self-registering plugin under `apps/bun-service/src/adapters/`. LLM adapters expose `executePrompt`; chat adapters expose `sendMessage` and a listener loop |
+| **seher-ts** | External router SDK that resolves the highest-priority available coding agent (Claude / Kimi / Copilot / Codex) given the user's settings |
+| **Skill** | A reusable Markdown prompt body, optionally auto-generated from execution traces |
+| **Memory** | An FTS5-backed SQLite store of past chat turns and execution traces, periodically summarized into `kind=summary` entries |
+
+## Legacy
+
+The previous Tauri/Rust framework documentation (Layer/DTO/DirectedGraphBuilder, tokio runtime, OpenTelemetry exporter, `crab new` CLI) lives under [`legacy/`](/legacy/) for reference. **It does not describe the current implementation.**
