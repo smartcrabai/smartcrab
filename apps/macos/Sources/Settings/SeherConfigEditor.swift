@@ -154,9 +154,9 @@ private struct ProviderRow: View {
 
     private static let kinds: [(id: String, label: String)] = [
         ("anthropic", "Anthropic API互換"),
-        ("copilot",   "GitHub Copilot"),
-        ("kimi",      "Kimi (Moonshot)"),
-        ("openai",    "OpenAI API互換"),
+        ("copilot", "GitHub Copilot"),
+        ("kimi", "Kimi (Moonshot)"),
+        ("openai", "OpenAI API互換"),
     ]
 
     var body: some View {
