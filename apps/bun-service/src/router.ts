@@ -12,12 +12,16 @@
 
 import { llmRegistry } from "./adapters/llm/registry";
 import { defaultSeherConfigPath } from "./seher/write-settings";
+import type { SeherTool } from "@seher-ts/sdk";
+import { zodToJsonSchema } from "zod-to-json-schema";
+import type { LlmMessage, LlmResponse } from "./adapters/llm/types.ts";
 
 export interface RouteRequest {
   prompt: string;
   systemPrompt?: string;
   model?: string;
   maxTokens?: number;
+  tools?: SeherTool[];
 }
 
 export interface RouteResponse {
@@ -27,7 +31,7 @@ export interface RouteResponse {
 }
 
 interface SeherModule {
-  SeherSDK: new (opts?: { configPath?: string; noWait?: boolean }) => {
+  SeherSDK: new (opts?: { configPath?: string; noWait?: boolean; tools?: SeherTool[] }) => {
     run: (opts: {
       prompt: string;
       model?: string;
@@ -36,6 +40,8 @@ interface SeherModule {
     }) => Promise<{ text: string; kind: string; raw: unknown }>;
   };
 }
+
+const MAX_TOOL_ROUNDS = 10;
 
 let cachedSdk: SeherModule | null | undefined;
 
@@ -60,6 +66,7 @@ export async function route(request: RouteRequest): Promise<RouteResponse> {
         // Fail fast if all configured agents are rate-limited rather than
         // sleeping the chat thread until a reset.
         noWait: true,
+        tools: request.tools,
       });
       const result = await sdk.run({
         prompt: request.prompt,
@@ -81,8 +88,42 @@ export async function route(request: RouteRequest): Promise<RouteResponse> {
       "router: seher-ts unavailable and no LLM adapter registered (configure ~/.config/seher/settings.jsonc).",
     );
   }
-  const response = await adapter.complete({
-    messages: [{ role: "user", content: request.prompt }],
-  });
-  return { text: response.content, kind: "registry-fallback" };
+
+  const toolDefs = request.tools?.map((t) => ({
+    name: t.name,
+    description: t.description,
+    input_schema: zodToJsonSchema(t.parameters, { target: "openApi3" }) as Record<string, unknown>,
+  }));
+
+  const toolMap = new Map(request.tools?.map((t) => [t.name, t]) ?? []);
+  const messages: LlmMessage[] = [{ role: "user", content: request.prompt }];
+
+  let lastResponse = await adapter.complete({ messages, tools: toolDefs });
+  for (let _round = 1; _round < MAX_TOOL_ROUNDS && lastResponse.toolCalls?.length; _round++) {
+    if (lastResponse.content) {
+      messages.push({ role: "assistant", content: lastResponse.content });
+    }
+
+    const results = await Promise.all(
+      lastResponse.toolCalls.map(async (call) => {
+        const tool = toolMap.get(call.name);
+        if (tool) {
+          try {
+            const parsed = tool.parameters.parse(call.input);
+            const raw = await tool.handler(parsed);
+            return typeof raw === "string" ? raw : JSON.stringify(raw);
+          } catch (err) {
+            return `[tool error: ${call.name} - ${err instanceof Error ? err.message : String(err)}]`;
+          }
+        }
+        return `[unknown tool: ${call.name}]`;
+      }),
+    );
+    for (const result of results) {
+      messages.push({ role: "tool", content: result });
+    }
+    lastResponse = await adapter.complete({ messages, tools: toolDefs });
+  }
+
+  return { text: lastResponse.content, kind: "registry-fallback" };
 }

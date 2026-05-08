@@ -31,15 +31,17 @@ export const defaultLlmHandler: DiscordMessageHandler = async (message) => {
   if (!llm) {
     return null;
   }
-  const response = await llm.generate({
+  const response = await llm.complete({
     prompt: message.content,
-    context: {
-      source: "discord",
-      channelId: message.channelId,
-      authorId: message.author.id,
+    options: {
+      context: {
+        source: "discord",
+        channelId: message.channelId,
+        authorId: message.author.id,
+      },
     },
   });
-  return response.text;
+  return response.content;
 };
 
 /**
