@@ -18,6 +18,11 @@ public enum PipelineNodeAction: Equatable, Sendable {
     case shell
     case none
 
+    /// Default LLM provider kind for newly created `llm_call` nodes.
+    /// Must stay in sync with the `ProviderKind` union in
+    /// `packages/seher-config-schema/src/smartcrab-config.ts`.
+    public static let defaultLLMProvider: String = "anthropic"
+
     public var label: String {
         switch self {
         case let .llm(provider): return "LLM (\(provider))"
@@ -108,7 +113,7 @@ public struct PipelineGraph: Equatable, Sendable {
             .init(id: "start", name: "Start", kind: .input,
                   position: CGPoint(x: 200, y: 100)),
             .init(id: "think", name: "Think", kind: .hidden,
-                  action: .llm(provider: "claude"),
+                  action: .llm(provider: PipelineNodeAction.defaultLLMProvider),
                   position: CGPoint(x: 200, y: 260)),
             .init(id: "fetch", name: "Fetch", kind: .hidden,
                   action: .http(method: "GET"),

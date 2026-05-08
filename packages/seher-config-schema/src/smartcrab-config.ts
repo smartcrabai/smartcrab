@@ -5,8 +5,14 @@
  * `translate()` を通して seher-ts の `settings.jsonc` 形式に変換される。
  */
 
-/** どの LLM 実装を使うかの種別。Adapter 自動登録のキーと一致する。 */
-export type ProviderKind = "claude" | "kimi" | "copilot";
+/**
+ * どの LLM 実装を使うかの種別。
+ * - `anthropic` … Anthropic API 互換 (Claude Agent SDK で駆動)
+ * - `copilot`   … GitHub Copilot (Copilot SDK で駆動)
+ * - `kimi`      … Moonshot Kimi (Kimi Agent SDK で駆動)
+ * - `openai`    … OpenAI API 互換 (Kimi Agent SDK + Kimi CLI の `openai_legacy` で駆動)
+ */
+export type ProviderKind = "anthropic" | "copilot" | "kimi" | "openai";
 
 /** 曜日 (0 = Sunday … 6 = Saturday)。Date#getDay() に揃える。 */
 export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;

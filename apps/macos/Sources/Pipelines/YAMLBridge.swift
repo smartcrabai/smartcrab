@@ -69,7 +69,7 @@ public extension PipelineGraph {
                     let v = line.dropFirst("next:".count).trimmingCharacters(in: .whitespaces)
                     if !v.isEmpty { collected[idx].next = [v] }
                 } else if line.hasPrefix("type: llm_call") {
-                    collected[idx].action = .llm(provider: "claude")
+                    collected[idx].action = .llm(provider: PipelineNodeAction.defaultLLMProvider)
                 } else if line.hasPrefix("type: http_request") {
                     collected[idx].action = .http(method: "GET")
                 } else if line.hasPrefix("type: shell_command") {

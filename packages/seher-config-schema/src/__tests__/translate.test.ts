@@ -27,12 +27,12 @@ const cases: readonly Case[] = [
   {
     name: "single provider without rules: fallback adds weight=0 priority entry",
     input: {
-      providers: [{ id: "main", kind: "claude" }],
+      providers: [{ id: "main", kind: "anthropic" }],
       priority: [],
       defaults: { fallbackProviderId: "main", rateLimitBackoffSec: 60 },
     },
     expected: {
-      agents: [{ name: "main", provider: "claude" }],
+      agents: [{ name: "main", provider: "anthropic" }],
       priority: [{ agent: "main", weight: 0 }],
     },
   },
@@ -40,7 +40,7 @@ const cases: readonly Case[] = [
     name: "multi provider with priority: weights preserved, fallback already covered",
     input: {
       providers: [
-        { id: "primary", kind: "claude", model: "claude-sonnet-4.7" },
+        { id: "primary", kind: "anthropic", model: "claude-sonnet-4.7" },
         { id: "secondary", kind: "kimi" },
       ],
       priority: [
@@ -51,7 +51,7 @@ const cases: readonly Case[] = [
     },
     expected: {
       agents: [
-        { name: "primary", provider: "claude", model: "claude-sonnet-4.7" },
+        { name: "primary", provider: "anthropic", model: "claude-sonnet-4.7" },
         { name: "secondary", provider: "kimi" },
       ],
       priority: [
@@ -117,7 +117,7 @@ const cases: readonly Case[] = [
   {
     name: "multiple rules per provider collapse to max weight + multiple time windows",
     input: {
-      providers: [{ id: "shift-bot", kind: "claude" }],
+      providers: [{ id: "shift-bot", kind: "anthropic" }],
       priority: [
         {
           providerId: "shift-bot",
@@ -138,7 +138,7 @@ const cases: readonly Case[] = [
       agents: [
         {
           name: "shift-bot",
-          provider: "claude",
+          provider: "anthropic",
           timeWindows: [
             { weekday: [1, 2, 3, 4, 5], startHour: 9, endHour: 18 },
             { weekday: [0, 6], startHour: 10, endHour: 22 },
@@ -151,7 +151,7 @@ const cases: readonly Case[] = [
   {
     name: "rule referencing unknown provider is silently ignored",
     input: {
-      providers: [{ id: "real", kind: "claude" }],
+      providers: [{ id: "real", kind: "anthropic" }],
       priority: [
         { providerId: "real", weight: 3 },
         { providerId: "ghost", weight: 999 },
@@ -159,26 +159,26 @@ const cases: readonly Case[] = [
       defaults: { fallbackProviderId: "real", rateLimitBackoffSec: 30 },
     },
     expected: {
-      agents: [{ name: "real", provider: "claude" }],
+      agents: [{ name: "real", provider: "anthropic" }],
       priority: [{ agent: "real", weight: 3 }],
     },
   },
   {
     name: "empty envOverrides is omitted (no empty env object emitted)",
     input: {
-      providers: [{ id: "p", kind: "claude", envOverrides: {} }],
+      providers: [{ id: "p", kind: "anthropic", envOverrides: {} }],
       priority: [{ providerId: "p", weight: 1 }],
       defaults: { fallbackProviderId: "p", rateLimitBackoffSec: 30 },
     },
     expected: {
-      agents: [{ name: "p", provider: "claude" }],
+      agents: [{ name: "p", provider: "anthropic" }],
       priority: [{ agent: "p", weight: 1 }],
     },
   },
   {
     name: "rule with only hours (no weekdays) yields empty weekday array",
     input: {
-      providers: [{ id: "night", kind: "claude" }],
+      providers: [{ id: "night", kind: "anthropic" }],
       priority: [{ providerId: "night", weight: 2, hours: [22, 24] }],
       defaults: { fallbackProviderId: "night", rateLimitBackoffSec: 30 },
     },
@@ -186,7 +186,7 @@ const cases: readonly Case[] = [
       agents: [
         {
           name: "night",
-          provider: "claude",
+          provider: "anthropic",
           timeWindows: [{ weekday: [], startHour: 22, endHour: 24 }],
         },
       ],
@@ -205,7 +205,7 @@ describe("translate(SmartCrabConfig) -> SeherSettings", () => {
 
   test("translate is pure: same input twice yields equal but independent output", () => {
     const input: SmartCrabConfig = {
-      providers: [{ id: "a", kind: "claude", envOverrides: { K: "v" } }],
+      providers: [{ id: "a", kind: "anthropic", envOverrides: { K: "v" } }],
       priority: [{ providerId: "a", weight: 1 }],
       defaults: { fallbackProviderId: "a", rateLimitBackoffSec: 30 },
     };
@@ -223,7 +223,7 @@ describe("translate(SmartCrabConfig) -> SeherSettings", () => {
 
   test("condition field on PriorityRule is non-functional (not propagated)", () => {
     const out = translate({
-      providers: [{ id: "x", kind: "claude" }],
+      providers: [{ id: "x", kind: "anthropic" }],
       priority: [
         { providerId: "x", weight: 1, condition: "user-flag:beta" },
       ],
