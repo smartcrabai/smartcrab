@@ -139,7 +139,7 @@ public struct NodeView: View {
         NodeView(node: .init(id: "a", name: "Trigger", kind: .input,
                              position: .zero))
         NodeView(node: .init(id: "b", name: "Think", kind: .hidden,
-                             action: .llm(provider: "claude"),
+                             action: .llm(provider: PipelineNodeAction.defaultLLMProvider),
                              position: .zero, status: .running))
         NodeView(node: .init(id: "c", name: "Done", kind: .output,
                              position: .zero, status: .success))

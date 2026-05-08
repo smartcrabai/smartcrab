@@ -310,7 +310,7 @@ public struct PipelineEditorView: View {
 
     private func addNode(kind: PipelineNodeKind) {
         let id = "n\(graph.nodes.count + 1)"
-        let action: PipelineNodeAction = kind == .hidden ? .llm(provider: "claude") : .none
+        let action: PipelineNodeAction = kind == .hidden ? .llm(provider: PipelineNodeAction.defaultLLMProvider) : .none
         let pos = CGPoint(x: 200 + CGFloat(graph.nodes.count) * 40,
                           y: 100 + CGFloat(graph.nodes.count) * 40)
         graph.nodes.append(.init(

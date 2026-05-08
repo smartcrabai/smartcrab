@@ -1,12 +1,13 @@
 /**
- * LLM router built on top of `seher-ts`.
+ * LLM router built on top of `@seher-ts/sdk` (>= 0.1.3).
  *
- * `seher-ts` resolves the highest-priority available coding agent
- * (Claude / Kimi / Copilot / Codex) based on the user's settings
- * (`~/.config/seher/settings.jsonc` by default — overridable via
- * `SMARTCRAB_SEHER_CONFIG`). When seher-ts is unavailable or no agent
- * resolves, we fall back to the first registered adapter in
- * `llmRegistry` so the chat tab stays usable.
+ * Seher resolves the highest-priority available coding agent — backed by
+ * Claude Agent SDK (Anthropic API-compatible), Copilot SDK, or Kimi Agent SDK
+ * (Kimi / OpenAI API-compatible) — based on the user's settings file
+ * (`~/Library/Application Support/SmartCrab/seher-settings.jsonc` by default,
+ * overridable via `SMARTCRAB_SEHER_CONFIG`). When `@seher-ts/sdk` is
+ * unavailable or no agent resolves, we fall back to the first registered
+ * adapter in `llmRegistry` so the chat tab stays usable.
  */
 
 import { llmRegistry } from "./adapters/llm/registry";
@@ -21,7 +22,7 @@ export interface RouteRequest {
 
 export interface RouteResponse {
   text: string;
-  /** "claude" | "kimi" | "copilot" | "codex" | "registry-fallback" */
+  /** "claude" | "copilot" | "kimi" | "registry-fallback" — Seher's own SDK kinds. */
   kind: string;
 }
 
@@ -41,7 +42,7 @@ let cachedSdk: SeherModule | null | undefined;
 async function loadSeher(): Promise<SeherModule | null> {
   if (cachedSdk !== undefined) return cachedSdk;
   try {
-    cachedSdk = (await import("seher-ts")) as unknown as SeherModule;
+    cachedSdk = (await import("@seher-ts/sdk")) as unknown as SeherModule;
   } catch {
     cachedSdk = null;
   }

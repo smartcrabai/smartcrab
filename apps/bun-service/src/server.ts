@@ -88,7 +88,7 @@ async function main(): Promise<void> {
     },
   };
   const llmRegistry = new Map<string, typeof seherLlmAdapter>();
-  for (const id of ["seher", "default", "claude", "kimi", "copilot", "codex"]) {
+  for (const id of ["seher", "default", "anthropic", "copilot", "kimi", "openai"]) {
     llmRegistry.set(id, seherLlmAdapter);
   }
 

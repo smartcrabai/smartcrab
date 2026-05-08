@@ -20,7 +20,7 @@
     "bun-types": "latest"
   },
   "optionalDependencies": {
-    "seher-ts": "*",
+    "@seher-ts/sdk": "^0.1.3",
     "@smartcrab/ipc-protocol": "*",
     "@smartcrab/seher-config-schema": "*"
   }

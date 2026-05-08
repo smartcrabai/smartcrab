@@ -31,9 +31,9 @@ export interface LlmResponse {
 
 /** Trait that every LLM-provider adapter must implement. */
 export interface LlmAdapter {
-  /** Unique machine-readable identifier (e.g. `"claude"`). */
+  /** Unique machine-readable identifier (e.g. `"anthropic"`). */
   readonly id: string;
-  /** Human-readable display name (e.g. `"Claude"`). */
+  /** Human-readable display name (e.g. `"Anthropic API互換"`). */
   readonly name: string;
   /** Static capability declaration for this provider. */
   capabilities(): LlmCapabilities;
