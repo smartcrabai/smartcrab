@@ -153,10 +153,10 @@ private struct ProviderRow: View {
     @State private var newEnvValue: String = ""
 
     private static let kinds: [(id: String, label: String)] = [
-        ("anthropic", "Anthropic API互換"),
+        ("anthropic", "Anthropic API compatible"),
         ("copilot", "GitHub Copilot"),
         ("kimi", "Kimi (Moonshot)"),
-        ("openai", "OpenAI API互換"),
+        ("openai", "OpenAI API compatible"),
     ]
 
     var body: some View {

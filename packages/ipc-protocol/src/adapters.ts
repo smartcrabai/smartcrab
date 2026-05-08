@@ -33,7 +33,7 @@ export interface LlmResponse {
 export interface LlmAdapter {
   /** Unique machine-readable identifier (e.g. `"anthropic"`). */
   readonly id: string;
-  /** Human-readable display name (e.g. `"Anthropic API互換"`). */
+  /** Human-readable display name (e.g. `"Anthropic API compatible"`). */
   readonly name: string;
   /** Static capability declaration for this provider. */
   capabilities(): LlmCapabilities;

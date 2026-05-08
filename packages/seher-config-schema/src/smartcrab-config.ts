@@ -1,68 +1,68 @@
 /**
- * smartcrab 独自のプロバイダ設定スキーマ。
+ * smartcrab-specific provider configuration schema.
  *
- * SwiftUI 側の GUI で編集される人間向けシェイプ。実行時に
- * `translate()` を通して seher-ts の `settings.jsonc` 形式に変換される。
+ * The human-facing shape edited by the SwiftUI GUI. At runtime it is
+ * converted through `translate()` into the seher-ts `settings.jsonc` form.
  */
 
 /**
- * どの LLM 実装を使うかの種別。
- * - `anthropic` … Anthropic API 互換 (Claude Agent SDK で駆動)
- * - `copilot`   … GitHub Copilot (Copilot SDK で駆動)
- * - `kimi`      … Moonshot Kimi (Kimi Agent SDK で駆動)
- * - `openai`    … OpenAI API 互換 (Kimi Agent SDK + Kimi CLI の `openai_legacy` で駆動)
+ * Which LLM implementation to use.
+ * - `anthropic` ... Anthropic API compatible (driven by the Claude Agent SDK)
+ * - `copilot`   ... GitHub Copilot (driven by the Copilot SDK)
+ * - `kimi`      ... Moonshot Kimi (driven by the Kimi Agent SDK)
+ * - `openai`    ... OpenAI API compatible (driven by the Kimi Agent SDK + Kimi CLI `openai_legacy`)
  */
 export type ProviderKind = "anthropic" | "copilot" | "kimi" | "openai";
 
-/** 曜日 (0 = Sunday … 6 = Saturday)。Date#getDay() に揃える。 */
+/** Weekday (0 = Sunday ... 6 = Saturday). Aligned with Date#getDay(). */
 export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
-/** [startHour, endHour) の時間レンジ。両端 0..24 の整数。 */
+/** Hour range [startHour, endHour). Both endpoints are integers in 0..24. */
 export type HourRange = readonly [number, number];
 
 /**
- * 個別 provider の宣言的設定。
- * `id` は priority ルールから参照される論理名。
+ * Declarative configuration for a single provider.
+ * `id` is the logical name referenced by priority rules.
  */
 export interface ProviderConfig {
-  /** smartcrab 内で一意の論理名 (priority.providerId から参照される)。 */
+  /** Unique logical name within smartcrab (referenced by priority.providerId). */
   readonly id: string;
-  /** 使用する adapter の種別。 */
+  /** Adapter kind to use. */
   readonly kind: ProviderKind;
-  /** 使用するモデル名 (省略時は adapter の default)。 */
+  /** Model name to use (falls back to the adapter default when omitted). */
   readonly model?: string;
-  /** この provider 起動時に注入する追加環境変数。 */
+  /** Extra environment variables injected when this provider is launched. */
   readonly envOverrides?: Readonly<Record<string, string>>;
 }
 
 /**
- * provider の優先順位ルール。seher-ts の router が同じ優先度を見て選ぶ。
+ * Provider priority rule. The seher-ts router picks providers by priority.
  *
- * 重み (`weight`) が大きいほど優先される。
- * `weekdays` / `hours` を両方指定すると AND 条件で評価される。
+ * Higher `weight` wins. When both `weekdays` and `hours` are specified they
+ * are evaluated as an AND condition.
  */
 export interface PriorityRule {
-  /** 対象 provider の id。`ProviderConfig.id` と対応していなければならない。 */
+  /** Target provider id. Must correspond to a `ProviderConfig.id`. */
   readonly providerId: string;
-  /** 優先度の重み (大きいほど先に選ばれる)。負値も許容。 */
+  /** Priority weight (higher is picked first). Negative values are allowed. */
   readonly weight: number;
-  /** このルールが効く曜日の集合。未指定は「全曜日」。 */
+  /** Weekdays this rule is active. Omitted means "every weekday". */
   readonly weekdays?: readonly Weekday[];
-  /** このルールが効く時間帯。未指定は「全日」。 */
+  /** Time range this rule is active. Omitted means "all day". */
   readonly hours?: HourRange;
-  /** 任意のラベル文字列 (UI 表示用)。translate では非機能的 — pass-through しない。 */
+  /** Optional label string (for UI display). Not functional in translate -- not passed through. */
   readonly condition?: string;
 }
 
-/** smartcrab 全体での fallback 動作の既定。 */
+/** Defaults for smartcrab-wide fallback behavior. */
 export interface DefaultsConfig {
-  /** どの provider にも当てはまらない場合の fallback。 */
+  /** Fallback used when no provider matches. */
   readonly fallbackProviderId: string;
-  /** rate-limit に当たった際の back-off (秒)。 */
+  /** Back-off (in seconds) applied on rate-limit hits. */
   readonly rateLimitBackoffSec: number;
 }
 
-/** smartcrab 設定ルート。GUI が編集し、ディスクに JSON として書く。 */
+/** Root of the smartcrab configuration. The GUI edits this and writes it to disk as JSON. */
 export interface SmartCrabConfig {
   readonly providers: readonly ProviderConfig[];
   readonly priority: readonly PriorityRule[];

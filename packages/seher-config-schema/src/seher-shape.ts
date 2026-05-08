@@ -1,19 +1,20 @@
 /**
- * seher-ts (https://github.com/smartcrabai/seher-ts) の `settings.jsonc` 形を
- * smartcrab 内で表す TypeScript インターフェイス。
+ * TypeScript interfaces representing the shape of seher-ts
+ * (https://github.com/smartcrabai/seher-ts) `settings.jsonc` inside smartcrab.
  *
- * このファイルは seher-ts ライブラリへの runtime 依存を持たないため、
- * テストや translator は外部 fetch なしで完結する。
- * shape は seher-ts の README に基づき、smartcrab が利用する範囲だけを
- * 手書きで再現している (上位互換を意識し、追加プロパティは Record で受け流す前提)。
+ * This file has no runtime dependency on the seher-ts library, so tests and
+ * translators stay self-contained without external fetches.
+ * The shape mirrors what is documented in the seher-ts README, covering only
+ * the surface that smartcrab uses (forward-compatible by design: any extra
+ * properties are accepted via Record and passed through).
  */
 
-/** seher-ts の曜日 (0 = Sunday … 6 = Saturday)。 */
+/** seher-ts weekday (0 = Sunday ... 6 = Saturday). */
 export type SeherWeekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 /**
- * seher の time-window: ある agent がアクティブな時間帯を表す。
- * `weekday` が空配列なら「全曜日」を意味するのが seher 側の規約。
+ * seher time-window: the period during which an agent is active.
+ * Per the seher-ts contract, an empty `weekday` array means "every weekday".
  */
 export interface SeherTimeWindow {
   readonly weekday: readonly SeherWeekday[];
@@ -22,8 +23,8 @@ export interface SeherTimeWindow {
 }
 
 /**
- * seher における 1 つの実行可能 agent。
- * 各 agent は単一の provider に紐づき、router によって weight 順に選ばれる。
+ * A single executable agent in seher.
+ * Each agent is bound to one provider; the router picks agents in weight order.
  */
 export interface SeherAgent {
   readonly name: string;
@@ -34,13 +35,13 @@ export interface SeherAgent {
   readonly timeWindows?: readonly SeherTimeWindow[];
 }
 
-/** seher の優先度ルール。 */
+/** seher priority rule. */
 export interface SeherPriorityRule {
   readonly agent: string;
   readonly weight: number;
 }
 
-/** seher-ts の `settings.jsonc` ルート。 */
+/** Root of the seher-ts `settings.jsonc`. */
 export interface SeherSettings {
   readonly agents: readonly SeherAgent[];
   readonly priority: readonly SeherPriorityRule[];
