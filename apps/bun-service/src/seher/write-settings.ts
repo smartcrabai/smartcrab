@@ -17,10 +17,17 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 
+import type { ProviderKind } from "@smartcrab/seher-config-schema";
+
+import {
+  isKimiBackedKind,
+  kimiShareDirFor as kimiShareDirForProvider,
+  writeKimiShare,
+} from "./kimi-share.ts";
+
 interface InAppProvider {
   id: string;
-  /** "claude" | "kimi" | "copilot" */
-  kind: string;
+  kind: ProviderKind;
   model: string;
   envOverrides?: Record<string, string>;
 }
@@ -63,7 +70,7 @@ interface SeherAgent {
   pre_command: string[];
   active: { weekdays?: string[]; hours?: string[] } | null;
   inactive: { weekdays?: string[]; hours?: string[] } | null;
-  sdk?: "claude" | "codex" | "copilot" | "kimi" | null;
+  sdk?: "claude" | "copilot" | "kimi" | null;
 }
 
 interface SeherPriorityRule {
@@ -80,25 +87,22 @@ interface SeherSettings {
   priority: SeherPriorityRule[];
 }
 
-const KIND_TO_COMMAND: Record<string, string> = {
-  claude: "claude",
-  kimi: "kimi",
-  copilot: "copilot",
-  codex: "codex",
-};
+/**
+ * `anthropic` and `openai` are SmartCrab UX-level kinds; both share the same
+ * underlying CLI as `claude` / `kimi` respectively but with different config
+ * (Anthropic-compatible base URL / OpenAI-compatible config.toml).
+ */
+interface KindInfo {
+  readonly command: string;
+  readonly providerName: string;
+  readonly sdk: "claude" | "copilot" | "kimi";
+}
 
-const KIND_TO_PROVIDER_NAME: Record<string, string> = {
-  claude: "anthropic",
-  kimi: "moonshot",
-  copilot: "github",
-  codex: "openai",
-};
-
-const KIND_TO_SDK: Record<string, "claude" | "codex" | "copilot" | "kimi"> = {
-  claude: "claude",
-  kimi: "kimi",
-  copilot: "copilot",
-  codex: "codex",
+const KIND_INFO: Record<ProviderKind, KindInfo> = {
+  anthropic: { command: "claude",  providerName: "anthropic", sdk: "claude" },
+  copilot:   { command: "copilot", providerName: "github",    sdk: "copilot" },
+  kimi:      { command: "kimi",    providerName: "moonshot",  sdk: "kimi" },
+  openai:    { command: "kimi",    providerName: "openai",    sdk: "kimi" },
 };
 
 function clampWeekdayRanges(weekdays: number[] | undefined): string[] | undefined {
@@ -143,24 +147,34 @@ export function translateToSeherSettings(cfg: InAppSeherConfig): SeherSettings {
   const priority: SeherPriorityRule[] = [];
 
   for (const provider of cfg.providers) {
-    const command = KIND_TO_COMMAND[provider.kind] ?? provider.kind;
-    const providerName = KIND_TO_PROVIDER_NAME[provider.kind];
-    const sdk = KIND_TO_SDK[provider.kind] ?? null;
+    const info = KIND_INFO[provider.kind];
+    if (!info) {
+      // Persisted JSON predates the current ProviderKind union (e.g. legacy
+      // `claude` / `codex`). Skip with a warning instead of crashing.
+      console.warn(`[seher] dropping provider "${provider.id}" with unknown kind "${provider.kind}"`);
+      continue;
+    }
+
+    // For kimi-backed kinds (kimi, openai) the spawned `kimi` CLI must read
+    // SmartCrab's generated config.toml instead of the user's own
+    // ~/.kimi/config.toml; the share dir holds that generated file (written
+    // by writeSeherSettings).
+    const env: Record<string, string> = { ...(provider.envOverrides ?? {}) };
+    if (isKimiBackedKind(provider.kind) && env.KIMI_SHARE_DIR === undefined) {
+      env.KIMI_SHARE_DIR = kimiShareDirForProvider(provider.id);
+    }
 
     agents.push({
-      command,
+      command: info.command,
       args: [],
       models: provider.model ? { default: provider.model } : null,
       arg_maps: {},
-      env:
-        provider.envOverrides && Object.keys(provider.envOverrides).length > 0
-          ? { ...provider.envOverrides }
-          : null,
-      provider: providerName ? { kind: "explicit", name: providerName } : { kind: "inferred" },
+      env: Object.keys(env).length > 0 ? env : null,
+      provider: { kind: "explicit", name: info.providerName },
       pre_command: [],
       active: null,
       inactive: null,
-      sdk,
+      sdk: info.sdk,
     });
 
     const rules = rulesByProvider.get(provider.id) ?? [];
@@ -168,8 +182,8 @@ export function translateToSeherSettings(cfg: InAppSeherConfig): SeherSettings {
       const weekdays = clampWeekdayRanges(r.weekdayFilter);
       const hours = hourRange(r.hourStart, r.hourEnd);
       priority.push({
-        command,
-        provider: providerName ? { kind: "explicit", name: providerName } : { kind: "inferred" },
+        command: info.command,
+        provider: { kind: "explicit", name: info.providerName },
         model: provider.model ?? null,
         priority: r.weight,
         ...(weekdays ? { weekdays } : {}),
@@ -178,17 +192,16 @@ export function translateToSeherSettings(cfg: InAppSeherConfig): SeherSettings {
     }
   }
 
-  // Append a low-priority fallback row so the resolver always has a candidate
-  // even when no per-provider rule fires.
+  // Low-priority fallback row so the resolver always has a candidate even
+  // when no per-provider rule fires.
   const fallbackId = cfg.defaults?.fallbackProviderId;
   if (fallbackId && knownProviderIds.has(fallbackId)) {
     const fallback = cfg.providers.find((p) => p.id === fallbackId)!;
-    const command = KIND_TO_COMMAND[fallback.kind] ?? fallback.kind;
-    const providerName = KIND_TO_PROVIDER_NAME[fallback.kind];
-    if (!priority.some((p) => p.command === command && p.priority === 0)) {
+    const info = KIND_INFO[fallback.kind];
+    if (info && !priority.some((p) => p.command === info.command && p.priority === 0)) {
       priority.push({
-        command,
-        provider: providerName ? { kind: "explicit", name: providerName } : { kind: "inferred" },
+        command: info.command,
+        provider: { kind: "explicit", name: info.providerName },
         model: fallback.model ?? null,
         priority: 0,
       });
@@ -201,6 +214,15 @@ export function translateToSeherSettings(cfg: InAppSeherConfig): SeherSettings {
 /** Write the translated settings file. Creates parent dirs as needed. */
 export function writeSeherSettings(cfg: InAppSeherConfig, path: string = defaultSeherConfigPath()): void {
   const settings = translateToSeherSettings(cfg);
+
+  // Materialize the per-provider Kimi config.toml files first, so that if any
+  // of them fail we don't leave seher-settings.jsonc pointing at share dirs
+  // that don't exist yet. Each writeKimiShare is itself atomic (tmp+rename).
+  for (const provider of cfg.providers) {
+    if (!isKimiBackedKind(provider.kind)) continue;
+    writeKimiShare({ providerId: provider.id, kind: provider.kind });
+  }
+
   mkdirSync(dirname(path), { recursive: true });
   const banner =
     "// Generated by SmartCrab from the in-app Settings tab. Do not edit by hand —\n" +

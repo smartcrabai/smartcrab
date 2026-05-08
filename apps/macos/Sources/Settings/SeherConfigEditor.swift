@@ -66,7 +66,7 @@ public struct SeherConfigEditor: View {
 
             Button {
                 config.providers.append(
-                    SeherProvider(id: "provider-\(config.providers.count + 1)", kind: "claude", model: "")
+                    SeherProvider(id: "provider-\(config.providers.count + 1)", kind: "anthropic", model: "")
                 )
             } label: {
                 Label("Add provider", systemImage: "plus")
@@ -152,7 +152,12 @@ private struct ProviderRow: View {
     @State private var newEnvKey: String = ""
     @State private var newEnvValue: String = ""
 
-    private static let kinds = ["claude", "kimi", "copilot"]
+    private static let kinds: [(id: String, label: String)] = [
+        ("anthropic", "Anthropic API互換"),
+        ("copilot", "GitHub Copilot"),
+        ("kimi", "Kimi (Moonshot)"),
+        ("openai", "OpenAI API互換"),
+    ]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -160,10 +165,10 @@ private struct ProviderRow: View {
                 TextField("id", text: $provider.id)
                     .textFieldStyle(.roundedBorder)
                 Picker("kind", selection: $provider.kind) {
-                    ForEach(Self.kinds, id: \.self) { Text($0).tag($0) }
+                    ForEach(Self.kinds, id: \.id) { Text($0.label).tag($0.id) }
                 }
                 .labelsHidden()
-                .frame(width: 120)
+                .frame(width: 200)
             }
             TextField("model", text: $provider.model)
                 .textFieldStyle(.roundedBorder)

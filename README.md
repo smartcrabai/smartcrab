@@ -2,6 +2,29 @@
 
 SmartCrab is a framework implementing the Tool-to-AI paradigm — a macOS desktop application for building, running, and managing AI-powered workflows.
 
+## Features
+
+- **YAML pipeline engine** — Directed graph of nodes with conditional branches, parallel siblings, and fan-in. Authored visually in the SwiftUI editor or by hand.
+- **Tool-to-AI execution model** — Non-AI work (HTTP, shell, chat events) runs first; `MatchCondition` branches decide whether to escalate to an `llm_call`.
+- **Multi-agent LLM routing** — `llm_call` nodes and chat replies are dispatched through [`@seher-ts/sdk`](https://www.npmjs.com/package/@seher-ts/sdk) (≥ 0.1.3), which picks the highest-priority available agent at runtime based on user-defined priorities, time windows (weekday × hour), and rate-limit state. SmartCrab supports four provider kinds:
+
+  | SmartCrab `kind` | UI label | Underlying SDK | Notes |
+  |---|---|---|---|
+  | `anthropic` | Anthropic API互換 | [`@anthropic-ai/claude-agent-sdk`](https://www.npmjs.com/package/@anthropic-ai/claude-agent-sdk) | `ANTHROPIC_BASE_URL` で Bedrock / Vertex / OpenRouter 等の互換エンドポイントへ向け替え可能 |
+  | `copilot`   | GitHub Copilot     | [`@github/copilot-sdk`](https://www.npmjs.com/package/@github/copilot-sdk) | |
+  | `kimi`      | Kimi (Moonshot)    | [`@moonshot-ai/kimi-agent-sdk`](https://www.npmjs.com/package/@moonshot-ai/kimi-agent-sdk) | `kimi` CLI 経由。SmartCrab が `KIMI_SHARE_DIR` を per-provider に分離し `config.toml` を生成 |
+  | `openai`    | OpenAI API互換     | [`@moonshot-ai/kimi-agent-sdk`](https://www.npmjs.com/package/@moonshot-ai/kimi-agent-sdk) | Kimi CLI の `openai_legacy` プロバイダで OpenAI / OpenRouter / vLLM / LM Studio 等に接続。`OPENAI_API_KEY` / `OPENAI_BASE_URL` で上書き |
+
+  The same router backs the chat tab, pipeline `llm_call` nodes, skill invocation, and the memory summarizer — so routing rules apply uniformly across every code path that reaches an LLM.
+
+- **In-process tool use** — Custom tools (e.g. "what's my current Smartcrab config?") are forwarded to the chosen agent in-process via Seher's `SeherTool` (Zod-shaped). Tools work for `anthropic` / `copilot` / `kimi` / `openai`; Seher's auto-resolution skips agents whose underlying SDK cannot carry tools.
+- **Triggers** — Cron schedules and Discord chat events kick off pipelines. New triggers and chat backends plug in via a self-registering adapter registry.
+- **Node actions** — `shell_command`, `http_request`, `llm_call`, and `chat_send`, composable in a single pipeline.
+- **Self-learning loop** — FTS5-backed memory of chat turns and execution traces, summarized every 30 minutes; recurring patterns are distilled into reusable Markdown skills automatically.
+- **Execution history & logs** — Every run is persisted in SQLite with per-node logs, viewable from the History pane.
+- **Native macOS app, single binary service** — SwiftUI host + Bun TypeScript service compiled with `bun build --compile` and embedded inside the `.app`. No external runtime to install.
+- **Local-first & offline-capable** — All state (pipelines, history, memory, skills) lives in a local SQLite database under Application Support.
+
 ## Architecture
 
 - **Frontend**: SwiftUI macOS app (`apps/macos/`). The same Xcode project also produces an iOS Simulator preview target where the service layer is mocked, used purely for UI verification.
