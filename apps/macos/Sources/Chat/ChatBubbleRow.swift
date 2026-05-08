@@ -71,7 +71,7 @@ public struct ChatBubbleRow: View {
         let formatter = DateFormatter()
         formatter.dateStyle = .none
         formatter.timeStyle = .short
-        return "\(roleLabel) · \(formatter.string(from: message.createdAt))"
+        return "\(roleLabel) - \(formatter.string(from: message.createdAt))"
     }
 }
 

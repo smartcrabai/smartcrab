@@ -20,7 +20,7 @@ const cases: readonly Case[] = [
     },
     expected: {
       agents: [],
-      // fallback が providers に存在しないので priority には何も足されない
+      // fallback is not in providers, so nothing is added to priority
       priority: [],
     },
   },
@@ -212,7 +212,7 @@ describe("translate(SmartCrabConfig) -> SeherSettings", () => {
     const a = translate(input);
     const b = translate(input);
     expect(a).toEqual(b);
-    // env を mutate しても元 input が壊れていないことを確認
+    // mutating env must not corrupt the original input
     const firstAgent = a.agents[0];
     if (firstAgent && firstAgent.env) {
       const mutable = firstAgent.env as Record<string, string>;

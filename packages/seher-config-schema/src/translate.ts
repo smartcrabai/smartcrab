@@ -1,8 +1,9 @@
 /**
- * smartcrab の独自設定 → seher-ts `settings.jsonc` 形への純粋変換。
+ * Pure translation from the smartcrab-specific configuration into the
+ * seher-ts `settings.jsonc` shape.
  *
- * ネットワーク・ファイル I/O・グローバル状態を一切持たないため、
- * 単体テストはゴールデン比較だけで済む。
+ * Performs no network calls, file I/O, or global-state access, so unit tests
+ * reduce to golden comparisons.
  */
 
 import type {
@@ -17,14 +18,16 @@ import type {
 } from "./seher-shape.ts";
 
 /**
- * smartcrab 設定 → seher-ts `settings.jsonc` 形への純粋変換。
+ * Pure translation from a smartcrab configuration into the seher-ts
+ * `settings.jsonc` shape.
  *
- * 設計メモ:
- * - 同一 provider に複数 priority ルールがある場合、weight は最大値を採用
- *   (seher の router は agent ごとに 1 つの weight しか読まない)。
- * - 未知 provider を参照する priority ルールは黙って無視
- *   (UI 側でバリデーションする前提だが translator は防御的に振る舞う)。
- * - fallback provider が priority に含まれない場合は weight=0 で補う。
+ * Design notes:
+ * - When multiple priority rules target the same provider, the maximum
+ *   weight wins (seher's router reads exactly one weight per agent).
+ * - Priority rules referencing an unknown provider are silently dropped
+ *   (the UI is expected to validate; the translator stays defensive).
+ * - If the fallback provider is missing from priority, it is appended with
+ *   weight=0.
  */
 export function translate(cfg: SmartCrabConfig): SeherSettings {
   const knownProviderIds = new Set(cfg.providers.map((p) => p.id));
@@ -75,11 +78,11 @@ export function translate(cfg: SmartCrabConfig): SeherSettings {
 }
 
 /**
- * weekdays / hours が両方 undefined なルールは「常時有効」を意味するため
- * seher 側では time-window 自体を持たない (null を返す)。
+ * A rule with both `weekdays` and `hours` undefined means "always active",
+ * so it has no time-window on the seher side (we return null).
  *
- * smartcrab の `Weekday` と seher の `SeherWeekday` は値域 (0..6) が同一なので
- * `weekdays` 配列はそのまま再利用できる。
+ * smartcrab's `Weekday` and seher's `SeherWeekday` share the same value
+ * domain (0..6), so the `weekdays` array can be reused as-is.
  */
 function ruleToTimeWindow(rule: PriorityRule): SeherTimeWindow | null {
   if (rule.weekdays === undefined && rule.hours === undefined) return null;
