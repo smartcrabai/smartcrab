@@ -102,12 +102,6 @@ describe("CopilotLlmAdapter", () => {
     expect(Date.now() - start).toBeLessThan(1000);
   });
 
-  test("streamPrompt falls back to executePrompt", async () => {
-    const adapter = new CopilotLlmAdapter({ sdk: mockCopilotSdk });
-    const res = await adapter.streamPrompt({ prompt: "yo" });
-    expect(res.content).toBe("[copilot-mock] yo");
-  });
-
   test("self-registers via registry helper", () => {
     registerLlmAdapter(new CopilotLlmAdapter({ sdk: mockCopilotSdk }));
     const fromRegistry = getLlmAdapter("copilot");
@@ -123,5 +117,37 @@ describe("CopilotLlmAdapter", () => {
       prompt: "ping",
     });
     expect(res.result?.content).toContain("ping");
+  });
+
+  describe("complete()", () => {
+    test("passes prompt string as-is", async () => {
+      const adapter = new CopilotLlmAdapter({ sdk: mockCopilotSdk });
+      const res = await adapter.complete({ prompt: "hello" });
+      expect(res.content).toBe("[copilot-mock] hello");
+    });
+
+    test("normalizes messages array into prompt", async () => {
+      const adapter = new CopilotLlmAdapter({ sdk: mockCopilotSdk });
+      const res = await adapter.complete({
+        messages: [{ role: "user", content: "hello" }],
+      });
+      expect(res.content).toBe("[copilot-mock] hello");
+    });
+
+    test("joins multiple messages", async () => {
+      const adapter = new CopilotLlmAdapter({ sdk: mockCopilotSdk });
+      const res = await adapter.complete({
+        messages: [
+          { role: "system", content: "be helpful" },
+          { role: "user", content: "hi" },
+        ],
+      });
+      expect(res.content).toBe("[copilot-mock] [system] be helpful\nhi");
+    });
+
+    test("throws error when neither prompt nor messages provided", async () => {
+      const adapter = new CopilotLlmAdapter({ sdk: mockCopilotSdk });
+      await expect(adapter.complete({})).rejects.toThrow(/prompt.*messages/);
+    });
   });
 });

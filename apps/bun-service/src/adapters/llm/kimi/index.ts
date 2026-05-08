@@ -15,7 +15,7 @@ import type {
   LlmRequest,
   LlmResponse,
 } from "../types.ts";
-import { resolveOptionalSdk, withTimeout } from "../util.ts";
+import { normaliseToPrompt, resolveOptionalSdk, withTimeout } from "../util.ts";
 import { mockKimiSdk, type KimiSdkLike, type KimiSession } from "./mock.ts";
 
 const ADAPTER_ID = "kimi";
@@ -78,6 +78,10 @@ export class KimiLlmAdapter implements LlmAdapter {
     return this.sessionPromise;
   }
 
+  async complete(request: LlmRequest): Promise<LlmResponse> {
+    return this.executePrompt({ ...request, prompt: normaliseToPrompt(request) });
+  }
+
   async executePrompt(req: LlmRequest): Promise<LlmResponse> {
     const timeoutMs = (req.timeoutSecs ?? DEFAULT_TIMEOUT_SECS) * 1000;
     const session = await this.getSession();
@@ -91,9 +95,6 @@ export class KimiLlmAdapter implements LlmAdapter {
     return { content: result.content, metadata: result.metadata };
   }
 
-  async streamPrompt(req: LlmRequest): Promise<LlmResponse> {
-    return this.executePrompt(req);
-  }
 }
 
 // Self-registers on import so `import.meta.glob('./adapters/llm/*/index.ts')`
