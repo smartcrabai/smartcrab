@@ -14,7 +14,8 @@
     "cron-parser": "^5.0.0",
     "discord.js": "^14.16.0",
     "gray-matter": "^4.0.3",
-    "yaml": "^2.6.1"
+    "yaml": "^2.6.1",
+    "zod-to-json-schema": "^3.25.2"
   },
   "devDependencies": {
     "bun-types": "latest"

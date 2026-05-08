@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { silenceConsoleError } from "./test-helpers.ts";
 
 import {
   setDiscordClientFactory,
@@ -82,6 +83,8 @@ function makeMockClient(channels: Record<string, DiscordChannelLike> = {}): Mock
 
 const ORIGINAL_TOKEN = process.env.DISCORD_BOT_TOKEN;
 
+const consoleSpy = silenceConsoleError();
+
 beforeEach(() => {
   // Reset the LLM registry so tests don't leak handlers between cases.
   llmRegistry.clear();
@@ -89,9 +92,11 @@ beforeEach(() => {
   // is deterministic across the file.
   chatRegistry.clear();
   chatRegistry.register(new DiscordChatAdapter());
+  consoleSpy.setup();
 });
 
 afterEach(() => {
+  consoleSpy.restore();
   setDiscordClientFactory(null);
   if (ORIGINAL_TOKEN === undefined) {
     delete process.env.DISCORD_BOT_TOKEN;
@@ -366,8 +371,8 @@ describe("defaultLlmHandler", () => {
   });
 
   it("forwards prompt + context to the default LLM and returns its text", async () => {
-    const generate = mock(async () => ({ text: "llm-reply" }));
-    llmRegistry.register({ id: "fake", generate }, { default: true });
+    const complete = mock(async () => ({ content: "llm-reply" }));
+    llmRegistry.register({ id: "fake", complete, capabilities: { streaming: false, tools: false, maxContextTokens: 0 } });
 
     const result = await defaultLlmHandler({
       id: "m",
@@ -377,10 +382,10 @@ describe("defaultLlmHandler", () => {
     });
 
     expect(result).toBe("llm-reply");
-    expect(generate).toHaveBeenCalledTimes(1);
-    const call = (generate.mock.calls as any)[0][0];
+    expect(complete).toHaveBeenCalledTimes(1);
+    const call = (complete.mock.calls as any)[0][0];
     expect(call.prompt).toBe("hello");
-    expect(call.context).toMatchObject({
+    expect(call.options?.context).toMatchObject({
       source: "discord",
       channelId: "ch1",
       authorId: "u1",
