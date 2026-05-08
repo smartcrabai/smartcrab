@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 import { silenceConsoleError } from "./test-helpers.ts";
 
 import {
@@ -354,8 +354,13 @@ describe("attachMessageListener", () => {
     });
     attachMessageListener(client, { handler });
 
-    // Should not reject.
-    await client.emit("messageCreate", makeMessage());
+    const spy = spyOn(console, "error").mockImplementation(() => {});
+    try {
+      // Should not reject.
+      await client.emit("messageCreate", makeMessage());
+    } finally {
+      spy.mockRestore();
+    }
   });
 });
 

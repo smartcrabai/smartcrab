@@ -12,6 +12,7 @@
 
 import type { Database } from "bun:sqlite";
 
+import { isKimiBackedKind, removeKimiShare } from "../seher/kimi-share.ts";
 import {
   writeSeherSettings,
   type InAppSeherConfig,
@@ -36,15 +37,35 @@ function requireContext(): SettingsContext {
   return currentContext;
 }
 
+function loadSeherConfig(db: Database): InAppSeherConfig | null {
+  const row = db.query<{ config_json: string }, []>(
+    "SELECT config_json FROM seher_config WHERE id = 1",
+  ).get();
+  if (!row) return null;
+  try {
+    return JSON.parse(row.config_json) as InAppSeherConfig;
+  } catch (err) {
+    console.error("[settings] failed to parse seher_config JSON:", err);
+    return null;
+  }
+}
+
 const handlers = {
   "settings.app-load": (_params?: unknown): unknown => {
     const { db } = requireContext();
-    const row = db.query<{ config_json: string }, []>("SELECT config_json FROM seher_config WHERE id = 1").get();
-    return row ? JSON.parse(row.config_json) : null;
+    return loadSeherConfig(db);
   },
   "settings.app-save": (params: { config: unknown }): { saved: true } => {
     const { db } = requireContext();
-    const json = JSON.stringify(params.config ?? {});
+    const config = params.config as InAppSeherConfig;
+    if (!config || !Array.isArray(config.providers)) {
+      throw new Error("[settings] invalid config: missing providers array");
+    }
+
+    // Load previous config to detect deleted providers.
+    const prevConfig = loadSeherConfig(db);
+
+    const json = JSON.stringify(config);
     const now = Math.floor(Date.now() / 1000);
     db.query(
       "INSERT INTO seher_config (id, config_json, updated_at) VALUES (1, ?1, ?2) ON CONFLICT(id) DO UPDATE SET config_json = excluded.config_json, updated_at = excluded.updated_at",
@@ -52,10 +73,25 @@ const handlers = {
     // Mirror the saved config out to a seher-ts-compatible settings.jsonc so
     // `router.ts`'s SeherSDK reads it on the next chat.bubble-send.
     try {
-      writeSeherSettings(params.config as InAppSeherConfig);
+      writeSeherSettings(config);
     } catch (err) {
       console.error("[settings] failed to write seher-settings.jsonc:", err);
     }
+
+    // Clean up KIMI_SHARE_DIR for deleted kimi-backed providers.
+    if (prevConfig) {
+      const newIds = new Set(config.providers.map((p) => p.id));
+      for (const p of prevConfig.providers) {
+        if (!newIds.has(p.id) && isKimiBackedKind(p.kind)) {
+          try {
+            removeKimiShare(p.id);
+          } catch (err) {
+            console.error(`[settings] failed to remove kimi-share for "${p.id}":`, err);
+          }
+        }
+      }
+    }
+
     return { saved: true };
   },
   "settings.adapter-load": (params: { adapter_id: string }): unknown => {

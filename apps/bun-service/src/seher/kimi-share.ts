@@ -16,7 +16,7 @@
  * Override the root via `SMARTCRAB_KIMI_SHARE_ROOT` (mainly for tests).
  */
 
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
@@ -106,4 +106,9 @@ export function writeKimiShare(args: {
   writeFileSync(tmp, content, "utf8");
   renameSync(tmp, target);
   return dir;
+}
+
+export function removeKimiShare(providerId: string): void {
+  const dir = kimiShareDirFor(providerId);
+  rmSync(dir, { recursive: true, force: true });
 }
