@@ -10,10 +10,10 @@ SmartCrab is a framework implementing the Tool-to-AI paradigm — a macOS deskto
 
   | SmartCrab `kind` | UI label | Underlying SDK | Notes |
   |---|---|---|---|
-  | `anthropic` | Anthropic API互換 | [`@anthropic-ai/claude-agent-sdk`](https://www.npmjs.com/package/@anthropic-ai/claude-agent-sdk) | `ANTHROPIC_BASE_URL` で Bedrock / Vertex / OpenRouter 等の互換エンドポイントへ向け替え可能 |
+  | `anthropic` | Anthropic API-compatible | [`@anthropic-ai/claude-agent-sdk`](https://www.npmjs.com/package/@anthropic-ai/claude-agent-sdk) | Set `ANTHROPIC_BASE_URL` to redirect to compatible endpoints such as Bedrock / Vertex / OpenRouter |
   | `copilot`   | GitHub Copilot     | [`@github/copilot-sdk`](https://www.npmjs.com/package/@github/copilot-sdk) | |
-  | `kimi`      | Kimi (Moonshot)    | [`@moonshot-ai/kimi-agent-sdk`](https://www.npmjs.com/package/@moonshot-ai/kimi-agent-sdk) | `kimi` CLI 経由。SmartCrab が `KIMI_SHARE_DIR` を per-provider に分離し `config.toml` を生成 |
-  | `openai`    | OpenAI API互換     | [`@moonshot-ai/kimi-agent-sdk`](https://www.npmjs.com/package/@moonshot-ai/kimi-agent-sdk) | Kimi CLI の `openai_legacy` プロバイダで OpenAI / OpenRouter / vLLM / LM Studio 等に接続。`OPENAI_API_KEY` / `OPENAI_BASE_URL` で上書き |
+  | `kimi`      | Kimi (Moonshot)    | [`@moonshot-ai/kimi-agent-sdk`](https://www.npmjs.com/package/@moonshot-ai/kimi-agent-sdk) | Runs via the `kimi` CLI. SmartCrab isolates `KIMI_SHARE_DIR` per provider and generates `config.toml` |
+  | `openai`    | OpenAI API-compatible | [`@moonshot-ai/kimi-agent-sdk`](https://www.npmjs.com/package/@moonshot-ai/kimi-agent-sdk) | Connects to OpenAI / OpenRouter / vLLM / LM Studio etc. via the Kimi CLI's `openai_legacy` provider. Override with `OPENAI_API_KEY` / `OPENAI_BASE_URL` |
 
   The same router backs the chat tab, pipeline `llm_call` nodes, skill invocation, and the memory summarizer — so routing rules apply uniformly across every code path that reaches an LLM.
 

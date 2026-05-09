@@ -67,10 +67,10 @@ The next call to `route()` instantiates a fresh `SeherSDK` that reads the new fi
 
 | SmartCrab `kind` | UI label           | Seher `command` | Seher `provider.name` | Seher `sdk` | Underlying SDK |
 |------------------|--------------------|-----------------|------------------------|-------------|----------------|
-| `anthropic`      | Anthropic API互換  | `claude`        | `anthropic`            | `claude`    | Claude Agent SDK |
+| `anthropic`      | Anthropic API-compatible | `claude`  | `anthropic`            | `claude`    | Claude Agent SDK |
 | `copilot`        | GitHub Copilot     | `copilot`       | `github`               | `copilot`   | Copilot SDK |
 | `kimi`           | Kimi (Moonshot)    | `kimi`          | `moonshot`             | `kimi`      | Kimi Agent SDK |
-| `openai`         | OpenAI API互換     | `kimi`          | `openai`               | `kimi`      | Kimi Agent SDK (Kimi CLI の `openai_legacy` プロバイダ) |
+| `openai`         | OpenAI API-compatible | `kimi`       | `openai`               | `kimi`      | Kimi Agent SDK (Kimi CLI's `openai_legacy` provider) |
 
 Each provider becomes one entry in Seher's `agents` array with:
 
