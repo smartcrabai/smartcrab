@@ -1,3 +1,5 @@
+import type { LlmRequest } from "./types.ts";
+
 /**
  * Shared helpers for LLM adapters.
  *
@@ -50,4 +52,20 @@ export async function resolveOptionalSdk<T>(
     }
   }
   return fallback;
+}
+
+export function normaliseToPrompt(request: LlmRequest): string {
+  if (request.messages && request.messages.length > 0) {
+    return request.messages
+      .map((m) =>
+        m.role === "user" || m.role === "assistant"
+          ? m.content
+          : `[${m.role}] ${m.content}`,
+      )
+      .join("\n");
+  }
+  if (request.prompt) {
+    return request.prompt;
+  }
+  throw new Error("LlmAdapter: request must include `prompt` or `messages`.");
 }

@@ -19,7 +19,7 @@ import type {
   LlmRequest,
   LlmResponse,
 } from "../types.ts";
-import { resolveOptionalSdk, withTimeout } from "../util.ts";
+import { normaliseToPrompt, resolveOptionalSdk, withTimeout } from "../util.ts";
 import {
   mockCopilotSdk,
   type CopilotClient,
@@ -91,6 +91,10 @@ export class CopilotLlmAdapter implements LlmAdapter {
     return this.clientPromise;
   }
 
+  async complete(request: LlmRequest): Promise<LlmResponse> {
+    return this.executePrompt({ ...request, prompt: normaliseToPrompt(request) });
+  }
+
   async executePrompt(req: LlmRequest): Promise<LlmResponse> {
     const timeoutMs = (req.timeoutSecs ?? DEFAULT_TIMEOUT_SECS) * 1000;
     const client = await this.getClient();
@@ -115,9 +119,6 @@ export class CopilotLlmAdapter implements LlmAdapter {
     return { content: rpc.result.content, metadata: rpc.result.metadata };
   }
 
-  async streamPrompt(req: LlmRequest): Promise<LlmResponse> {
-    return this.executePrompt(req);
-  }
 }
 
 // Self-registers on import (see kimi adapter for rationale).

@@ -32,12 +32,6 @@ describe("KimiLlmAdapter", () => {
     expect(res.metadata).toEqual({ mock: true });
   });
 
-  test("streamPrompt falls back to executePrompt", async () => {
-    const adapter = new KimiLlmAdapter({ sdk: mockKimiSdk });
-    const res = await adapter.streamPrompt({ prompt: "yo" });
-    expect(res.content).toBe("[kimi-mock] yo");
-  });
-
   test("uses injected SDK rather than dynamic resolution", async () => {
     let constructed = 0;
     const fakeSdk: KimiSdkLike = {
@@ -88,5 +82,37 @@ describe("KimiLlmAdapter", () => {
     const session = new sdk.Session();
     const out = await session.run("ping");
     expect(out.content).toContain("ping");
+  });
+
+  describe("complete()", () => {
+    test("passes prompt string as-is", async () => {
+      const adapter = new KimiLlmAdapter({ sdk: mockKimiSdk });
+      const res = await adapter.complete({ prompt: "hello" });
+      expect(res.content).toBe("[kimi-mock] hello");
+    });
+
+    test("normalizes messages array into prompt", async () => {
+      const adapter = new KimiLlmAdapter({ sdk: mockKimiSdk });
+      const res = await adapter.complete({
+        messages: [{ role: "user", content: "hello" }],
+      });
+      expect(res.content).toBe("[kimi-mock] hello");
+    });
+
+    test("joins multiple messages", async () => {
+      const adapter = new KimiLlmAdapter({ sdk: mockKimiSdk });
+      const res = await adapter.complete({
+        messages: [
+          { role: "system", content: "be helpful" },
+          { role: "user", content: "hi" },
+        ],
+      });
+      expect(res.content).toBe("[kimi-mock] [system] be helpful\nhi");
+    });
+
+    test("throws error when neither prompt nor messages provided", async () => {
+      const adapter = new KimiLlmAdapter({ sdk: mockKimiSdk });
+      await expect(adapter.complete({})).rejects.toThrow(/prompt.*messages/);
+    });
   });
 });
