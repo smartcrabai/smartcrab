@@ -13,20 +13,20 @@ For the wire-level YAML schema, see [spec/pipeline-yaml](/spec/pipeline-yaml/). 
 ```
 pipeline.execute (RPC)
        │
-       ▼
+       v
 parsePipeline(yaml) ─────┐
        │                 │  validation only
-       ▼                 │
+       v                 │
 insertExecution(row) <───┘
        │
-       ▼
+       v
 async iterator: executePipeline(resolved, input, deps)
        │
        │  yield execution_started
        │  yield node_started   × N
        │  yield node_completed × N   (or node_failed once on error)
        │  yield execution_completed
-       ▼
+       v
 finalizeExecution(id, status, errorMessage?)
 ```
 
