@@ -5,3 +5,7 @@
 node_modules/
 
 .build/
+
+# Bun service binary (built by CI, staged into the .app bundle)
+apps/macos/Resources/smartcrab-service
+
