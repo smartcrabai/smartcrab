@@ -7,7 +7,7 @@ weight = 3
 The Bun service stores everything in one SQLite database:
 
 ```
-~/Library/Application Support/SmartCrab/smartcrab.db
+$XDG_DATA_HOME/smartcrab/smartcrab.db   # default: ~/.local/share/smartcrab/smartcrab.db
 ```
 
 Override the path with `SMARTCRAB_DB_PATH`. Pass `:memory:` for an ephemeral database.
@@ -182,7 +182,7 @@ CREATE TABLE seher_config (
 );
 ```
 
-`settings.app-save` upserts here and additionally writes `~/Library/Application Support/SmartCrab/seher-settings.jsonc`. See [design/llm-routing](/design/llm-routing/).
+`settings.app-save` upserts here and additionally writes `$XDG_CONFIG_HOME/smartcrab/seher-settings.jsonc`. See [design/llm-routing](/design/llm-routing/).
 
 ### `chat_bubbles`
 

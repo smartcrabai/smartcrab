@@ -44,7 +44,7 @@ The same bridge backs the chat tab, skill invocation, and the memory summarizer.
 `router.ts:route(request)`:
 
 1. **Try @seher-ts/sdk.** Lazy `await import("@seher-ts/sdk")` (cached). If the import succeeds, instantiate `SeherSDK` with:
-    - `configPath: defaultSeherConfigPath()` — `~/Library/Application Support/SmartCrab/seher-settings.jsonc`, overridable with `SMARTCRAB_SEHER_CONFIG`.
+    - `configPath: defaultSeherConfigPath()` — `$XDG_CONFIG_HOME/smartcrab/seher-settings.jsonc` (default `~/.config/smartcrab/seher-settings.jsonc`), overridable with `SMARTCRAB_SEHER_CONFIG`.
     - `noWait: true` — fail fast if every configured agent is rate-limited, instead of sleeping the chat thread until a quota reset. The chat tab surfaces the failure as an assistant bubble (`"LLM error: ..."`) rather than hanging.
 2. **Fall back to the registry.** If `@seher-ts/sdk` is unavailable (not installed, import failure) or its `run()` throws, pick `llmRegistry.default()` — the first adapter registered, which today is `ClaudeLlmAdapter`. Use it directly with a single `user` message containing the prompt. Tag the response `kind: "registry-fallback"`.
 3. **Hard error.** If neither path is available (no `@seher-ts/sdk` and no registered LLM adapter), throw an explanatory error pointing the user at the in-app Settings tab.
@@ -57,7 +57,7 @@ The Settings tab edits an in-app `SeherConfig` (providers, priorities, defaults)
 
 1. SwiftUI calls `settings.app-save` (RPC).
 2. The Bun handler upserts the JSON blob into the `seher_config` SQLite table (single row, `id = 1`).
-3. **Side effect**: `writeSeherSettings(cfg)` translates the in-app shape into seher-ts's expected `Settings` shape and writes it to `~/Library/Application Support/SmartCrab/seher-settings.jsonc`.
+3. **Side effect**: `writeSeherSettings(cfg)` translates the in-app shape into seher-ts's expected `Settings` shape and writes it to `$XDG_CONFIG_HOME/smartcrab/seher-settings.jsonc`.
 
 The next call to `route()` instantiates a fresh `SeherSDK` that reads the new file. There is no manual reload step.
 
@@ -87,7 +87,7 @@ Each provider becomes one entry in Seher's `agents` array with:
 To support both kinds without touching the user's own `~/.kimi/config.toml`, SmartCrab gives each provider its own share directory and writes a generated `config.toml`:
 
 ```
-~/Library/Application Support/SmartCrab/kimi-share/<providerId>/config.toml
+$XDG_DATA_HOME/smartcrab/kimi-share/<providerId>/config.toml
 ```
 
 The path is overridable via `SMARTCRAB_KIMI_SHARE_ROOT` (mainly for tests). `kimi-share.ts:writeKimiShare` is invoked from `writeSeherSettings` for every kimi-backed provider on save, and the matching `KIMI_SHARE_DIR` is auto-injected into the agent's `env`.

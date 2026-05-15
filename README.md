@@ -23,7 +23,7 @@ SmartCrab is a framework implementing the Tool-to-AI paradigm — a macOS deskto
 - **Self-learning loop** — FTS5-backed memory of chat turns and execution traces, summarized every 30 minutes; recurring patterns are distilled into reusable Markdown skills automatically.
 - **Execution history & logs** — Every run is persisted in SQLite with per-node logs, viewable from the History pane.
 - **Native macOS app, single binary service** — SwiftUI host + Bun TypeScript service compiled with `bun build --compile` and embedded inside the `.app`. No external runtime to install.
-- **Local-first & offline-capable** — All state (pipelines, history, memory, skills) lives in a local SQLite database under Application Support.
+- **Local-first & offline-capable** — All state (pipelines, history, memory, skills) lives in a local SQLite database under `$XDG_DATA_HOME/smartcrab/` (defaults to `~/.local/share/smartcrab/`; the macOS GUI app runs sandboxed, so paths are silently confined to its app container).
 
 ## Architecture
 
