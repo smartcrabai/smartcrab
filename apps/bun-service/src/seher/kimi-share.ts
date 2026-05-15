@@ -11,14 +11,15 @@
  * without touching the user's own `~/.kimi/config.toml`, SmartCrab gives each
  * provider its own share directory and writes a generated `config.toml`.
  *
- *   ~/Library/Application Support/SmartCrab/kimi-share/<providerId>/config.toml
+ *   $XDG_DATA_HOME/smartcrab/kimi-share/<providerId>/config.toml
  *
  * Override the root via `SMARTCRAB_KIMI_SHARE_ROOT` (mainly for tests).
  */
 
 import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
 import { join } from "node:path";
+
+import { dataDir } from "../paths.ts";
 
 /** SmartCrab kinds whose runtime is the Kimi CLI. */
 export type KimiBackedKind = "kimi" | "openai";
@@ -49,10 +50,7 @@ function sanitizeProviderId(id: string): string {
 }
 
 export function defaultKimiShareRoot(): string {
-  return (
-    process.env.SMARTCRAB_KIMI_SHARE_ROOT ??
-    join(homedir(), "Library", "Application Support", "SmartCrab", "kimi-share")
-  );
+  return process.env.SMARTCRAB_KIMI_SHARE_ROOT || join(dataDir(), "kimi-share");
 }
 
 export function kimiShareDirFor(providerId: string): string {

@@ -76,7 +76,7 @@ Currently shipped:
 When the user launches `SmartCrab.app`:
 
 1. **SwiftUI side** — `SmartCrabApp` instantiates `BunServiceContainer`, which calls `service.start()` from a `.task` modifier on the root window. macOS spawns the bundled `smartcrab-service` binary with the inherited login-shell `PATH`.
-2. **Bun side — DB**: `openDb()` opens the SQLite file at `~/Library/Application Support/SmartCrab/smartcrab.db`, sets `journal_mode=WAL` and `foreign_keys=ON`, then runs every pending migration in `db/migrations/000-init.sql` … `005-memory-realign.sql` inside one transaction each. Migrations are embedded into the binary via `import "..." with { type: "text" }`, so no filesystem is required.
+2. **Bun side — DB**: `openDb()` opens the SQLite file at `$XDG_DATA_HOME/smartcrab/smartcrab.db` (defaults to `~/.local/share/smartcrab/smartcrab.db`; sandboxed under `~/Library/Containers/<bundle-id>/Data/.local/share/smartcrab/smartcrab.db` for the GUI app), sets `journal_mode=WAL` and `foreign_keys=ON`, then runs every pending migration in `db/migrations/000-init.sql` … `005-memory-realign.sql` inside one transaction each. Migrations are embedded into the binary via `import "..." with { type: "text" }`, so no filesystem is required.
 3. **Bun side — Pipeline + settings**: `configurePipelineCommands` injects the `SqlitePipelineDatabase` and an `ExecutorDeps` whose `llmRegistry` maps every provider id (`seher`, `default`, `claude`, `kimi`, `copilot`, `codex`) to a single bridge that routes through `router.ts`. The actual provider is chosen by seher-ts at run time. `configureSettingsCommands` is wired similarly.
 4. **Bun side — Cron**: `setCronStore(SqliteCronStore)` is wired, the per-job callback factory is set to "mark run, then call `pipeline.execute`", and `bootstrapCronRunner` reads every `is_active=true` row from `cron_jobs` and re-arms it on the in-memory `CronScheduler`. Scheduling on startup is what makes cron **survive process restarts**.
 5. **Bun side — Skills + chat-bubble + Discord**: `SkillsRegistry` is hydrated from the `skills` table. `chat-bubble.commands` and the `discord` adapter loader are imported dynamically (top-level static imports would cause circular initialization through the `llmRegistry` proxy).
@@ -104,7 +104,7 @@ Each SwiftUI tab is a thin client over a small set of JSON-RPC methods. The full
 Everything user-facing is stored in a single SQLite database at:
 
 ```
-~/Library/Application Support/SmartCrab/smartcrab.db
+$XDG_DATA_HOME/smartcrab/smartcrab.db   # default: ~/.local/share/smartcrab/smartcrab.db
 ```
 
 Override with `SMARTCRAB_DB_PATH` (used by tests). Pass `:memory:` for an in-memory database. The full schema is in [spec/database-schema](/spec/database-schema/).
@@ -112,10 +112,15 @@ Override with `SMARTCRAB_DB_PATH` (used by tests). Pass `:memory:` for an in-mem
 The translated seher router config is written to:
 
 ```
-~/Library/Application Support/SmartCrab/seher-settings.jsonc
+$XDG_CONFIG_HOME/smartcrab/seher-settings.jsonc   # default: ~/.config/smartcrab/seher-settings.jsonc
 ```
 
 Override with `SMARTCRAB_SEHER_CONFIG`.
+
+Note: the macOS GUI app runs sandboxed, so `os.homedir()` resolves to
+`~/Library/Containers/<bundle-id>/Data/` and the XDG-derived paths are
+silently confined to the app container at runtime. A standalone CLI build
+would write directly to the user's real `~/.config` and `~/.local/share`.
 
 ## Threading and concurrency
 

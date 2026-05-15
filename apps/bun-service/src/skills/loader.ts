@@ -2,10 +2,9 @@
  * On-disk skills loader.
  *
  * Reads markdown files from the user's skills directory (default
- * `~/Library/Application Support/SmartCrab/skills/*.md`) and parses
- * frontmatter via `gray-matter`. Records the result as `SkillInfo`
- * structures so they can be merged into the registry alongside DB-backed
- * skills.
+ * `$XDG_DATA_HOME/smartcrab/skills/*.md`) and parses frontmatter via
+ * `gray-matter`. Records the result as `SkillInfo` structures so they can
+ * be merged into the registry alongside DB-backed skills.
  *
  * Frontmatter keys (all optional):
  *   id, name, description, skill_type, pipeline_id, created_at, updated_at
@@ -15,16 +14,16 @@
  */
 
 import { readdir, readFile, stat } from "node:fs/promises";
-import { homedir } from "node:os";
 import { extname, join } from "node:path";
 import matter from "gray-matter";
 
+import { dataDir } from "../paths.ts";
 import type { SkillInfo } from "./types.ts";
 import type { SkillsRegistry } from "./registry.ts";
 
 /** Default skills directory used when no override is supplied. */
 export function defaultSkillsDir(): string {
-  return join(homedir(), "Library", "Application Support", "SmartCrab", "skills");
+  return join(dataDir(), "skills");
 }
 
 /**
