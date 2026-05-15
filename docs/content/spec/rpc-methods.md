@@ -455,7 +455,7 @@ params: { config: SeherConfig }
 result: { saved: true }
 ```
 
-Persists the config and **also** rewrites `~/Library/Application Support/SmartCrab/seher-settings.jsonc` (override with `SMARTCRAB_SEHER_CONFIG`). The next call to `route()` picks up the new file. See [llm-routing](/design/llm-routing/).
+Persists the config and **also** rewrites `$XDG_CONFIG_HOME/smartcrab/seher-settings.jsonc` (override with `SMARTCRAB_SEHER_CONFIG`). The next call to `route()` picks up the new file. See [llm-routing](/design/llm-routing/).
 
 ### settings.adapter-load
 

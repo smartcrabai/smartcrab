@@ -4,10 +4,10 @@
  * Seher resolves the highest-priority available coding agent — backed by
  * Claude Agent SDK (Anthropic API-compatible), Copilot SDK, or Kimi Agent SDK
  * (Kimi / OpenAI API-compatible) — based on the user's settings file
- * (`~/Library/Application Support/SmartCrab/seher-settings.jsonc` by default,
- * overridable via `SMARTCRAB_SEHER_CONFIG`). When `@seher-ts/sdk` is
- * unavailable or no agent resolves, we fall back to the first registered
- * adapter in `llmRegistry` so the chat tab stays usable.
+ * (`$XDG_CONFIG_HOME/smartcrab/seher-settings.jsonc` by default, overridable
+ * via `SMARTCRAB_SEHER_CONFIG`). When `@seher-ts/sdk` is unavailable or no
+ * agent resolves, we fall back to the first registered adapter in
+ * `llmRegistry` so the chat tab stays usable.
  */
 
 import { llmRegistry } from "./adapters/llm/registry";

@@ -4,7 +4,7 @@
  * write it to a fixed path so the SeherSDK in `router.ts` picks it up.
  *
  * Output path defaults to
- *   `~/Library/Application Support/SmartCrab/seher-settings.jsonc`
+ *   `$XDG_CONFIG_HOME/smartcrab/seher-settings.jsonc`
  * and is overridable through `SMARTCRAB_SEHER_CONFIG`.
  *
  * Schema reference: `apps/bun-service/node_modules/seher-ts/dist/types.d.ts`
@@ -14,11 +14,11 @@
  */
 
 import { mkdirSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 
 import type { ProviderKind } from "@smartcrab/seher-config-schema";
 
+import { configDir } from "../paths.ts";
 import {
   isKimiBackedKind,
   kimiShareDirFor as kimiShareDirForProvider,
@@ -54,10 +54,7 @@ export interface InAppSeherConfig {
 }
 
 export function defaultSeherConfigPath(): string {
-  return (
-    process.env.SMARTCRAB_SEHER_CONFIG ??
-    join(homedir(), "Library", "Application Support", "SmartCrab", "seher-settings.jsonc")
-  );
+  return process.env.SMARTCRAB_SEHER_CONFIG || join(configDir(), "seher-settings.jsonc");
 }
 
 interface SeherAgent {

@@ -1,7 +1,8 @@
 import { Database } from "bun:sqlite";
-import { homedir } from "node:os";
 import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
+
+import { dataDir } from "../paths.ts";
 
 // Static `with { type: "text" }` imports let bun:build --compile embed the SQL
 // into the binary. Bun does not support Vite-style `import.meta.glob`, so each
@@ -39,7 +40,7 @@ export interface OpenOptions {
 export function defaultDbPath(): string {
   const override = process.env.SMARTCRAB_DB_PATH;
   if (override) return override;
-  return join(homedir(), "Library", "Application Support", "SmartCrab", "smartcrab.db");
+  return join(dataDir(), "smartcrab.db");
 }
 
 /**
