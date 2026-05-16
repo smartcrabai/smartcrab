@@ -1,47 +1,50 @@
 import { describe, expect, test } from "bun:test";
 
-import type { SeherSettings } from "../seher-shape.ts";
+import type { SeherConfig } from "../seher-shape.ts";
 import type { SmartCrabConfig } from "../smartcrab-config.ts";
 import { translate } from "../translate.ts";
 
 interface Case {
   readonly name: string;
   readonly input: SmartCrabConfig;
-  readonly expected: SeherSettings;
+  readonly expected: SeherConfig;
 }
 
 const cases: readonly Case[] = [
   {
-    name: "empty config produces empty agents and only fallback in priority when fallback unknown is dropped",
+    name: "empty config produces empty providers map",
     input: {
       providers: [],
       priority: [],
       defaults: { fallbackProviderId: "missing", rateLimitBackoffSec: 30 },
     },
     expected: {
-      agents: [],
-      // fallback is not in providers, so nothing is added to priority
-      priority: [],
+      providers: {},
     },
   },
   {
-    name: "single provider without rules: fallback adds weight=0 priority entry",
+    name: "single provider without rules: anthropic → sdk:claude",
     input: {
       providers: [{ id: "main", kind: "anthropic" }],
       priority: [],
       defaults: { fallbackProviderId: "main", rateLimitBackoffSec: 60 },
     },
     expected: {
-      agents: [{ name: "main", provider: "anthropic" }],
-      priority: [{ agent: "main", weight: 0 }],
+      providers: {
+        main: {
+          provider: "anthropic",
+          sdk: "claude",
+          models: {},
+        },
+      },
     },
   },
   {
-    name: "multi provider with priority: weights preserved, fallback already covered",
+    name: "multi provider with priority weights preserved as per-provider priority",
     input: {
       providers: [
         { id: "primary", kind: "anthropic", model: "claude-sonnet-4.7" },
-        { id: "secondary", kind: "kimi" },
+        { id: "secondary", kind: "openai" },
       ],
       priority: [
         { providerId: "primary", weight: 100 },
@@ -50,102 +53,198 @@ const cases: readonly Case[] = [
       defaults: { fallbackProviderId: "secondary", rateLimitBackoffSec: 30 },
     },
     expected: {
-      agents: [
-        { name: "primary", provider: "anthropic", model: "claude-sonnet-4.7" },
-        { name: "secondary", provider: "kimi" },
-      ],
-      priority: [
-        { agent: "primary", weight: 100 },
-        { agent: "secondary", weight: 10 },
-      ],
-    },
-  },
-  {
-    name: "time windows: weekdays + hours collapsed to seher TimeWindow",
-    input: {
-      providers: [{ id: "weekday-bot", kind: "copilot" }],
-      priority: [
-        {
-          providerId: "weekday-bot",
-          weight: 5,
-          weekdays: [1, 2, 3, 4, 5],
-          hours: [9, 18],
+      providers: {
+        primary: {
+          provider: "anthropic",
+          sdk: "claude",
+          priority: 100,
+          models: { build: { model: "claude-sonnet-4.7" } },
         },
-      ],
-      defaults: {
-        fallbackProviderId: "weekday-bot",
-        rateLimitBackoffSec: 15,
+        secondary: {
+          provider: "openai",
+          sdk: "pi",
+          priority: 10,
+          models: {},
+        },
       },
     },
-    expected: {
-      agents: [
-        {
-          name: "weekday-bot",
-          provider: "copilot",
-          timeWindows: [
-            { weekday: [1, 2, 3, 4, 5], startHour: 9, endHour: 18 },
-          ],
-        },
+  },
+  {
+    name: "openai model gets openai/ prefix when no slash present",
+    input: {
+      providers: [
+        { id: "gpt", kind: "openai", model: "gpt-4o" },
       ],
-      priority: [{ agent: "weekday-bot", weight: 5 }],
+      priority: [{ providerId: "gpt", weight: 50 }],
+      defaults: { fallbackProviderId: "gpt", rateLimitBackoffSec: 30 },
+    },
+    expected: {
+      providers: {
+        gpt: {
+          provider: "openai",
+          sdk: "pi",
+          priority: 50,
+          models: { build: { model: "openai/gpt-4o" } },
+        },
+      },
     },
   },
   {
-    name: "env overrides flow through to seher env",
+    name: "openai model with slash is passed through unchanged",
+    input: {
+      providers: [
+        { id: "gpt", kind: "openai", model: "openai/gpt-5" },
+      ],
+      priority: [{ providerId: "gpt", weight: 50 }],
+      defaults: { fallbackProviderId: "gpt", rateLimitBackoffSec: 30 },
+    },
+    expected: {
+      providers: {
+        gpt: {
+          provider: "openai",
+          sdk: "pi",
+          priority: 50,
+          models: { build: { model: "openai/gpt-5" } },
+        },
+      },
+    },
+  },
+  {
+    name: "openai env overrides map to api.key and api.endpoint",
     input: {
       providers: [
         {
-          id: "kimi-jp",
-          kind: "kimi",
-          envOverrides: { KIMI_REGION: "jp", KIMI_LOG: "debug" },
+          id: "openai-prod",
+          kind: "openai",
+          envOverrides: { OPENAI_API_KEY: "sk-abc123", OPENAI_BASE_URL: "https://api.openai.com/v1" },
         },
       ],
-      priority: [{ providerId: "kimi-jp", weight: 50 }],
-      defaults: { fallbackProviderId: "kimi-jp", rateLimitBackoffSec: 30 },
+      priority: [{ providerId: "openai-prod", weight: 50 }],
+      defaults: { fallbackProviderId: "openai-prod", rateLimitBackoffSec: 30 },
     },
     expected: {
-      agents: [
-        {
-          name: "kimi-jp",
-          provider: "kimi",
-          env: { KIMI_REGION: "jp", KIMI_LOG: "debug" },
+      providers: {
+        "openai-prod": {
+          provider: "openai",
+          sdk: "pi",
+          priority: 50,
+          api: { key: "sk-abc123", endpoint: "https://api.openai.com/v1" },
+          models: {},
         },
-      ],
-      priority: [{ agent: "kimi-jp", weight: 50 }],
+      },
     },
   },
   {
-    name: "multiple rules per provider collapse to max weight + multiple time windows",
+    name: "openai env overrides with only api key (no base url)",
+    input: {
+      providers: [
+        {
+          id: "openai-keyonly",
+          kind: "openai",
+          envOverrides: { OPENAI_API_KEY: "sk-xyz" },
+        },
+      ],
+      priority: [{ providerId: "openai-keyonly", weight: 1 }],
+      defaults: { fallbackProviderId: "openai-keyonly", rateLimitBackoffSec: 30 },
+    },
+    expected: {
+      providers: {
+        "openai-keyonly": {
+          provider: "openai",
+          sdk: "pi",
+          priority: 1,
+          api: { key: "sk-xyz" },
+          models: {},
+        },
+      },
+    },
+  },
+  {
+    name: "openai env overrides with only base url (no api key)",
+    input: {
+      providers: [
+        {
+          id: "openai-endpoint",
+          kind: "openai",
+          envOverrides: { OPENAI_BASE_URL: "https://custom.example.com/v1" },
+        },
+      ],
+      priority: [{ providerId: "openai-endpoint", weight: 1 }],
+      defaults: { fallbackProviderId: "openai-endpoint", rateLimitBackoffSec: 30 },
+    },
+    expected: {
+      providers: {
+        "openai-endpoint": {
+          provider: "openai",
+          sdk: "pi",
+          priority: 1,
+          api: { endpoint: "https://custom.example.com/v1" },
+          models: {},
+        },
+      },
+    },
+  },
+  {
+    name: "non-openai env overrides do NOT produce api section",
+    input: {
+      providers: [
+        {
+          id: "claude-eu",
+          kind: "anthropic",
+          envOverrides: { ANTHROPIC_API_KEY: "sk-ant-xyz", UNUSED_VAR: "eu" },
+        },
+      ],
+      priority: [{ providerId: "claude-eu", weight: 1 }],
+      defaults: { fallbackProviderId: "claude-eu", rateLimitBackoffSec: 30 },
+    },
+    expected: {
+      providers: {
+        "claude-eu": {
+          provider: "anthropic",
+          sdk: "claude",
+          priority: 1,
+          models: {},
+        },
+      },
+    },
+  },
+  {
+    name: "copilot provider maps to sdk:copilot",
+    input: {
+      providers: [{ id: "gh", kind: "copilot" }],
+      priority: [{ providerId: "gh", weight: 10 }],
+      defaults: { fallbackProviderId: "gh", rateLimitBackoffSec: 30 },
+    },
+    expected: {
+      providers: {
+        gh: {
+          provider: "copilot",
+          sdk: "copilot",
+          priority: 10,
+          models: {},
+        },
+      },
+    },
+  },
+  {
+    name: "multiple rules per provider collapse to max weight",
     input: {
       providers: [{ id: "shift-bot", kind: "anthropic" }],
       priority: [
-        {
-          providerId: "shift-bot",
-          weight: 1,
-          weekdays: [1, 2, 3, 4, 5],
-          hours: [9, 18],
-        },
-        {
-          providerId: "shift-bot",
-          weight: 7,
-          weekdays: [0, 6],
-          hours: [10, 22],
-        },
+        { providerId: "shift-bot", weight: 1, weekdays: [1, 2, 3, 4, 5], hours: [9, 18] },
+        { providerId: "shift-bot", weight: 7, weekdays: [0, 6], hours: [10, 22] },
       ],
       defaults: { fallbackProviderId: "shift-bot", rateLimitBackoffSec: 30 },
     },
     expected: {
-      agents: [
-        {
-          name: "shift-bot",
+      providers: {
+        "shift-bot": {
           provider: "anthropic",
-          timeWindows: [
-            { weekday: [1, 2, 3, 4, 5], startHour: 9, endHour: 18 },
-            { weekday: [0, 6], startHour: 10, endHour: 22 },
-          ],
+          sdk: "claude",
+          priority: 7,
+          models: {},
         },
-      ],
-      priority: [{ agent: "shift-bot", weight: 7 }],
+      },
     },
   },
   {
@@ -159,43 +258,37 @@ const cases: readonly Case[] = [
       defaults: { fallbackProviderId: "real", rateLimitBackoffSec: 30 },
     },
     expected: {
-      agents: [{ name: "real", provider: "anthropic" }],
-      priority: [{ agent: "real", weight: 3 }],
+      providers: {
+        real: {
+          provider: "anthropic",
+          sdk: "claude",
+          priority: 3,
+          models: {},
+        },
+      },
     },
   },
   {
-    name: "empty envOverrides is omitted (no empty env object emitted)",
+    name: "empty envOverrides is omitted (no empty api object emitted)",
     input: {
-      providers: [{ id: "p", kind: "anthropic", envOverrides: {} }],
+      providers: [{ id: "p", kind: "openai", envOverrides: {} }],
       priority: [{ providerId: "p", weight: 1 }],
       defaults: { fallbackProviderId: "p", rateLimitBackoffSec: 30 },
     },
     expected: {
-      agents: [{ name: "p", provider: "anthropic" }],
-      priority: [{ agent: "p", weight: 1 }],
-    },
-  },
-  {
-    name: "rule with only hours (no weekdays) yields empty weekday array",
-    input: {
-      providers: [{ id: "night", kind: "anthropic" }],
-      priority: [{ providerId: "night", weight: 2, hours: [22, 24] }],
-      defaults: { fallbackProviderId: "night", rateLimitBackoffSec: 30 },
-    },
-    expected: {
-      agents: [
-        {
-          name: "night",
-          provider: "anthropic",
-          timeWindows: [{ weekday: [], startHour: 22, endHour: 24 }],
+      providers: {
+        p: {
+          provider: "openai",
+          sdk: "pi",
+          priority: 1,
+          models: {},
         },
-      ],
-      priority: [{ agent: "night", weight: 2 }],
+      },
     },
   },
 ];
 
-describe("translate(SmartCrabConfig) -> SeherSettings", () => {
+describe("translate(SmartCrabConfig) -> SeherConfig (providers map)", () => {
   for (const c of cases) {
     test(c.name, () => {
       const out = translate(c.input);
@@ -205,20 +298,20 @@ describe("translate(SmartCrabConfig) -> SeherSettings", () => {
 
   test("translate is pure: same input twice yields equal but independent output", () => {
     const input: SmartCrabConfig = {
-      providers: [{ id: "a", kind: "anthropic", envOverrides: { K: "v" } }],
+      providers: [{ id: "a", kind: "openai", envOverrides: { OPENAI_API_KEY: "sk-v" } }],
       priority: [{ providerId: "a", weight: 1 }],
       defaults: { fallbackProviderId: "a", rateLimitBackoffSec: 30 },
     };
     const a = translate(input);
     const b = translate(input);
     expect(a).toEqual(b);
-    // mutating env must not corrupt the original input
-    const firstAgent = a.agents[0];
-    if (firstAgent && firstAgent.env) {
-      const mutable = firstAgent.env as Record<string, string>;
-      mutable.K = "mutated";
+    // mutating api must not corrupt the original input
+    const entry = a.providers["a"];
+    if (entry && entry.api) {
+      const mutable = entry.api as Record<string, string>;
+      mutable.key = "mutated";
     }
-    expect(input.providers[0]?.envOverrides?.K).toBe("v");
+    expect(input.providers[0]?.envOverrides?.OPENAI_API_KEY).toBe("sk-v");
   });
 
   test("condition field on PriorityRule is non-functional (not propagated)", () => {
@@ -229,7 +322,8 @@ describe("translate(SmartCrabConfig) -> SeherSettings", () => {
       ],
       defaults: { fallbackProviderId: "x", rateLimitBackoffSec: 30 },
     });
-    expect(out.agents[0]).not.toHaveProperty("condition");
-    expect(out.priority[0]).not.toHaveProperty("condition");
+    const entry = out.providers["x"];
+    expect(entry).toBeDefined();
+    expect(entry).not.toHaveProperty("condition");
   });
 });

@@ -12,9 +12,8 @@
 
 import type { Database } from "bun:sqlite";
 
-import { isKimiBackedKind, removeKimiShare } from "../seher/kimi-share.ts";
 import {
-  writeSeherSettings,
+  writeSeherConfig,
   type InAppSeherConfig,
 } from "../seher/write-settings.ts";
 
@@ -62,34 +61,17 @@ const handlers = {
       throw new Error("[settings] invalid config: missing providers array");
     }
 
-    // Load previous config to detect deleted providers.
-    const prevConfig = loadSeherConfig(db);
-
     const json = JSON.stringify(config);
     const now = Math.floor(Date.now() / 1000);
     db.query(
       "INSERT INTO seher_config (id, config_json, updated_at) VALUES (1, ?1, ?2) ON CONFLICT(id) DO UPDATE SET config_json = excluded.config_json, updated_at = excluded.updated_at",
     ).run(json, now);
-    // Mirror the saved config out to a seher-ts-compatible settings.jsonc so
+    // Mirror the saved config out to a seher-ts-compatible config.yaml so
     // `router.ts`'s SeherSDK reads it on the next chat.bubble-send.
     try {
-      writeSeherSettings(config);
+      writeSeherConfig(config);
     } catch (err) {
-      console.error("[settings] failed to write seher-settings.jsonc:", err);
-    }
-
-    // Clean up KIMI_SHARE_DIR for deleted kimi-backed providers.
-    if (prevConfig) {
-      const newIds = new Set(config.providers.map((p) => p.id));
-      for (const p of prevConfig.providers) {
-        if (!newIds.has(p.id) && isKimiBackedKind(p.kind)) {
-          try {
-            removeKimiShare(p.id);
-          } catch (err) {
-            console.error(`[settings] failed to remove kimi-share for "${p.id}":`, err);
-          }
-        }
-      }
+      console.error("[settings] failed to write seher-config.yaml:", err);
     }
 
     return { saved: true };

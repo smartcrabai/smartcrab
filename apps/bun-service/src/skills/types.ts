@@ -46,7 +46,7 @@ export interface SkillInvocationResult {
  * Minimal LLM adapter interface used by the skills subsystem.
  *
  * Mirrors the `LlmAdapter::execute_prompt` shape from the Rust codebase but
- * keeps the surface narrow so any concrete adapter (Claude, Kimi, Copilot,
+ * keeps the surface narrow so any concrete adapter (Claude, Copilot,
  * mock) can satisfy it.
  */
 export interface LlmAdapter {

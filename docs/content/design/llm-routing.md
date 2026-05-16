@@ -1,16 +1,16 @@
 +++
 title = "LLM routing"
-description = "seher-ts router and how Settings drives `seher-settings.jsonc`"
+description = "seher-ts router and how Settings drives `seher-config.yaml`"
 weight = 3
 +++
 
-SmartCrab does not bind to a single LLM provider. Instead, every LLM call funnels through `router.ts`, which delegates to [`@seher-ts/sdk`](https://www.npmjs.com/package/@seher-ts/sdk) (≥ 0.1.3) — an external router SDK that resolves the highest-priority **available** coding agent at run time, given the user's settings file.
+SmartCrab does not bind to a single LLM provider. Instead, every LLM call funnels through `router.ts`, which delegates to [`@seher-ts/sdk`](https://www.npmjs.com/package/@seher-ts/sdk) (≥ 0.1.13) — an external router SDK that resolves the highest-priority **available** coding agent at run time, given the user's settings file.
 
 ```
 chat.bubble-send  ──┐
-pipeline llm_call ──┤── router.route() ── SeherSDK ──▶  Claude Agent SDK   (anthropic)
-skill.invoke      ──┤                       │       │  Copilot SDK         (copilot)
-memory.summarize  ──┘                       │       │  Kimi Agent SDK      (kimi / openai)
+pipeline llm_call ──┤── router.route() ── SeherSDK ──▶  Claude Agent SDK        (anthropic)
+skill.invoke      ──┤                       │       │  Copilot SDK              (copilot)
+memory.summarize  ──┘                       │       │  pi-coding-agent          (openai)
                                             │
                                     fallback to
                                     llmRegistry.default()
@@ -20,7 +20,7 @@ memory.summarize  ──┘                       │       │  Kimi Agent SDK 
 
 ## Why one router, not many
 
-`server.ts` registers every LLM provider id that nodes can mention — `seher`, `default`, `anthropic`, `copilot`, `kimi`, `openai` — against a **single bridge object**:
+`server.ts` registers every LLM provider id that nodes can mention — `seher`, `default`, `anthropic`, `copilot`, `openai` — against a **single bridge object**:
 
 ```ts
 const seherLlmAdapter = {
@@ -30,7 +30,7 @@ const seherLlmAdapter = {
   },
 };
 const llmRegistry = new Map<string, typeof seherLlmAdapter>();
-for (const id of ["seher", "default", "anthropic", "copilot", "kimi", "openai"]) {
+for (const id of ["seher", "default", "anthropic", "copilot", "openai"]) {
   llmRegistry.set(id, seherLlmAdapter);
 }
 ```
@@ -44,66 +44,56 @@ The same bridge backs the chat tab, skill invocation, and the memory summarizer.
 `router.ts:route(request)`:
 
 1. **Try @seher-ts/sdk.** Lazy `await import("@seher-ts/sdk")` (cached). If the import succeeds, instantiate `SeherSDK` with:
-    - `configPath: defaultSeherConfigPath()` — `$XDG_CONFIG_HOME/smartcrab/seher-settings.jsonc` (default `~/.config/smartcrab/seher-settings.jsonc`), overridable with `SMARTCRAB_SEHER_CONFIG`.
+    - `configPath: defaultSeherConfigPath()` — `$XDG_CONFIG_HOME/smartcrab/seher-config.yaml` (default `~/.config/smartcrab/seher-config.yaml`), overridable with `SMARTCRAB_SEHER_CONFIG`.
     - `noWait: true` — fail fast if every configured agent is rate-limited, instead of sleeping the chat thread until a quota reset. The chat tab surfaces the failure as an assistant bubble (`"LLM error: ..."`) rather than hanging.
 2. **Fall back to the registry.** If `@seher-ts/sdk` is unavailable (not installed, import failure) or its `run()` throws, pick `llmRegistry.default()` — the first adapter registered, which today is `ClaudeLlmAdapter`. Use it directly with a single `user` message containing the prompt. Tag the response `kind: "registry-fallback"`.
 3. **Hard error.** If neither path is available (no `@seher-ts/sdk` and no registered LLM adapter), throw an explanatory error pointing the user at the in-app Settings tab.
 
 The fallback is what keeps the chat tab usable in dev environments that don't have a seher settings file yet.
 
-## Settings → `seher-settings.jsonc`
+## Settings → `seher-config.yaml`
 
 The Settings tab edits an in-app `SeherConfig` (providers, priorities, defaults). When the user clicks Save:
 
 1. SwiftUI calls `settings.app-save` (RPC).
 2. The Bun handler upserts the JSON blob into the `seher_config` SQLite table (single row, `id = 1`).
-3. **Side effect**: `writeSeherSettings(cfg)` translates the in-app shape into seher-ts's expected `Settings` shape and writes it to `$XDG_CONFIG_HOME/smartcrab/seher-settings.jsonc`.
+3. **Side effect**: `writeSeherConfig(cfg)` translates the in-app shape into seher-ts 0.1.13's `Config` shape (YAML `providers` map) and writes it to `$XDG_CONFIG_HOME/smartcrab/seher-config.yaml`.
 
 The next call to `route()` instantiates a fresh `SeherSDK` that reads the new file. There is no manual reload step.
 
 ### Translation rules
 
-`write-settings.ts:translateToSeherSettings` maps SmartCrab's four supported provider kinds to the agent / provider names Seher expects:
+`write-settings.ts:translateToSeherConfig` maps SmartCrab's three supported provider kinds to the seher-ts provider entries:
 
-| SmartCrab `kind` | UI label           | Seher `command` | Seher `provider.name` | Seher `sdk` | Underlying SDK |
-|------------------|--------------------|-----------------|------------------------|-------------|----------------|
-| `anthropic`      | Anthropic API-compatible | `claude`  | `anthropic`            | `claude`    | Claude Agent SDK |
-| `copilot`        | GitHub Copilot     | `copilot`       | `github`               | `copilot`   | Copilot SDK |
-| `kimi`           | Kimi (Moonshot)    | `kimi`          | `moonshot`             | `kimi`      | Kimi Agent SDK |
-| `openai`         | OpenAI API-compatible | `kimi`       | `openai`               | `kimi`      | Kimi Agent SDK (Kimi CLI's `openai_legacy` provider) |
+| SmartCrab `kind` | UI label                  | Seher `sdk` | Seher `provider` | Underlying SDK |
+|------------------|---------------------------|-------------|-------------------|----------------|
+| `anthropic`      | Anthropic API-compatible  | `claude`    | `anthropic`       | Claude Agent SDK |
+| `copilot`        | GitHub Copilot            | `copilot`   | `copilot`         | Copilot SDK |
+| `openai`         | OpenAI API-compatible     | `pi`        | `openai`          | pi-coding-agent (via `@seher-ts/sdk`) |
 
-Each provider becomes one entry in Seher's `agents` array with:
+Each provider becomes one key in seher's `providers` map with:
 
-- `command`: the CLI the SDK wrapper spawns under the hood
-- `models: { default: <model> }` if a model is configured
-- `env`: the user's `envOverrides` (e.g. `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `OPENAI_BASE_URL`) merged with auto-injected `KIMI_SHARE_DIR` for kimi-backed kinds
-- `provider: { kind: "explicit", name }` for known kinds, otherwise `{ kind: "inferred" }`
 - `sdk`: the matching SDK identifier so Seher picks the right SDK wrapper
+- `provider`: the resolved provider name
+- `models.build.model`: the qualified model name (for openai, bare names like `gpt-4o` are prefixed to `openai/gpt-4o`)
+- `models.build.priority`: the maximum weight across all priority rules for that provider
+- `api.key` / `api.endpoint`: for openai providers, `OPENAI_API_KEY` / `OPENAI_BASE_URL` env overrides are transcribed here
 
-### Per-provider Kimi share directory
+### openai → pi-coding-agent
 
-`kimi` and `openai` both end up calling the `kimi` CLI under the hood. The CLI selects its upstream LLM from `<KIMI_SHARE_DIR>/config.toml`, and env-var overrides only work when the configured provider type matches (`KIMI_*` for `type = "kimi"`, `OPENAI_*` for `type = "openai_legacy"`).
+The `openai` kind is driven by [`@earendil-works/pi-coding-agent`](https://www.npmjs.com/package/@earendil-works/pi-coding-agent) through seher-ts's `sdk: "pi"` path. The old Kimi CLI-based approach (`openai_legacy` provider) has been removed.
 
-To support both kinds without touching the user's own `~/.kimi/config.toml`, SmartCrab gives each provider its own share directory and writes a generated `config.toml`:
+**Important**: pi-coding-agent does not support in-process tools. When openai is selected as the active provider, `SeherTool` definitions are silently stripped and the agent responds without tool calls. Tools continue to work for `anthropic` and `copilot`.
 
-```
-$XDG_DATA_HOME/smartcrab/kimi-share/<providerId>/config.toml
-```
+### API key handling
 
-The path is overridable via `SMARTCRAB_KIMI_SHARE_ROOT` (mainly for tests). `kimi-share.ts:writeKimiShare` is invoked from `writeSeherSettings` for every kimi-backed provider on save, and the matching `KIMI_SHARE_DIR` is auto-injected into the agent's `env`.
-
-Per-provider `priority` rules in the in-app config become entries in seher's top-level `priority` array. Time windows are encoded by:
-
-- `weekdayFilter: number[]` (0..6) → compressed into seher-style ranges like `["1-5"]` for Mon–Fri.
-- `[hourStart, hourEnd]` → `["9-18"]`. The full day `[0, 24]` is omitted entirely (seher treats absence as "always").
-
-If the configured `defaults.fallbackProviderId` does not appear in any priority rule, the translator appends a `priority: 0` entry for it so seher always has a candidate, even when no time-windowed rule matches.
+OpenAI API keys are bridged from environment variables (`OPENAI_API_KEY`, `OPENAI_BASE_URL`) into the YAML config's `api.key` / `api.endpoint` fields at write time. Users who inject secrets via the environment do not need to type them into the GUI. The confidentiality level is equivalent to the old approach.
 
 The output file starts with a banner:
 
 ```
-// Generated by SmartCrab from the in-app Settings tab. Do not edit by hand —
-// changes will be overwritten on the next `settings.app-save`.
+# Generated by SmartCrab from the in-app Settings tab. Do not edit by hand —
+# changes will be overwritten on the next `settings.app-save`.
 ```
 
 So manual edits are explicitly discouraged.
@@ -126,10 +116,10 @@ Static imports at the top of `server.ts` would trigger circular initialization t
 
 ## PATH propagation
 
-GUI-launched apps on macOS inherit a minimal `PATH` that does not contain Homebrew, mise, or `~/.local/bin`. Without intervention, the embedded Bun service cannot find `claude` or `kimi`, which the Claude Agent SDK and Kimi Agent SDK respectively spawn as subprocesses.
+GUI-launched apps on macOS inherit a minimal `PATH` that does not contain Homebrew, mise, or `~/.local/bin`. Without intervention, the embedded Bun service cannot find `claude`, which the Claude Agent SDK spawns as a subprocess.
 
-`BunServiceMacOS` works around this by spawning the user's login shell once at startup (`$SHELL -lc 'printf %s "$PATH"'`), capturing the output, and forwarding it to the child process's environment. The result is memoised because shell startup is non-trivial. This is what lets the SDK wrappers succeed when they call `Bun.which("claude")` / `Bun.which("kimi")` from a Finder-launched app.
+`BunServiceMacOS` works around this by spawning the user's login shell once at startup (`$SHELL -lc 'printf %s "$PATH"'`), capturing the output, and forwarding it to the child process's environment. The result is memoised because shell startup is non-trivial. This is what lets the SDK wrappers succeed when they call `Bun.which("claude")` from a Finder-launched app.
 
 ## Testing
 
-Unit tests don't need a real `@seher-ts/sdk` install; they import `router.ts` and test the **fallback path** by registering a stub adapter into `llmRegistry`. End-to-end testing of routing requires either a real `@seher-ts/sdk` settings file or a mock `SeherSDK`. The `optionalDependencies` block in `apps/bun-service/package.json` keeps `@seher-ts/sdk` optional so CI without credentials still builds.
+Unit tests don't need a real `@seher-ts/sdk` install; they import `router.ts` and test the **fallback path** by registering a stub adapter into `llmRegistry`. End-to-end testing of routing requires either a real `@seher-ts/sdk` config file or a mock `SeherSDK`. The `optionalDependencies` block in `apps/bun-service/package.json` keeps `@seher-ts/sdk` optional so CI without credentials still builds.

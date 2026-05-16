@@ -12,12 +12,11 @@ SmartCrab is a framework implementing the Tool-to-AI paradigm — a macOS deskto
   |---|---|---|---|
   | `anthropic` | Anthropic API-compatible | [`@anthropic-ai/claude-agent-sdk`](https://www.npmjs.com/package/@anthropic-ai/claude-agent-sdk) | Set `ANTHROPIC_BASE_URL` to redirect to compatible endpoints such as Bedrock / Vertex / OpenRouter |
   | `copilot`   | GitHub Copilot     | [`@github/copilot-sdk`](https://www.npmjs.com/package/@github/copilot-sdk) | |
-  | `kimi`      | Kimi (Moonshot)    | [`@moonshot-ai/kimi-agent-sdk`](https://www.npmjs.com/package/@moonshot-ai/kimi-agent-sdk) | Runs via the `kimi` CLI. SmartCrab isolates `KIMI_SHARE_DIR` per provider and generates `config.toml` |
-  | `openai`    | OpenAI API-compatible | [`@moonshot-ai/kimi-agent-sdk`](https://www.npmjs.com/package/@moonshot-ai/kimi-agent-sdk) | Connects to OpenAI / OpenRouter / vLLM / LM Studio etc. via the Kimi CLI's `openai_legacy` provider. Override with `OPENAI_API_KEY` / `OPENAI_BASE_URL` |
+  | `openai`    | OpenAI API-compatible | [`@earendil-works/pi-coding-agent`](https://www.npmjs.com/package/@earendil-works/pi-coding-agent) (via `@seher-ts/sdk` pi) | Connects to OpenAI / OpenRouter / vLLM / LM Studio etc. via pi-coding-agent. Override with `OPENAI_API_KEY` / `OPENAI_BASE_URL` |
 
   The same router backs the chat tab, pipeline `llm_call` nodes, skill invocation, and the memory summarizer — so routing rules apply uniformly across every code path that reaches an LLM.
 
-- **In-process tool use** — Custom tools (e.g. "what's my current Smartcrab config?") are forwarded to the chosen agent in-process via Seher's `SeherTool` (Zod-shaped). Tools work for `anthropic` / `copilot` / `kimi` / `openai`; Seher's auto-resolution skips agents whose underlying SDK cannot carry tools.
+- **In-process tool use** — Custom tools (e.g. "what's my current Smartcrab config?") are forwarded to the chosen agent in-process via Seher's `SeherTool` (Zod-shaped). Tools work for `anthropic` / `copilot`; Seher's auto-resolution skips agents whose underlying SDK cannot carry tools.
 - **Triggers** — Cron schedules and Discord chat events kick off pipelines. New triggers and chat backends plug in via a self-registering adapter registry.
 - **Node actions** — `shell_command`, `http_request`, `llm_call`, and `chat_send`, composable in a single pipeline.
 - **Self-learning loop** — FTS5-backed memory of chat turns and execution traces, summarized every 30 minutes; recurring patterns are distilled into reusable Markdown skills automatically.
@@ -33,7 +32,7 @@ SmartCrab is a framework implementing the Tool-to-AI paradigm — a macOS deskto
 - **Shared packages** (`packages/`):
   - `ipc-protocol` — JSON-RPC method types + adapter interfaces.
   - `seher-config-schema` — SmartCrab provider configuration shape and translator to [`seher-ts`](https://github.com/smartcrabai/seher-ts) router settings.
-- **LLM routing**: All `llm_call` nodes and chat sends go through [`seher-ts`](https://github.com/smartcrabai/seher-ts), which resolves the highest-priority available coding agent (Claude Code / Kimi / GitHub Copilot / Codex CLI) based on the user's settings.
+- **LLM routing**: All `llm_call` nodes and chat sends go through [`seher-ts`](https://github.com/smartcrabai/seher-ts), which resolves the highest-priority available coding agent (Claude Code / GitHub Copilot / pi.dev) based on the user's settings.
 - **Chat adapters**: Discord, registered via a self-registering adapter registry.
 - **Self-learning**: FTS5-backed memory + 30-minute summarization loop and skill auto-generation, inspired by `hermes-agent`.
 

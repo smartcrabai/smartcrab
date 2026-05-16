@@ -182,7 +182,7 @@ CREATE TABLE seher_config (
 );
 ```
 
-`settings.app-save` upserts here and additionally writes `$XDG_CONFIG_HOME/smartcrab/seher-settings.jsonc`. See [design/llm-routing](/design/llm-routing/).
+`settings.app-save` upserts here and additionally writes `$XDG_CONFIG_HOME/smartcrab/seher-config.yaml`. See [design/llm-routing](/design/llm-routing/).
 
 ### `chat_bubbles`
 

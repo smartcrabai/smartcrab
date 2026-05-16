@@ -52,7 +52,7 @@ The SwiftUI process owns all UI; the Bun process owns all business logic, persis
 
 - `SmartCrabApp` mounts `AppRoot`, which wires a `NavigationSplitView` of `SidebarTab` cases (Chat / Pipelines / Cron / Skills / History / Settings) to per-tab views. `Cmd+1` … `Cmd+6` jump between tabs.
 - `BunServiceContainer` is a `@MainActor ObservableObject` that publishes a `BunServiceProtocol` into the SwiftUI environment. On macOS the implementation is `BunServiceMacOS` (real subprocess). On the iOS Simulator preview target it is `BunServiceMock`, used purely for UI verification — there is no Bun child process in that build.
-- `BunServiceMacOS.start()` resolves `Bundle.main.url(forResource: "smartcrab-service")`, captures the user's login-shell `$PATH` once (so the child can find tools like `claude`, `kimi`, `bun` that GUI-launched apps would otherwise miss), `Process.run()`s the binary, and wires `readabilityHandler` on stdout to parse one JSON-RPC response per line.
+- `BunServiceMacOS.start()` resolves `Bundle.main.url(forResource: "smartcrab-service")`, captures the user's login-shell `$PATH` once (so the child can find tools like `claude`, `bun` that GUI-launched apps would otherwise miss), `Process.run()`s the binary, and wires `readabilityHandler` on stdout to parse one JSON-RPC response per line.
 - Each request is a Swift struct encoded with `.convertToSnakeCase`; responses are decoded with `.convertFromSnakeCase`. The bridge keeps an `idCounter` and a `pending: [String: Continuation]` dictionary.
 
 ### Bun service (`apps/bun-service/`)
@@ -68,7 +68,7 @@ Adapters live under `src/adapters/<kind>/<name>/index.ts` and **self-register** 
 
 Currently shipped:
 
-- **LLM adapters**: `claude`, `kimi`, `copilot` (each wraps its respective agent SDK).
+- **LLM adapters**: `claude`, `copilot` (each wraps its respective agent SDK). openai is handled through `@seher-ts/sdk`'s `sdk: "pi"` path backed by `@earendil-works/pi-coding-agent` — no standalone adapter module.
 - **Chat adapters**: `discord` (uses `discord.js` and reads its config out of the `chat_adapter_config` SQLite row that the Settings tab writes).
 
 ## Startup sequence
@@ -77,7 +77,7 @@ When the user launches `SmartCrab.app`:
 
 1. **SwiftUI side** — `SmartCrabApp` instantiates `BunServiceContainer`, which calls `service.start()` from a `.task` modifier on the root window. macOS spawns the bundled `smartcrab-service` binary with the inherited login-shell `PATH`.
 2. **Bun side — DB**: `openDb()` opens the SQLite file at `$XDG_DATA_HOME/smartcrab/smartcrab.db` (defaults to `~/.local/share/smartcrab/smartcrab.db`; sandboxed under `~/Library/Containers/<bundle-id>/Data/.local/share/smartcrab/smartcrab.db` for the GUI app), sets `journal_mode=WAL` and `foreign_keys=ON`, then runs every pending migration in `db/migrations/000-init.sql` … `005-memory-realign.sql` inside one transaction each. Migrations are embedded into the binary via `import "..." with { type: "text" }`, so no filesystem is required.
-3. **Bun side — Pipeline + settings**: `configurePipelineCommands` injects the `SqlitePipelineDatabase` and an `ExecutorDeps` whose `llmRegistry` maps every provider id (`seher`, `default`, `claude`, `kimi`, `copilot`, `codex`) to a single bridge that routes through `router.ts`. The actual provider is chosen by seher-ts at run time. `configureSettingsCommands` is wired similarly.
+3. **Bun side — Pipeline + settings**: `configurePipelineCommands` injects the `SqlitePipelineDatabase` and an `ExecutorDeps` whose `llmRegistry` maps every provider id (`seher`, `default`, `claude`, `copilot`, `codex`) to a single bridge that routes through `router.ts`. The actual provider is chosen by seher-ts at run time. `configureSettingsCommands` is wired similarly.
 4. **Bun side — Cron**: `setCronStore(SqliteCronStore)` is wired, the per-job callback factory is set to "mark run, then call `pipeline.execute`", and `bootstrapCronRunner` reads every `is_active=true` row from `cron_jobs` and re-arms it on the in-memory `CronScheduler`. Scheduling on startup is what makes cron **survive process restarts**.
 5. **Bun side — Skills + chat-bubble + Discord**: `SkillsRegistry` is hydrated from the `skills` table. `chat-bubble.commands` and the `discord` adapter loader are imported dynamically (top-level static imports would cause circular initialization through the `llmRegistry` proxy).
 6. **Bun side — Memory + learn loop**: `rebindSharedToDb(db)` switches the singleton `MemoryStore` from its in-memory default onto the on-disk schema. `configureMemorySummarizer` is wired with a seher-backed completion function. A `setInterval` fires `runLearnLoop` every 30 minutes — see [memory-and-skills](/design/memory-and-skills/).
@@ -97,7 +97,7 @@ Each SwiftUI tab is a thin client over a small set of JSON-RPC methods. The full
 | **History** | `execution.history`, `execution.logs` |
 | **Settings** | `settings.app-load`, `settings.app-save`, `settings.adapter-load`, `settings.adapter-save` |
 
-`settings.app-save` has a side effect that the Settings tab cannot see directly: it also writes a translated `seher-settings.jsonc` to disk so the next `route()` call picks up the new provider list. See [llm-routing](/design/llm-routing/).
+`settings.app-save` has a side effect that the Settings tab cannot see directly: it also writes a translated `seher-config.yaml` to disk so the next `route()` call picks up the new provider list. See [llm-routing](/design/llm-routing/).
 
 ## Persistence layout
 
@@ -112,7 +112,7 @@ Override with `SMARTCRAB_DB_PATH` (used by tests). Pass `:memory:` for an in-mem
 The translated seher router config is written to:
 
 ```
-$XDG_CONFIG_HOME/smartcrab/seher-settings.jsonc   # default: ~/.config/smartcrab/seher-settings.jsonc
+$XDG_CONFIG_HOME/smartcrab/seher-config.yaml   # default: ~/.config/smartcrab/seher-config.yaml
 ```
 
 Override with `SMARTCRAB_SEHER_CONFIG`.

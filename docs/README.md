@@ -1,6 +1,6 @@
 # SmartCrab Documentation
 
-SmartCrab is a macOS desktop application implementing the "Tool-to-AI" paradigm. Non-AI processing runs first, and conditional branches in a YAML pipeline decide whether to invoke an AI agent (Claude Code, Kimi, GitHub Copilot, or Codex CLI — resolved at runtime by `seher-ts`).
+SmartCrab is a macOS desktop application implementing the "Tool-to-AI" paradigm. Non-AI processing runs first, and conditional branches in a YAML pipeline decide whether to invoke an AI agent (Claude Code, GitHub Copilot, or pi.dev — resolved at runtime by `seher-ts`).
 
 The application is split into a SwiftUI host process and a Bun TypeScript service that communicate over line-delimited JSON-RPC 2.0 on stdio.
 
@@ -17,7 +17,7 @@ The application is split into a SwiftUI host process and a Bun TypeScript servic
 |----------|---------|
 | [architecture.md](content/design/architecture.md) | Process model — SwiftUI host, Bun child, stdio JSON-RPC, SQLite, startup sequence |
 | [pipeline-engine.md](content/design/pipeline-engine.md) | YAML pipeline DAG executor — node actions, conditional routing, parallel siblings, fan-in |
-| [llm-routing.md](content/design/llm-routing.md) | seher-ts router and how Settings drives `seher-settings.jsonc` |
+| [llm-routing.md](content/design/llm-routing.md) | seher-ts router and how Settings drives `seher-config.yaml` |
 | [memory-and-skills.md](content/design/memory-and-skills.md) | FTS5 memory store, 30-minute summarization loop, skill auto-generation |
 
 ## Specifications

@@ -55,7 +55,7 @@ public struct ChatView: View {
                 .font(.title2)
                 .fontWeight(.semibold)
             // sakoku-ignore-next-line
-            Text("Open Settings (⌘6) and add an LLM provider so the chat can route through your Claude / Kimi / Copilot subscription.")
+            Text("Open Settings (⌘6) and add an LLM provider so the chat can route through your Claude / Copilot / pi.dev subscription.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

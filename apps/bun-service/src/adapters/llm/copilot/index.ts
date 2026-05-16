@@ -8,7 +8,7 @@
  * itself (capabilities flag `native: "copilot"` signals the special tool
  * path to upstream code).
  *
- * Like Kimi, the SDK npm name is not yet pinned, so we attempt a dynamic
+ * The SDK npm name is not yet pinned, so we attempt a dynamic
  * import and fall back to a mock shim (see `./mock.ts`).
  */
 
@@ -121,5 +121,5 @@ export class CopilotLlmAdapter implements LlmAdapter {
 
 }
 
-// Self-registers on import (see kimi adapter for rationale).
+// Self-registers on import.
 registerLlmAdapter(new CopilotLlmAdapter());
