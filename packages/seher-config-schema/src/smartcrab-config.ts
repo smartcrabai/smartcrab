@@ -9,10 +9,9 @@
  * Which LLM implementation to use.
  * - `anthropic` ... Anthropic API compatible (driven by the Claude Agent SDK)
  * - `copilot`   ... GitHub Copilot (driven by the Copilot SDK)
- * - `kimi`      ... Moonshot Kimi (driven by the Kimi Agent SDK)
- * - `openai`    ... OpenAI API compatible (driven by the Kimi Agent SDK + Kimi CLI `openai_legacy`)
+ * - `openai`    ... OpenAI API compatible (driven by seher-ts SDK + @earendil-works/pi-coding-agent)
  */
-export type ProviderKind = "anthropic" | "copilot" | "kimi" | "openai";
+export type ProviderKind = "anthropic" | "copilot" | "openai";
 
 /** Weekday (0 = Sunday ... 6 = Saturday). Aligned with Date#getDay(). */
 export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;

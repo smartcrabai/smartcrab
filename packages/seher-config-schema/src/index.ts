@@ -9,11 +9,11 @@ export type {
 } from "./smartcrab-config.ts";
 
 export type {
-  SeherAgent,
-  SeherPriorityRule,
-  SeherSettings,
-  SeherTimeWindow,
-  SeherWeekday,
+  SdkKind,
+  SeherApi,
+  SeherConfig,
+  SeherModelEntry,
+  SeherProviderEntry,
 } from "./seher-shape.ts";
 
 export { translate } from "./translate.ts";

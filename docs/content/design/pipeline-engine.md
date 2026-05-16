@@ -161,7 +161,7 @@ action:
   timeout_secs: 60
 ```
 
-Looks up `deps.llmRegistry.get(provider)` and calls its `executePrompt`. **The bun-service wires every provider id (`seher`, `default`, `claude`, `kimi`, `copilot`, `codex`) to a single bridge that delegates to `router.ts`.** This means `provider: claude` is more of a hint than a binding — seher-ts decides the actual agent based on settings. See [llm-routing](/design/llm-routing/).
+Looks up `deps.llmRegistry.get(provider)` and calls its `executePrompt`. **The bun-service wires every provider id (`seher`, `default`, `claude`, `copilot`, `codex`) to a single bridge that delegates to `router.ts`.** This means `provider: claude` is more of a hint than a binding — seher-ts decides the actual agent based on settings. See [llm-routing](/design/llm-routing/).
 
 The action returns the response `content` string.
 

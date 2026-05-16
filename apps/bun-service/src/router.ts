@@ -1,10 +1,10 @@
 /**
- * LLM router built on top of `@seher-ts/sdk` (>= 0.1.3).
+ * LLM router built on top of `@seher-ts/sdk` (>= 0.1.13).
  *
  * Seher resolves the highest-priority available coding agent — backed by
- * Claude Agent SDK (Anthropic API-compatible), Copilot SDK, or Kimi Agent SDK
- * (Kimi / OpenAI API-compatible) — based on the user's settings file
- * (`$XDG_CONFIG_HOME/smartcrab/seher-settings.jsonc` by default, overridable
+ * Claude Agent SDK (Anthropic API-compatible), Copilot SDK, or
+ * pi-coding-agent (OpenAI API-compatible) — based on the user's YAML config
+ * (`$XDG_CONFIG_HOME/smartcrab/seher-config.yaml` by default, overridable
  * via `SMARTCRAB_SEHER_CONFIG`). When `@seher-ts/sdk` is unavailable or no
  * agent resolves, we fall back to the first registered adapter in
  * `llmRegistry` so the chat tab stays usable.
@@ -26,7 +26,7 @@ export interface RouteRequest {
 
 export interface RouteResponse {
   text: string;
-  /** "claude" | "copilot" | "kimi" | "registry-fallback" — Seher's own SDK kinds. */
+  /** "claude" | "copilot" | "pi" | "registry-fallback" — Seher's own SDK kinds. */
   kind: string;
 }
 

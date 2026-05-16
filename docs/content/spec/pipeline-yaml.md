@@ -107,7 +107,7 @@ action:
   timeout_secs: 60
 ```
 
-Forwards through the LLM registry. **The `provider` field is a hint — the Bun service routes every id (`seher`/`default`/`claude`/`kimi`/`copilot`/`codex`) through seher-ts**, which picks the actual agent at run time. See [design/llm-routing](/design/llm-routing/).
+Forwards through the LLM registry. **The `provider` field is a hint — the Bun service routes every id (`seher`/`default`/`claude`/`copilot`/`codex`) through seher-ts**, which picks the actual agent at run time. See [design/llm-routing](/design/llm-routing/).
 
 ### `chat_send`
 

@@ -1,6 +1,6 @@
 /**
  * Pure translation from the smartcrab-specific configuration into the
- * seher-ts `settings.jsonc` shape.
+ * seher-ts `config.yaml` shape (providers map, seher-ts 0.1.13+).
  *
  * Performs no network calls, file I/O, or global-state access, so unit tests
  * reduce to golden comparisons.
@@ -11,85 +11,82 @@ import type {
   SmartCrabConfig,
 } from "./smartcrab-config.ts";
 import type {
-  SeherAgent,
-  SeherPriorityRule,
-  SeherSettings,
-  SeherTimeWindow,
+  SeherApi,
+  SeherConfig,
+  SeherModelEntry,
+  SeherProviderEntry,
 } from "./seher-shape.ts";
 
-/**
- * Pure translation from a smartcrab configuration into the seher-ts
- * `settings.jsonc` shape.
- *
- * Design notes:
- * - When multiple priority rules target the same provider, the maximum
- *   weight wins (seher's router reads exactly one weight per agent).
- * - Priority rules referencing an unknown provider are silently dropped
- *   (the UI is expected to validate; the translator stays defensive).
- * - If the fallback provider is missing from priority, it is appended with
- *   weight=0.
- */
-export function translate(cfg: SmartCrabConfig): SeherSettings {
-  const knownProviderIds = new Set(cfg.providers.map((p) => p.id));
-
-  const rulesByProvider = new Map<string, PriorityRule[]>();
-  for (const rule of cfg.priority) {
-    if (!knownProviderIds.has(rule.providerId)) continue;
-    const list = rulesByProvider.get(rule.providerId);
-    if (list) list.push(rule);
-    else rulesByProvider.set(rule.providerId, [rule]);
+/** Maps a SmartCrab ProviderKind to the seher-ts SDK kind. */
+function toSdkKind(kind: string): string {
+  switch (kind) {
+    case "anthropic": return "claude";
+    case "copilot":   return "copilot";
+    case "openai":    return "pi";
+    default:          return kind;
   }
+}
 
-  const agents: SeherAgent[] = [];
-  const priority: SeherPriorityRule[] = [];
+/** Build api section from env overrides (OPENAI_API_KEY / OPENAI_BASE_URL). */
+function buildApi(envOverrides?: Readonly<Record<string, string>>): SeherApi | undefined {
+  if (!envOverrides) return undefined;
+  const api: SeherApi = {};
+  if (envOverrides.OPENAI_API_KEY) api.key = envOverrides.OPENAI_API_KEY;
+  if (envOverrides.OPENAI_BASE_URL) api.endpoint = envOverrides.OPENAI_BASE_URL;
+  return Object.keys(api).length > 0 ? api : undefined;
+}
 
-  for (const provider of cfg.providers) {
-    const rules = rulesByProvider.get(provider.id) ?? [];
-    const timeWindows = rules
-      .map(ruleToTimeWindow)
-      .filter((w): w is SeherTimeWindow => w !== null);
-    const env = provider.envOverrides;
-
-    agents.push({
-      name: provider.id,
-      provider: provider.kind,
-      ...(provider.model !== undefined && { model: provider.model }),
-      ...(env && Object.keys(env).length > 0 && { env: { ...env } }),
-      ...(timeWindows.length > 0 && { timeWindows }),
-    });
-
-    if (rules.length > 0) {
-      priority.push({
-        agent: provider.id,
-        weight: Math.max(...rules.map((r) => r.weight)),
-      });
-    }
+/** Format model id: pi-based providers need "openai/<model>" prefix. */
+function buildModelId(kind: string, model?: string): string | undefined {
+  if (model === undefined) return undefined;
+  if (kind === "openai" && !model.includes("/")) {
+    return `openai/${model}`;
   }
-
-  const fallbackId = cfg.defaults.fallbackProviderId;
-  if (
-    knownProviderIds.has(fallbackId) &&
-    !priority.some((p) => p.agent === fallbackId)
-  ) {
-    priority.push({ agent: fallbackId, weight: 0 });
-  }
-
-  return { agents, priority };
+  return model;
 }
 
 /**
- * A rule with both `weekdays` and `hours` undefined means "always active",
- * so it has no time-window on the seher side (we return null).
+ * Pure translation from a smartcrab configuration into the seher-ts
+ * `config.yaml` shape.
  *
- * smartcrab's `Weekday` and seher's `SeherWeekday` share the same value
- * domain (0..6), so the `weekdays` array can be reused as-is.
+ * Design notes:
+ * - Each provider becomes a map entry with its id as the key.
+ * - `model` is placed under `models.build`.
+ * - `envOverrides` for openai providers map to `api.key` / `api.endpoint`.
+ * - All other env vars are ignored (seher-ts 0.1.13 does not support generic
+ *   env passthrough for pi, codex, copilot, cursor, or opencode SDKs).
+ * - Priority rules map to per-provider `priority`.
  */
-function ruleToTimeWindow(rule: PriorityRule): SeherTimeWindow | null {
-  if (rule.weekdays === undefined && rule.hours === undefined) return null;
-  const [startHour, endHour] = rule.hours ?? [0, 24];
-  return {
-    weekday: rule.weekdays ?? [],
-    startHour,
-    endHour,
-  };
+export function translate(cfg: SmartCrabConfig): SeherConfig {
+  const providers: Record<string, SeherProviderEntry> = {};
+
+  const maxWeights = new Map<string, number>();
+  for (const rule of cfg.priority) {
+    const prev = maxWeights.get(rule.providerId) ?? -Infinity;
+    if (rule.weight > prev) maxWeights.set(rule.providerId, rule.weight);
+  }
+
+  for (const provider of cfg.providers) {
+    const sdk = toSdkKind(provider.kind);
+    const modelId = buildModelId(provider.kind, provider.model);
+    const api = buildApi(provider.envOverrides);
+    const maxWeight = maxWeights.get(provider.id);
+
+    const models: Record<string, SeherModelEntry> = {};
+    if (modelId) {
+      models.build = { model: modelId };
+    }
+
+    const entry: SeherProviderEntry = {
+      provider: provider.kind,
+      sdk,
+      models,
+      ...(api && { api }),
+      ...(maxWeight !== undefined && { priority: maxWeight }),
+    };
+
+    providers[provider.id] = entry;
+  }
+
+  return { providers };
 }

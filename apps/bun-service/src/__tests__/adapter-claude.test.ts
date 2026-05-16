@@ -157,10 +157,10 @@ describe("ClaudeLlmAdapter — tools", () => {
 
   it("invokes the configured config provider when the tool is called", async () => {
     const tool = makeGetCurrentSmartcrabConfigTool(() => ({
-      providers: ["claude", "kimi"],
+      providers: ["claude", "openai"],
     }));
     const result = (await tool.handler({})) as { providers: string[] };
-    expect(result.providers).toEqual(["claude", "kimi"]);
+    expect(result.providers).toEqual(["claude", "openai"]);
   });
 });
 
