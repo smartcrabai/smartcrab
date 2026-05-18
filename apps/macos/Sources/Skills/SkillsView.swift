@@ -41,7 +41,7 @@ public struct SkillsView: View {
         }
         .alert(
             "Delete skill?",
-            isPresented: deleteAlertBinding,
+            isPresented: .isPresenting($pendingDelete),
             presenting: pendingDelete
         ) { skill in
             Button("Cancel", role: .cancel) { pendingDelete = nil }
@@ -153,14 +153,7 @@ public struct SkillsView: View {
         .frame(minWidth: 420)
     }
 
-    // MARK: - Bindings & actions
-
-    private var deleteAlertBinding: Binding<Bool> {
-        Binding(
-            get: { pendingDelete != nil },
-            set: { if !$0 { pendingDelete = nil } }
-        )
-    }
+    // MARK: - Actions
 
     private func reload() async {
         isLoading = true

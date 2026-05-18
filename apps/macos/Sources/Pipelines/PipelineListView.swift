@@ -47,32 +47,31 @@ public struct PipelineListView: View {
                     service: service
                 )
             } else {
-                ContentUnavailableViewCompat(
-                    title: "No pipeline selected",
-                    message: "Pick a pipeline from the sidebar or create a new one.",
-                    systemImage: "rectangle.stack.badge.plus"
+                ContentUnavailableView(
+                    "No pipeline selected",
+                    systemImage: "rectangle.stack.badge.plus",
+                    description: Text("Pick a pipeline from the sidebar or create a new one.")
                 )
             }
         }
         .task { await load() }
     }
 
+    @ViewBuilder
     private var sidebar: some View {
-        Group {
-            if isLoading && pipelines.isEmpty {
-                ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if pipelines.isEmpty {
-                ContentUnavailableViewCompat(
-                    title: "No pipelines yet",
-                    message: loadError ?? "Tap the + button to create your first pipeline.",
-                    systemImage: "tray"
-                )
-            } else {
-                List(selection: $selection) {
-                    ForEach(pipelines) { pipeline in
-                        row(for: pipeline)
-                            .tag(pipeline.id)
-                    }
+        if isLoading && pipelines.isEmpty {
+            ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if pipelines.isEmpty {
+            ContentUnavailableView(
+                "No pipelines yet",
+                systemImage: "tray",
+                description: Text(loadError ?? "Tap the + button to create your first pipeline.")
+            )
+        } else {
+            List(selection: $selection) {
+                ForEach(pipelines) { pipeline in
+                    row(for: pipeline)
+                        .tag(pipeline.id)
                 }
             }
         }
@@ -108,35 +107,6 @@ public struct PipelineListView: View {
             if selection == nil { selection = pipelines.first?.id }
         } catch {
             loadError = error.localizedDescription
-        }
-    }
-}
-
-/// Cross-version stand-in for `ContentUnavailableView` (introduced in macOS
-/// 14 / iOS 17). Falls back to a simple label on older SDKs.
-struct ContentUnavailableViewCompat: View {
-    var title: String
-    var message: String
-    var systemImage: String
-
-    var body: some View {
-        if #available(macOS 14, iOS 17, *) {
-            ContentUnavailableView {
-                Label(title, systemImage: systemImage)
-            } description: {
-                Text(message)
-            }
-        } else {
-            VStack(spacing: 12) {
-                Image(systemName: systemImage)
-                    .font(.system(size: 36))
-                    .foregroundStyle(.secondary)
-                Text(title).font(.headline)
-                Text(message).font(.caption).foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            .padding()
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 }

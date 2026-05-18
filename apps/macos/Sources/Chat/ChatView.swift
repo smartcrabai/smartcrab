@@ -97,27 +97,20 @@ public struct ChatView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(spacing: 12) {
-                        ForEach(messages) { message in
-                            ChatBubbleRow(message: message)
-                                .id(message.id)
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                }
-                .onChange(of: messages.last?.id) { _, newId in
-                    guard let newId else { return }
-                    withAnimation { proxy.scrollTo(newId, anchor: .bottom) }
-                }
-                .onAppear {
-                    if let lastId = messages.last?.id {
-                        proxy.scrollTo(lastId, anchor: .bottom)
+            // `defaultScrollAnchor(.bottom)` opens at the latest message and
+            // keeps the scroll glued to the bottom when new messages arrive,
+            // without the ScrollViewReader/scrollTo dance.
+            ScrollView {
+                LazyVStack(spacing: 12) {
+                    ForEach(messages) { message in
+                        ChatBubbleRow(message: message)
+                            .id(message.id)
                     }
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
             }
+            .defaultScrollAnchor(.bottom)
         }
     }
 

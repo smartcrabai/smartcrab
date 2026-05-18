@@ -31,7 +31,7 @@ public struct ExecutionHistoryView: View {
             }
         }
         .task { await reload() }
-        .onChange(of: statusFilter) { _, _ in
+        .onChange(of: statusFilter) {
             Task { await reload() }
         }
     }

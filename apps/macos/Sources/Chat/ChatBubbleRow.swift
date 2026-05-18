@@ -68,10 +68,7 @@ public struct ChatBubbleRow: View {
     }
 
     private var timestampLabel: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .none
-        formatter.timeStyle = .short
-        return "\(roleLabel) - \(formatter.string(from: message.createdAt))"
+        "\(roleLabel) - \(message.createdAt.formatted(date: .omitted, time: .shortened))"
     }
 }
 

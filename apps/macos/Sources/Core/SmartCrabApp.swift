@@ -5,27 +5,23 @@ import SwiftUI
 
 @main
 struct SmartCrabApp: App {
-    @StateObject private var bun = BunServiceContainer()
+    @State private var bun = BunServiceContainer()
 
     var body: some Scene {
         #if os(macOS)
             WindowGroup("SmartCrab") {
                 AppRoot()
-                    .environmentObject(bun)
+                    .environment(bun)
                     .frame(minWidth: 900, minHeight: 600)
-                    .task {
-                        await bun.start()
-                    }
+                    .task { await bun.start() }
             }
             .windowStyle(.titleBar)
             .windowToolbarStyle(.unified)
         #else
             WindowGroup {
                 AppRoot()
-                    .environmentObject(bun)
-                    .task {
-                        await bun.start()
-                    }
+                    .environment(bun)
+                    .task { await bun.start() }
             }
         #endif
     }
@@ -34,7 +30,8 @@ struct SmartCrabApp: App {
 /// Container that provides a `BunServiceProtocol` to the SwiftUI environment.
 /// On macOS we use the real subprocess-backed service; on iOS we use the mock.
 @MainActor
-final class BunServiceContainer: ObservableObject {
+@Observable
+final class BunServiceContainer {
     let service: BunServiceProtocol
 
     init() {
