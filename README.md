@@ -12,7 +12,7 @@ SmartCrab is a framework implementing the Tool-to-AI paradigm — a macOS deskto
   |---|---|---|---|
   | `anthropic` | Anthropic API-compatible | [`@anthropic-ai/claude-agent-sdk`](https://www.npmjs.com/package/@anthropic-ai/claude-agent-sdk) | Set `ANTHROPIC_BASE_URL` to redirect to compatible endpoints such as Bedrock / Vertex / OpenRouter |
   | `copilot`   | GitHub Copilot     | [`@github/copilot-sdk`](https://www.npmjs.com/package/@github/copilot-sdk) | |
-  | `openai`    | OpenAI API-compatible | [`@earendil-works/pi-coding-agent`](https://www.npmjs.com/package/@earendil-works/pi-coding-agent) (via `@seher-ts/sdk` pi) | Connects to OpenAI / OpenRouter / vLLM / LM Studio etc. via pi-coding-agent. Override with `OPENAI_API_KEY` / `OPENAI_BASE_URL` |
+  | `openai`    | OpenAI API-compatible | [`@earendil-works/pi-coding-agent`](https://www.npmjs.com/package/@earendil-works/pi-coding-agent) | Connects to OpenAI / OpenRouter / vLLM / LM Studio etc. Override with `OPENAI_API_KEY` / `OPENAI_BASE_URL` |
 
   The same router backs the chat tab, pipeline `llm_call` nodes, skill invocation, and the memory summarizer — so routing rules apply uniformly across every code path that reaches an LLM.
 
