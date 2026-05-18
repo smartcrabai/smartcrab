@@ -41,7 +41,7 @@ public struct CronListView: View {
         }
         .alert(
             "Delete cron job?",
-            isPresented: deleteAlertBinding,
+            isPresented: .isPresenting($pendingDelete),
             presenting: pendingDelete
         ) { job in
             Button("Cancel", role: .cancel) { pendingDelete = nil }
@@ -143,14 +143,7 @@ public struct CronListView: View {
         .padding()
     }
 
-    // MARK: - Bindings & helpers
-
-    private var deleteAlertBinding: Binding<Bool> {
-        Binding(
-            get: { pendingDelete != nil },
-            set: { if !$0 { pendingDelete = nil } }
-        )
-    }
+    // MARK: - Helpers
 
     private func pipelineName(for id: String) -> String {
         pipelines.first(where: { $0.id == id })?.name ?? id

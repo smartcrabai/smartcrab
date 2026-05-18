@@ -34,7 +34,7 @@ enum SidebarTab: String, CaseIterable, Identifiable, Hashable {
 }
 
 struct AppRoot: View {
-    @EnvironmentObject private var bun: BunServiceContainer
+    @Environment(BunServiceContainer.self) private var bun
     @State private var selection: SidebarTab? = .chat
 
     var body: some View {
@@ -55,18 +55,24 @@ struct AppRoot: View {
         // (and `scripts/e2e/preview-mac.sh`) navigate without clicking the
         // sidebar — SwiftUI's List+selection doesn't respond to synthetic
         // mouse events from System Events / CGEvent reliably.
-        .background(
-            VStack {
-                ForEach(SidebarTab.allCases) { tab in
-                    Button("") { selection = tab }
-                        .keyboardShortcut(KeyEquivalent(Character("\(tab.shortcutNumber)")), modifiers: .command)
-                        .opacity(0)
-                        .frame(width: 0, height: 0)
-                }
-            }
-        )
+        .background(tabShortcutButtons)
         #endif
     }
+
+    #if os(macOS)
+        private var tabShortcutButtons: some View {
+            ForEach(SidebarTab.allCases) { tab in
+                Button("") { selection = tab }
+                    .keyboardShortcut(
+                        KeyEquivalent(Character("\(tab.shortcutNumber)")),
+                        modifiers: .command
+                    )
+            }
+            .frame(width: 0, height: 0)
+            .opacity(0)
+            .accessibilityHidden(true)
+        }
+    #endif
 
     @ViewBuilder
     private func detailView(for tab: SidebarTab) -> some View {
@@ -84,5 +90,24 @@ struct AppRoot: View {
         case .settings:
             SettingsView(service: bun.service)
         }
+    }
+}
+
+// MARK: - Helpers
+
+extension Binding {
+    /// Bridges a `Binding<T?>` to the `Binding<Bool>` that SwiftUI's
+    /// `alert/sheet(isPresented:presenting:)` modifiers expect. Setting it to
+    /// `false` clears the optional — analogous to the deprecated
+    /// `.alert(item:)` pattern.
+    static func isPresenting<Wrapped>(_ source: Binding<Wrapped?>) -> Binding<Bool>
+        where Value == Bool
+    {
+        Binding<Bool>(
+            get: { source.wrappedValue != nil },
+            set: { isPresented in
+                if !isPresented { source.wrappedValue = nil }
+            }
+        )
     }
 }

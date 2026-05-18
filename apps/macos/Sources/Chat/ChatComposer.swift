@@ -28,6 +28,7 @@ public struct ChatComposer: View {
                 .textFieldStyle(.roundedBorder)
                 .focused($isFocused)
                 .disabled(isSending)
+                .submitLabel(.send)
                 .onSubmit(submit)
 
             Button(action: submit) {

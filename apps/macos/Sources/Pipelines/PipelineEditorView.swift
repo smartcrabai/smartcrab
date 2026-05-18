@@ -8,7 +8,7 @@ import SwiftUI
 ///   regular SwiftUI views (rather than `Canvas` symbols) so we can attach
 ///   gestures + accessibility cleanly.
 /// - Pan: `DragGesture` on background, accumulated into `panOffset`.
-/// - Zoom: `MagnificationGesture` on background, accumulated into `zoom`.
+/// - Zoom: `MagnifyGesture` on background, accumulated into `zoom`.
 /// - Node move: `DragGesture` on each `NodeView`.
 /// - Edge draw: tap-and-drag on a port handle. We track the `pendingEdge`
 ///   from the source node + the cursor location until the drag ends on
@@ -72,12 +72,9 @@ public struct PipelineEditorView: View {
 
     private var toolbar: some View {
         HStack(spacing: 12) {
-            TextField("Pipeline name", text: Binding(
-                get: { info.name },
-                set: { info.name = $0 }
-            ))
-            .textFieldStyle(.roundedBorder)
-            .frame(maxWidth: 320)
+            TextField("Pipeline name", text: $info.name)
+                .textFieldStyle(.roundedBorder)
+                .frame(maxWidth: 320)
 
             Spacer()
 
@@ -186,7 +183,7 @@ public struct PipelineEditorView: View {
             ctx.fill(arrow, with: .color(color))
             if let label = edge.label {
                 let mid = CGPoint(x: (from.x + to.x) / 2, y: (from.y + to.y) / 2)
-                let text = Text(label).font(.caption2).foregroundColor(color)
+                let text = Text(label).font(.caption2).foregroundStyle(color)
                 ctx.draw(text, at: mid)
             }
         }
@@ -245,10 +242,10 @@ public struct PipelineEditorView: View {
     }
 
     private var zoomGesture: some Gesture {
-        MagnificationGesture()
-            .onChanged { pinchZoom = $0 }
+        MagnifyGesture()
+            .onChanged { pinchZoom = $0.magnification }
             .onEnded { value in
-                zoom = max(0.25, min(3.0, zoom * value))
+                zoom = max(0.25, min(3.0, zoom * value.magnification))
                 pinchZoom = 1.0
             }
     }
@@ -344,7 +341,7 @@ public struct PipelineEditorView: View {
             info = detail.info
             let now = Date()
             lastSavedAt = now
-            validationMessage = "Saved at \(Self.timestamp.string(from: now))"
+            validationMessage = "Saved at \(now.formatted(date: .omitted, time: .standard))"
         } catch {
             validationMessage = "Save failed: \(error.localizedDescription)"
         }
@@ -385,13 +382,6 @@ public struct PipelineEditorView: View {
             NSPasteboard.general.setString(yaml, forType: .string)
         #endif
     }
-
-    private static let timestamp: DateFormatter = {
-        let f = DateFormatter()
-        f.dateStyle = .none
-        f.timeStyle = .medium
-        return f
-    }()
 }
 
 #if canImport(AppKit)
