@@ -39,40 +39,51 @@ struct AppRoot: View {
 
     var body: some View {
         NavigationSplitView {
-            List(SidebarTab.allCases, selection: $selection) { tab in
-                Label(tab.rawValue, systemImage: tab.systemImage)
-                    .tag(Optional(tab))
-            }
-            .navigationTitle("SmartCrab")
+            sidebar
+                .navigationTitle("SmartCrab")
             #if os(macOS)
                 .frame(minWidth: 180)
             #endif
         } detail: {
             detailView(for: selection ?? .chat)
         }
-        #if os(macOS)
-        // Cmd+1..6 jump straight to a tab. Lets keyboard-driven workflows
-        // (and `scripts/e2e/preview-mac.sh`) navigate without clicking the
-        // sidebar — SwiftUI's List+selection doesn't respond to synthetic
-        // mouse events from System Events / CGEvent reliably.
-        .background(tabShortcutButtons)
-        #endif
     }
 
-    #if os(macOS)
-        private var tabShortcutButtons: some View {
+    /// Hand-rolled VStack instead of `List(selection:)` because the latter
+    /// stops propagating real mouse clicks to its binding on macOS 15
+    /// (AXSelected still works; clicks no-op).
+    private var sidebar: some View {
+        VStack(alignment: .leading, spacing: 2) {
             ForEach(SidebarTab.allCases) { tab in
-                Button("") { selection = tab }
-                    .keyboardShortcut(
-                        KeyEquivalent(Character("\(tab.shortcutNumber)")),
-                        modifiers: .command
-                    )
+                sidebarRow(for: tab)
             }
-            .frame(width: 0, height: 0)
-            .opacity(0)
-            .accessibilityHidden(true)
+            Spacer()
         }
-    #endif
+        .padding(8)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+    }
+
+    @ViewBuilder
+    private func sidebarRow(for tab: SidebarTab) -> some View {
+        let shape = RoundedRectangle(cornerRadius: 6)
+        Button {
+            selection = tab
+        } label: {
+            Label(tab.rawValue, systemImage: tab.systemImage)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 5)
+                .background(selection == tab ? Color.accentColor.opacity(0.25) : .clear, in: shape)
+                .contentShape(shape)
+        }
+        .buttonStyle(.plain)
+        #if os(macOS)
+            .keyboardShortcut(
+                KeyEquivalent(Character("\(tab.shortcutNumber)")),
+                modifiers: .command
+            )
+        #endif
+    }
 
     @ViewBuilder
     private func detailView(for tab: SidebarTab) -> some View {
