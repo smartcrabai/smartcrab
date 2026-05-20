@@ -23,12 +23,51 @@ public struct SeherProvider: Identifiable, Hashable, Codable {
     public var kind: String
     public var model: String
     public var envOverrides: [String: String]
+    // Stable SwiftUI row identity; not persisted. Lets the user edit `id`
+    // without ForEach tearing down the row (which would drop TextField focus).
+    public let rowKey: UUID
 
     public init(id: String, kind: String, model: String, envOverrides: [String: String] = [:]) {
         self.id = id
         self.kind = kind
         self.model = model
         self.envOverrides = envOverrides
+        rowKey = UUID()
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, kind, model, envOverrides
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        kind = try container.decode(String.self, forKey: .kind)
+        model = try container.decode(String.self, forKey: .model)
+        envOverrides = try container.decodeIfPresent([String: String].self, forKey: .envOverrides) ?? [:]
+        rowKey = UUID()
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(kind, forKey: .kind)
+        try container.encode(model, forKey: .model)
+        try container.encode(envOverrides, forKey: .envOverrides)
+    }
+
+    public static func == (lhs: SeherProvider, rhs: SeherProvider) -> Bool {
+        lhs.id == rhs.id
+            && lhs.kind == rhs.kind
+            && lhs.model == rhs.model
+            && lhs.envOverrides == rhs.envOverrides
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(kind)
+        hasher.combine(model)
+        hasher.combine(envOverrides)
     }
 }
 
