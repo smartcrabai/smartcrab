@@ -57,7 +57,7 @@ public struct SeherConfigEditor: View {
 
     private var providersSection: some View {
         Section {
-            ForEach($config.providers) { $provider in
+            ForEach($config.providers, id: \.rowKey) { $provider in
                 ProviderRow(provider: $provider)
             }
             .onDelete { indices in
