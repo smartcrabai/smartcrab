@@ -23,8 +23,8 @@ public struct SeherProvider: Identifiable, Hashable, Codable {
     public var kind: String
     public var model: String
     public var envOverrides: [String: String]
-    // Stable SwiftUI row identity; not persisted. Lets the user edit `id`
-    // without ForEach tearing down the row (which would drop TextField focus).
+    /// Stable SwiftUI row identity; not persisted. Lets the user edit `id`
+    /// without ForEach tearing down the row (which would drop TextField focus).
     public let rowKey: UUID
 
     public init(id: String, kind: String, model: String, envOverrides: [String: String] = [:]) {
