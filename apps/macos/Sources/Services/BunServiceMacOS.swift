@@ -81,6 +81,16 @@
                     guard !chunk.isEmpty else { return }
                     self?.queue.async { self?.ingest(chunk) }
                 }
+                // Surface bun-service stderr in the host console so adapter
+                // failures (e.g. missing DISCORD_BOT_TOKEN) are diagnosable
+                // without re-running the service standalone.
+                stderrPipe.fileHandleForReading.readabilityHandler = { handle in
+                    let chunk = handle.availableData
+                    guard !chunk.isEmpty else { return }
+                    if let text = String(data: chunk, encoding: .utf8) {
+                        FileHandle.standardError.write(Data(text.utf8))
+                    }
+                }
 
                 try process.run()
                 started = true
@@ -91,6 +101,7 @@
             queue.sync {
                 guard started else { return }
                 stdoutPipe.fileHandleForReading.readabilityHandler = nil
+                stderrPipe.fileHandleForReading.readabilityHandler = nil
                 if process.isRunning { process.terminate() }
                 started = false
             }
@@ -168,10 +179,16 @@
             return ChatBubble(id: uuid, role: role, content: wire.content, createdAt: date)
         }
 
-        public func chatStart(adapterId: String) async throws -> Bool {
-            struct Params: Encodable, Sendable { let adapter: String }
+        public func chatStart(adapterId: String, token: String? = nil) async throws -> Bool {
+            struct Params: Encodable, Sendable {
+                let adapter: String
+                let token: String?
+            }
             struct Result: Decodable, Sendable { let running: Bool }
-            let r: Result = try await call(method: "chat.start", params: Params(adapter: adapterId))
+            let r: Result = try await call(
+                method: "chat.start",
+                params: Params(adapter: adapterId, token: token),
+            )
             return r.running
         }
 
@@ -188,6 +205,85 @@
             struct Result: Decodable, Sendable { let adapters: [Adapter] }
             let r: Result = try await call(method: "chat.status", params: Params(adapter: adapterId))
             return r.adapters.first?.running ?? false
+        }
+
+        // MARK: - Chat DM pairing
+
+        private struct WirePairingRequest: Decodable, Sendable {
+            let adapterId: String
+            let senderId: String
+            let code: String
+            let meta: [String: String]?
+            let createdAt: Int64
+            let lastSeenAt: Int64
+        }
+
+        private struct WireAllowlistEntry: Decodable, Sendable {
+            let adapterId: String
+            let senderId: String
+            let meta: [String: String]?
+            let approvedAt: Int64
+        }
+
+        private static func msToDate(_ ms: Int64) -> Date {
+            Date(timeIntervalSince1970: TimeInterval(ms) / 1000.0)
+        }
+
+        public func chatPairingList(adapterId: String) async throws -> [DiscordPairingRequest] {
+            struct Params: Encodable, Sendable { let adapter: String }
+            struct Result: Decodable, Sendable { let requests: [WirePairingRequest] }
+            let r: Result = try await call(method: "chat.pairing.list", params: Params(adapter: adapterId))
+            return r.requests.map { wire in
+                DiscordPairingRequest(
+                    adapterId: wire.adapterId, senderId: wire.senderId,
+                    code: wire.code, meta: wire.meta ?? [:],
+                    createdAt: Self.msToDate(wire.createdAt),
+                    lastSeenAt: Self.msToDate(wire.lastSeenAt),
+                )
+            }
+        }
+
+        public func chatPairingApprove(adapterId: String, code: String) async throws -> DiscordAllowlistEntry? {
+            struct Params: Encodable, Sendable { let adapter: String; let code: String }
+            struct Result: Decodable, Sendable {
+                let approved: Bool
+                let entry: WireAllowlistEntry?
+            }
+            let r: Result = try await call(method: "chat.pairing.approve", params: Params(adapter: adapterId, code: code))
+            guard r.approved, let wire = r.entry else { return nil }
+            return DiscordAllowlistEntry(
+                adapterId: wire.adapterId, senderId: wire.senderId,
+                meta: wire.meta ?? [:],
+                approvedAt: Self.msToDate(wire.approvedAt),
+            )
+        }
+
+        public func chatPairingReject(adapterId: String, code: String) async throws -> Bool {
+            struct Params: Encodable, Sendable { let adapter: String; let code: String }
+            struct Result: Decodable, Sendable { let removed: Bool }
+            let r: Result = try await call(method: "chat.pairing.reject", params: Params(adapter: adapterId, code: code))
+            return r.removed
+        }
+
+        public func chatPairingAllowlist(adapterId: String) async throws -> [DiscordAllowlistEntry] {
+            struct Params: Encodable, Sendable { let adapter: String }
+            struct Result: Decodable, Sendable { let entries: [WireAllowlistEntry] }
+            let r: Result = try await call(method: "chat.pairing.allowlist", params: Params(adapter: adapterId))
+            return r.entries.map { wire in
+                DiscordAllowlistEntry(
+                    adapterId: wire.adapterId, senderId: wire.senderId,
+                    meta: wire.meta ?? [:],
+                    approvedAt: Self.msToDate(wire.approvedAt),
+                )
+            }
+        }
+
+        public func chatPairingAllowlistRemove(adapterId: String, senderId: String) async throws -> Bool {
+            struct Params: Encodable, Sendable { let adapter: String; let senderId: String }
+            struct Result: Decodable, Sendable { let removed: Bool }
+            let r: Result = try await call(method: "chat.pairing.allowlist.remove",
+                                           params: Params(adapter: adapterId, senderId: senderId))
+            return r.removed
         }
 
         // MARK: - Pipelines

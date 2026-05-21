@@ -1,66 +1,89 @@
 /**
  * Typed Discord adapter configuration.
  *
- * Ported from `crates/smartcrab-app/src-tauri/src/adapters/chat/discord.rs`
- * (`DiscordConfig`). Token values themselves are never persisted -- only the
- * env var name. This mirrors the Rust adapter so the SQLite row format stays
- * identical across the Rust → Bun migration.
+ * The bot token is stored directly in the SQLite-backed `chat_adapter_config`
+ * row (the GUI Settings tab persists it). Plaintext storage matches how
+ * Seher provider API keys live in the same database — both are guarded only
+ * by the macOS app-sandbox container.
+ *
+ * `dm_policy` controls how the listener treats DMs (no guild) from senders
+ * that are not in the SQLite-backed DM allowlist. See
+ * `src/adapters/chat/pairing-store.ts` and OpenClaw's
+ * https://github.com/openclaw/openclaw for the underlying model.
  */
+export type DiscordDmPolicy = "pairing" | "allowlist" | "disabled";
+
+export const DISCORD_DM_POLICIES: readonly DiscordDmPolicy[] = [
+  "pairing",
+  "allowlist",
+  "disabled",
+] as const;
+
+export const DEFAULT_DISCORD_DM_POLICY: DiscordDmPolicy = "pairing";
+
 export interface DiscordConfig {
-  /** Name of the environment variable that holds the bot token. */
-  bot_token_env: string;
-  /** Optional channel ID to post unsolicited notifications to. */
-  notification_channel_id?: string;
+  /**
+   * Bot token used to log in to Discord. Optional because the macOS host
+   * supplies it per-call via Keychain (`chat.start({ token })`); only
+   * headless/test runs populate this field directly.
+   */
+  bot_token?: string;
+  /**
+   * Policy applied to direct messages whose sender is not in the
+   * allowlist. Guild messages are unaffected.
+   */
+  dm_policy?: DiscordDmPolicy;
 }
 
 export const DISCORD_ADAPTER_ID = "discord" as const;
 
 export const DEFAULT_DISCORD_CONFIG: DiscordConfig = {
-  bot_token_env: "",
+  dm_policy: DEFAULT_DISCORD_DM_POLICY,
 };
+
+function isDiscordDmPolicy(value: unknown): value is DiscordDmPolicy {
+  return (
+    typeof value === "string" &&
+    (DISCORD_DM_POLICIES as readonly string[]).includes(value)
+  );
+}
 
 /**
  * Validate and normalize a raw JSON value into a [`DiscordConfig`].
- * Throws `Error` with an `invalid Discord config` prefix on failure (matches
- * the Rust adapter's `AppError::InvalidInput` shape).
+ * Throws `Error` with an `invalid Discord config` prefix on failure.
  */
 export function parseDiscordConfig(value: unknown): DiscordConfig {
   if (typeof value !== "object" || value === null) {
     throw new Error("invalid Discord config: expected object");
   }
   const obj = value as Record<string, unknown>;
-  const tokenEnv = obj.bot_token_env;
-  if (typeof tokenEnv !== "string") {
-    throw new Error("invalid Discord config: bot_token_env must be a string");
+  const token = obj.bot_token;
+  if (token !== undefined && typeof token !== "string") {
+    throw new Error("invalid Discord config: bot_token must be a string");
   }
-  const channelId = obj.notification_channel_id;
-  if (channelId !== undefined && typeof channelId !== "string") {
+  const dmPolicyRaw = obj.dm_policy;
+  if (dmPolicyRaw !== undefined && !isDiscordDmPolicy(dmPolicyRaw)) {
     throw new Error(
-      "invalid Discord config: notification_channel_id must be a string"
+      `invalid Discord config: dm_policy must be one of ${DISCORD_DM_POLICIES.join(", ")}`,
     );
   }
   return {
-    bot_token_env: tokenEnv,
-    ...(channelId !== undefined ? { notification_channel_id: channelId } : {}),
+    ...(typeof token === "string" && token ? { bot_token: token } : {}),
+    ...(dmPolicyRaw !== undefined ? { dm_policy: dmPolicyRaw } : {}),
   };
 }
 
 /**
- * Resolve the configured token from process.env. Throws when the env var is
- * missing or `bot_token_env` is empty -- matches the Rust adapter behavior.
+ * Return the configured token, or throw if it's empty.
  */
-export function resolveDiscordToken(
-  config: DiscordConfig,
-  env: Record<string, string | undefined> = process.env
-): string {
-  if (!config.bot_token_env) {
-    throw new Error("bot_token_env is not configured");
+export function resolveDiscordToken(config: DiscordConfig): string {
+  const token = config.bot_token;
+  if (!token) {
+    throw new Error("bot_token is not configured");
   }
-  const value = env[config.bot_token_env];
-  if (typeof value !== "string" || value.length === 0) {
-    throw new Error(
-      `environment variable '${config.bot_token_env}' is not set`
-    );
-  }
-  return value;
+  return token;
+}
+
+export function resolveDmPolicy(config: DiscordConfig): DiscordDmPolicy {
+  return config.dm_policy ?? DEFAULT_DISCORD_DM_POLICY;
 }

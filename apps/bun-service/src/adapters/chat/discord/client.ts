@@ -13,7 +13,13 @@ export interface DiscordMessageLike {
   id: string;
   content: string;
   channelId: string;
-  author: { id: string; bot: boolean; username?: string };
+  /**
+   * Guild ID for the message, or `null` / `undefined` when the message
+   * was received in a direct message channel. Used by the DM pairing
+   * policy to distinguish DM traffic from guild traffic.
+   */
+  guildId?: string | null;
+  author: { id: string; bot: boolean; username?: string; tag?: string };
   reply?: (content: string) => Promise<unknown>;
 }
 
@@ -65,6 +71,7 @@ export async function createDiscordClient(
   const mod: any = await import("discord.js");
   const Client = mod.Client;
   const GatewayIntentBits = mod.GatewayIntentBits ?? {};
+  const Partials = mod.Partials ?? {};
   const intents = options.intents.length > 0
     ? options.intents
     : [
@@ -73,5 +80,12 @@ export async function createDiscordClient(
         GatewayIntentBits.MessageContent ?? 32768,
         GatewayIntentBits.DirectMessages ?? 4096,
       ];
-  return new Client({ intents }) as DiscordClientLike;
+  // Required to receive DMs from uncached channels (first-time pairings).
+  // Numeric fallbacks keep stubbed test factories working without `Partials`.
+  // discord.js v14: Channel=1, Message=3 (GuildMember=2 lives between them).
+  const partials = [
+    Partials.Channel ?? 1,
+    Partials.Message ?? 3,
+  ];
+  return new Client({ intents, partials }) as DiscordClientLike;
 }

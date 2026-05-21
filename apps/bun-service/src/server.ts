@@ -2,12 +2,14 @@ import { setCronStore, setCronJobCallback } from "./commands/cron.commands";
 import { bootstrapCronRunner } from "./cron/runner";
 import { CronScheduler } from "./cron/scheduler";
 import { configurePipelineCommands } from "./commands/pipeline.commands";
+import { configureChatPairingCommands } from "./commands/chat-pairing.commands";
 import { configureSettingsCommands } from "./commands/settings.commands";
 import { configureSkillsCommands } from "./commands/skills.commands";
 import { openDb, runMigrations } from "./db";
 import { SqliteCronStore } from "./db/cron";
 import { SqlitePipelineDatabase } from "./db/pipelines";
 import { BunSqliteSkillsDb } from "./db/skills";
+import { createSqlitePairingStore, setPairingStore } from "./adapters/chat/pairing-store";
 import { rebindSharedToDb } from "./memory/shared-store";
 import { SkillsRegistry } from "./skills/registry";
 import { dispatch } from "./dispatcher";
@@ -102,6 +104,10 @@ async function main(): Promise<void> {
   });
   configureSettingsCommands({ db });
 
+  const pairingStore = createSqlitePairingStore(db);
+  setPairingStore(pairingStore);
+  configureChatPairingCommands({ store: pairingStore });
+
   const cronStore = new SqliteCronStore(db);
   setCronStore(cronStore);
   // Cron firing → pipeline.execute. Runs in the same process so the executor's
@@ -146,11 +152,9 @@ async function main(): Promise<void> {
         .get("discord");
       if (!row) return null;
       const cfg = JSON.parse(row.config_json) as Record<string, unknown>;
-      // Translate the GUI shape (camelCase) to the adapter's expected snake_case.
-      return {
-        bot_token_env: cfg.botTokenEnv ?? "DISCORD_BOT_TOKEN",
-        notification_channel_id: cfg.notificationChannelId,
-      };
+      // Token is supplied per-call from the macOS Keychain via
+      // `chat.start({ token })`; only non-secret knobs live here.
+      return { dm_policy: cfg.dmPolicy };
     });
   });
 
