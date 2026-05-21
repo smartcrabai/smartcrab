@@ -6,7 +6,7 @@ SmartCrab is a framework implementing the Tool-to-AI paradigm — a macOS deskto
 
 - **YAML pipeline engine** — Directed graph of nodes with conditional branches, parallel siblings, and fan-in. Authored visually in the SwiftUI editor or by hand.
 - **Tool-to-AI execution model** — Non-AI work (HTTP, shell, chat events) runs first; `MatchCondition` branches decide whether to escalate to an `llm_call`.
-- **Multi-agent LLM routing** — `llm_call` nodes and chat replies are dispatched through [`@seher-ts/sdk`](https://www.npmjs.com/package/@seher-ts/sdk) (≥ 0.1.3), which picks the highest-priority available agent at runtime based on user-defined priorities, time windows (weekday × hour), and rate-limit state. SmartCrab supports four provider kinds:
+- **Multi-agent LLM routing** — `llm_call` nodes and chat replies are dispatched through [`@seher-ts/sdk`](https://www.npmjs.com/package/@seher-ts/sdk), which picks the highest-priority available agent at runtime based on user-defined priorities, time windows (weekday × hour), and rate-limit state. SmartCrab supports four provider kinds:
 
   | SmartCrab `kind` | UI label | Underlying SDK | Notes |
   |---|---|---|---|
