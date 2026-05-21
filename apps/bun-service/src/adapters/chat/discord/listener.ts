@@ -1,9 +1,28 @@
-import { llmRegistry } from "../../llm/registry.js";
+import { route } from "../../../router.js";
 import { getPairingStore, type PairingStore } from "../pairing-store.js";
 import type { DiscordClientLike, DiscordMessageLike } from "./client.js";
 import { DISCORD_ADAPTER_ID, type DiscordDmPolicy } from "./types.js";
 
+const LOG_PREFIX = "[discord-listener]";
 const debugEnabled = (): boolean => Boolean(process.env.SMARTCRAB_DISCORD_DEBUG);
+
+function logError(...args: unknown[]): void {
+  console.error(LOG_PREFIX, ...args);
+}
+
+/** sendReply wrapper that logs on failure instead of throwing. */
+async function safeSendReply(
+  client: DiscordClientLike,
+  message: DiscordMessageLike,
+  body: string,
+  context: string,
+): Promise<void> {
+  try {
+    await sendReply(client, message, body);
+  } catch (err) {
+    logError(`${context} failed:`, err);
+  }
+}
 
 /**
  * Callback signature for incoming Discord messages. Returning a string causes
@@ -16,7 +35,7 @@ export type DiscordMessageHandler = (
 ) => Promise<string | void | null> | string | void | null;
 
 export interface AttachListenerOptions {
-  /** Custom handler. Defaults to LLM-routing via `llmRegistry`. */
+  /** Custom handler. Defaults to LLM-routing via the seher-ts `route()`. */
   handler?: DiscordMessageHandler;
   /**
    * If true, messages authored by bots (including the adapter itself) are
@@ -36,26 +55,16 @@ export interface AttachListenerOptions {
 }
 
 /**
- * Default routing: forward the message body to the registered default LLM
- * adapter and return its response text. Returns `null` when no LLM is
- * registered so the listener stays silent rather than echoing.
+ * Default routing: send the DM body through the same seher-ts router the
+ * in-app chat bubble uses. Going through `route()` (vs. talking to
+ * `llmRegistry.default()` directly) means Discord inherits the user's
+ * configured agent resolution -- Claude Agent SDK / Copilot / pi-coding-agent
+ * -- instead of unconditionally spawning the Claude Code CLI which fails
+ * silently when run inside the macOS app sandbox.
  */
 export const defaultLlmHandler: DiscordMessageHandler = async (message) => {
-  const llm = llmRegistry.default();
-  if (!llm) {
-    return null;
-  }
-  const response = await llm.complete({
-    prompt: message.content,
-    options: {
-      context: {
-        source: "discord",
-        channelId: message.channelId,
-        authorId: message.author.id,
-      },
-    },
-  });
-  return response.content;
+  const result = await route({ prompt: message.content });
+  return result.text;
 };
 
 function isDirectMessage(message: DiscordMessageLike): boolean {
@@ -115,35 +124,52 @@ export function attachMessageListener(
     options.pairingStore !== undefined ? options.pairingStore : getPairingStore();
 
   const onMessage = async (message: DiscordMessageLike): Promise<void> => {
-    try {
-      const dm = isDirectMessage(message);
-      // DMs are rare enough to log unconditionally; guild messages would spam.
-      if (dm || debugEnabled()) {
-        // eslint-disable-next-line no-console
-        console.error(
-          `[discord-listener] messageCreate dm=${dm} author=${message.author?.id ?? "?"} bot=${message.author?.bot ?? "?"} content_len=${message.content?.length ?? 0}`,
-        );
-      }
-      if (ignoreBots && message.author?.bot) return;
+    const dm = isDirectMessage(message);
+    // DMs are rare enough to log unconditionally; guild messages would spam.
+    if (dm || debugEnabled()) {
+      logError(
+        `messageCreate dm=${dm} author=${message.author?.id ?? "?"} bot=${message.author?.bot ?? "?"} content_len=${message.content?.length ?? 0}`,
+      );
+    }
+    if (ignoreBots && message.author?.bot) return;
 
-      if (dm) {
-        const allowed = await applyDmPolicy({
+    if (dm) {
+      let allowed = false;
+      try {
+        allowed = await applyDmPolicy({
           client,
           message,
           dmPolicy,
           store: resolvePairingStore(),
         });
-        if (!allowed) return;
+      } catch (err) {
+        logError("dm policy error:", err);
+        return;
       }
+      if (!allowed) return;
+    }
 
-      const result = await handler(message);
-      if (typeof result === "string" && result.length > 0) {
-        await sendReply(client, message, result);
-      }
+    // GUI-launched SmartCrab pipes bun-service stderr to /dev/null, so a
+    // silent handler failure looks identical to a working bot from the
+    // user's Discord client. Surface failures as a DM reply.
+    let result: string | void | null;
+    try {
+      result = await handler(message);
     } catch (err) {
-      // Log via stderr -- the JSON-RPC contract requires stdout stays clean.
-      // eslint-disable-next-line no-console
-      console.error("[discord-listener] handler error:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      logError("handler error:", err);
+      await safeSendReply(client, message, `LLM error: ${msg}`, "error reply");
+      return;
+    }
+    if (typeof result === "string" && result.length > 0) {
+      await safeSendReply(client, message, result, "reply");
+    } else if (dm) {
+      await safeSendReply(
+        client,
+        message,
+        "(SmartCrab: LLM returned no content. Check seher-config.yaml or the LLM adapter status.)",
+        "empty-reply notice",
+      );
     }
   };
 
@@ -172,20 +198,16 @@ async function applyDmPolicy(params: {
     return false;
   }
   if (!store) {
-    // Without a store we cannot enforce allowlist/pairing safely.
-    // Fail closed so an un-bootstrapped service does not silently
-    // forward unknown DMs to the LLM.
-    // eslint-disable-next-line no-console
-    console.error(
-      "[discord-listener] dm received but pairing store is unavailable; dropping",
-    );
+    // Without a store we cannot enforce allowlist/pairing safely. Fail closed
+    // so an un-bootstrapped service does not silently forward unknown DMs to
+    // the LLM.
+    logError("dm received but pairing store is unavailable; dropping");
     return false;
   }
   if (!senderId) return false;
   if (store.isAllowed(DISCORD_ADAPTER_ID, senderId)) {
     if (debugEnabled()) {
-      // eslint-disable-next-line no-console
-      console.error(`[discord-listener] dm allowed (approved sender ${senderId})`);
+      logError(`dm allowed (approved sender ${senderId})`);
     }
     return true;
   }
@@ -203,17 +225,11 @@ async function applyDmPolicy(params: {
       tag: message.author?.tag,
     },
   });
-  // eslint-disable-next-line no-console
-  console.error(
-    `[discord-listener] pairing upsert sender=${senderId} created=${created} code=${code || "<capped>"}`,
+  logError(
+    `pairing upsert sender=${senderId} created=${created} code=${code || "<capped>"}`,
   );
   if (created && code) {
-    try {
-      await sendReply(client, message, buildPairingReply({ code, senderId }));
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error("[discord-listener] failed to send pairing reply:", err);
-    }
+    await safeSendReply(client, message, buildPairingReply({ code, senderId }), "pairing reply");
   }
   return false;
 }

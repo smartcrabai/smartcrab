@@ -379,7 +379,7 @@ describe("attachMessageListener", () => {
     expect(channel.sent).toEqual(["fallback-reply"]);
   });
 
-  it("swallows handler errors so a single bad message can't crash the bot", async () => {
+  it("surfaces handler errors as a reply so a silent /dev/null stderr doesn't hide them", async () => {
     const client = makeMockClient();
     const handler = mock(async () => {
       throw new Error("boom");
@@ -387,12 +387,17 @@ describe("attachMessageListener", () => {
     attachMessageListener(client, { handler });
 
     const spy = spyOn(console, "error").mockImplementation(() => {});
+    const msg = makeMessage();
     try {
       // Should not reject.
-      await client.emit("messageCreate", makeMessage());
+      await client.emit("messageCreate", msg);
     } finally {
       spy.mockRestore();
     }
+    expect(msg.reply).toHaveBeenCalledTimes(1);
+    const replyArg = (msg.reply as any).mock.calls[0][0] as string;
+    expect(replyArg).toContain("LLM error");
+    expect(replyArg).toContain("boom");
   });
 });
 
@@ -605,36 +610,46 @@ describe("attachMessageListener DM pairing", () => {
 });
 
 describe("defaultLlmHandler", () => {
-  it("returns null when no LLM is registered", async () => {
-    const result = await defaultLlmHandler({
-      id: "m",
-      content: "hi",
-      channelId: "c",
-      author: { id: "u", bot: false },
-    });
-    expect(result).toBeNull();
+  it("forwards the message content to route() and returns its text", async () => {
+    const routeMock = mock(async (_req: { prompt: string }) => ({
+      text: "router-reply",
+      kind: "claude" as const,
+    }));
+    const router = await import("../router.ts");
+    const spy = spyOn(router, "route").mockImplementation(routeMock as unknown as typeof router.route);
+    try {
+      const result = await defaultLlmHandler({
+        id: "m",
+        content: "hello",
+        channelId: "ch1",
+        author: { id: "u1", bot: false },
+      });
+
+      expect(result).toBe("router-reply");
+      expect(routeMock).toHaveBeenCalledTimes(1);
+      expect((routeMock.mock.calls as any)[0][0]).toMatchObject({ prompt: "hello" });
+    } finally {
+      spy.mockRestore();
+    }
   });
 
-  it("forwards prompt + context to the default LLM and returns its text", async () => {
-    const complete = mock(async () => ({ content: "llm-reply" }));
-    llmRegistry.register({ id: "fake", complete, capabilities: { streaming: false, tools: false, maxContextTokens: 0 } });
-
-    const result = await defaultLlmHandler({
-      id: "m",
-      content: "hello",
-      channelId: "ch1",
-      author: { id: "u1", bot: false },
+  it("propagates route() failures so the listener's catch logs them", async () => {
+    const router = await import("../router.ts");
+    const spy = spyOn(router, "route").mockImplementation(async () => {
+      throw new Error("router: seher-ts unavailable and no LLM adapter registered");
     });
-
-    expect(result).toBe("llm-reply");
-    expect(complete).toHaveBeenCalledTimes(1);
-    const call = (complete.mock.calls as any)[0][0];
-    expect(call.prompt).toBe("hello");
-    expect(call.options?.context).toMatchObject({
-      source: "discord",
-      channelId: "ch1",
-      authorId: "u1",
-    });
+    try {
+      await expect(
+        defaultLlmHandler({
+          id: "m",
+          content: "hi",
+          channelId: "c",
+          author: { id: "u", bot: false },
+        }),
+      ).rejects.toThrow(/router/);
+    } finally {
+      spy.mockRestore();
+    }
   });
 });
 
