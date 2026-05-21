@@ -1,23 +1,26 @@
 // AdapterSettings.swift
 //
 // Chat-adapter configuration screen. Currently only Discord is wired up; future
-// adapters will be added here as additional sections. Each adapter loads from
-// `BunServiceProtocol.adapterLoad(adapterId:)` and saves via `adapterSave`.
+// adapters will be added here as additional sections. Edits are auto-saved
+// (debounced) via `BunServiceProtocol.adapterSave`; a save-status pill is
+// pinned to the bottom of the form.
 
 import SwiftUI
 
 public struct AdapterSettings: View {
     private static let discordAdapterId = "discord"
+    private static let autoSaveDebounce: Duration = .milliseconds(500)
 
     private let service: BunServiceProtocol
 
     @State private var discord: DiscordAdapterConfig = .init()
     @State private var isLoading: Bool = true
-    @State private var isSaving: Bool = false
     @State private var isToggling: Bool = false
     @State private var isRunning: Bool = false
-    @State private var errorMessage: String?
-    @State private var savedMessage: String?
+    @State private var adapterError: String?
+    @State private var saveStatus: SaveStatus = .idle
+    @State private var lastSavedConfig: DiscordAdapterConfig?
+    @State private var saveTask: Task<Void, Never>?
 
     public init(service: BunServiceProtocol) {
         self.service = service
@@ -75,43 +78,48 @@ public struct AdapterSettings: View {
                     Text("Adapter status")
                 }
 
-                if let errorMessage {
-                    Section { Text(errorMessage).foregroundStyle(.red) }
-                }
-                if let savedMessage {
-                    Section { Text(savedMessage).foregroundStyle(.secondary) }
+                if let adapterError {
+                    Section { Text(adapterError).foregroundStyle(.red) }
                 }
             }
         }
         .formStyle(.grouped)
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            HStack {
+                Spacer()
+                SaveStatusIndicator(status: saveStatus) {
                     Task { await save() }
-                } label: {
-                    if isSaving { ProgressView() } else { Text("Save") }
                 }
-                .disabled(isLoading || isSaving)
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 6)
+            .background(.bar)
         }
         .task { await load() }
+        .onChange(of: discord) { _, newValue in
+            scheduleAutoSave(for: newValue)
+        }
+        .onDisappear { saveTask?.cancel() }
     }
 
     private func load() async {
         isLoading = true
         defer { isLoading = false }
         do {
-            discord = try await service.adapterLoad(adapterId: Self.discordAdapterId)
+            let loaded = try await service.adapterLoad(adapterId: Self.discordAdapterId)
+            discord = loaded
+            lastSavedConfig = loaded
+            saveStatus = .idle
             isRunning = (try? await service.chatStatus(adapterId: Self.discordAdapterId)) ?? false
         } catch {
-            errorMessage = "Failed to load: \(error.localizedDescription)"
+            saveStatus = .failed("Failed to load: \(error.localizedDescription)")
         }
     }
 
     private func toggleRunning() async {
         isToggling = true
         defer { isToggling = false }
-        errorMessage = nil
+        adapterError = nil
         do {
             isRunning = if isRunning {
                 try await service.chatStop(adapterId: Self.discordAdapterId)
@@ -119,20 +127,35 @@ public struct AdapterSettings: View {
                 try await service.chatStart(adapterId: Self.discordAdapterId)
             }
         } catch {
-            errorMessage = "Adapter error: \(error.localizedDescription)"
+            adapterError = "Adapter error: \(error.localizedDescription)"
+        }
+    }
+
+    private func scheduleAutoSave(for newValue: DiscordAdapterConfig) {
+        // Cancel pending debounce BEFORE the no-op guard so an A→B→A revert
+        // doesn't leave the B-scheduled task to fire a useless save.
+        guard let baseline = lastSavedConfig else { return }
+        saveTask?.cancel()
+        guard baseline != newValue else { return }
+        saveTask = Task { @MainActor in
+            do {
+                try await Task.sleep(for: Self.autoSaveDebounce)
+            } catch {
+                return
+            }
+            await save()
         }
     }
 
     private func save() async {
-        isSaving = true
-        defer { isSaving = false }
-        errorMessage = nil
-        savedMessage = nil
+        saveStatus = .saving
         do {
-            try await service.adapterSave(adapterId: Self.discordAdapterId, config: discord)
-            savedMessage = "Saved."
+            let snapshot = discord
+            try await service.adapterSave(adapterId: Self.discordAdapterId, config: snapshot)
+            lastSavedConfig = snapshot
+            saveStatus = .saved(Date())
         } catch {
-            errorMessage = "Failed to save: \(error.localizedDescription)"
+            saveStatus = .failed("Failed to save: \(error.localizedDescription)")
         }
     }
 }
