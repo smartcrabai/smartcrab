@@ -18,6 +18,9 @@ import {
   attachMessageListener,
   defaultLlmHandler,
 } from "../adapters/chat/discord/listener.js";
+import { createSqlitePairingStore } from "../adapters/chat/pairing-store.js";
+import { Database } from "bun:sqlite";
+import { runMigrations } from "../db/index.js";
 import { chatRegistry } from "../adapters/chat/registry.js";
 import { llmRegistry } from "../adapters/llm/registry.js";
 import chatCommands from "../commands/chat.commands.js";
@@ -81,8 +84,6 @@ function makeMockClient(channels: Record<string, DiscordChannelLike> = {}): Mock
 
 // --- Setup / teardown ------------------------------------------------------
 
-const ORIGINAL_TOKEN = process.env.DISCORD_BOT_TOKEN;
-
 const consoleSpy = silenceConsoleError();
 
 beforeEach(() => {
@@ -98,11 +99,6 @@ beforeEach(() => {
 afterEach(() => {
   consoleSpy.restore();
   setDiscordClientFactory(null);
-  if (ORIGINAL_TOKEN === undefined) {
-    delete process.env.DISCORD_BOT_TOKEN;
-  } else {
-    process.env.DISCORD_BOT_TOKEN = ORIGINAL_TOKEN;
-  }
 });
 
 // --- Config parsing --------------------------------------------------------
@@ -110,52 +106,52 @@ afterEach(() => {
 describe("DiscordConfig", () => {
   it("parses a full JSON object", () => {
     const cfg = parseDiscordConfig({
-      bot_token_env: "MY_TOKEN",
-      notification_channel_id: "789",
+      bot_token: "secret",
+      dm_policy: "allowlist",
     });
-    expect(cfg.bot_token_env).toBe("MY_TOKEN");
-    expect(cfg.notification_channel_id).toBe("789");
+    expect(cfg.bot_token).toBe("secret");
+    expect(cfg.dm_policy).toBe("allowlist");
   });
 
-  it("parses without the optional channel id", () => {
-    const cfg = parseDiscordConfig({ bot_token_env: "X" });
-    expect(cfg.bot_token_env).toBe("X");
-    expect(cfg.notification_channel_id).toBeUndefined();
+  it("parses an empty config (pre-configuration state)", () => {
+    const cfg = parseDiscordConfig({});
+    expect(cfg.bot_token).toBeUndefined();
+    expect(cfg.dm_policy).toBeUndefined();
   });
 
   it("rejects non-object input", () => {
     expect(() => parseDiscordConfig("nope")).toThrow(/invalid Discord config/);
   });
 
-  it("rejects missing bot_token_env", () => {
-    expect(() => parseDiscordConfig({})).toThrow(/bot_token_env/);
+  it("rejects non-string bot_token", () => {
+    expect(() => parseDiscordConfig({ bot_token: 123 })).toThrow(/bot_token/);
   });
 
-  it("default config has empty bot_token_env", () => {
-    expect(DEFAULT_DISCORD_CONFIG.bot_token_env).toBe("");
-    expect(DEFAULT_DISCORD_CONFIG.notification_channel_id).toBeUndefined();
+  it("rejects bogus dm_policy values", () => {
+    expect(() =>
+      parseDiscordConfig({ bot_token: "x", dm_policy: "wat" }),
+    ).toThrow(/dm_policy/);
+  });
+
+  it("default config omits bot_token and uses the pairing dm policy", () => {
+    expect(DEFAULT_DISCORD_CONFIG.bot_token).toBeUndefined();
+    expect(DEFAULT_DISCORD_CONFIG.dm_policy).toBe("pairing");
   });
 });
 
 describe("resolveDiscordToken", () => {
-  it("returns the env var value when set", () => {
-    const token = resolveDiscordToken(
-      { bot_token_env: "MY_TOKEN" },
-      { MY_TOKEN: "abc123" }
-    );
-    expect(token).toBe("abc123");
+  it("returns the token when set", () => {
+    expect(resolveDiscordToken({ bot_token: "abc123" })).toBe("abc123");
   });
 
-  it("throws when bot_token_env is empty", () => {
-    expect(() => resolveDiscordToken({ bot_token_env: "" }, {})).toThrow(
-      /not configured/
+  it("throws when bot_token is empty", () => {
+    expect(() => resolveDiscordToken({ bot_token: "" })).toThrow(
+      /not configured/,
     );
   });
 
-  it("throws when env var is missing", () => {
-    expect(() => resolveDiscordToken({ bot_token_env: "X" }, {})).toThrow(
-      /'X' is not set/
-    );
+  it("throws when bot_token is missing", () => {
+    expect(() => resolveDiscordToken({})).toThrow(/not configured/);
   });
 });
 
@@ -184,13 +180,12 @@ describe("DiscordChatAdapter identity", () => {
 // --- Lifecycle (start/stop/send) -------------------------------------------
 
 describe("DiscordChatAdapter lifecycle", () => {
-  it("login is called with the resolved token on start, destroy on stop", async () => {
+  it("login is called with the configured token on start, destroy on stop", async () => {
     const client = makeMockClient();
     setDiscordClientFactory(() => client);
 
     const adapter = new DiscordChatAdapter({
-      configSource: { kind: "literal", config: { bot_token_env: "MY_TOKEN" } },
-      env: { MY_TOKEN: "secret-token" },
+      configSource: { kind: "literal", config: { bot_token: "secret-token" } },
     });
 
     await adapter.start();
@@ -207,8 +202,7 @@ describe("DiscordChatAdapter lifecycle", () => {
     setDiscordClientFactory(() => client);
 
     const adapter = new DiscordChatAdapter({
-      configSource: { kind: "literal", config: { bot_token_env: "T" } },
-      env: { T: "tok" },
+      configSource: { kind: "literal", config: { bot_token: "tok" } },
     });
     await adapter.start();
     await adapter.start();
@@ -222,12 +216,11 @@ describe("DiscordChatAdapter lifecycle", () => {
     expect(adapter.isRunning()).toBe(false);
   });
 
-  it("start fails when env var is missing", async () => {
+  it("start fails when token is empty", async () => {
     const adapter = new DiscordChatAdapter({
-      configSource: { kind: "literal", config: { bot_token_env: "MISSING_VAR" } },
-      env: {},
+      configSource: { kind: "literal", config: { bot_token: "" } },
     });
-    await expect(adapter.start()).rejects.toThrow(/MISSING_VAR/);
+    await expect(adapter.start()).rejects.toThrow(/bot_token/);
     expect(adapter.isRunning()).toBe(false);
   });
 
@@ -238,12 +231,50 @@ describe("DiscordChatAdapter lifecycle", () => {
     const adapter = new DiscordChatAdapter({
       configSource: {
         kind: "loader",
-        load: async () => ({ bot_token_env: "FROM_DB" }),
+        load: async () => ({ bot_token: "loaded-token" }),
       },
-      env: { FROM_DB: "loaded-token" },
     });
     await adapter.start();
     expect(client.loginCalls).toEqual(["loaded-token"]);
+    await adapter.stop();
+  });
+
+  it("start({ token }) overrides the config-supplied token", async () => {
+    const client = makeMockClient();
+    setDiscordClientFactory(() => client);
+
+    const adapter = new DiscordChatAdapter({
+      configSource: {
+        kind: "literal",
+        config: { bot_token: "from-config" },
+      },
+    });
+    await adapter.start({ token: "from-keychain" });
+    expect(client.loginCalls).toEqual(["from-keychain"]);
+    await adapter.stop();
+  });
+
+  it("start({ token }) succeeds even when persisted config has an empty token", async () => {
+    const client = makeMockClient();
+    setDiscordClientFactory(() => client);
+
+    const adapter = new DiscordChatAdapter({
+      configSource: { kind: "literal", config: { bot_token: "" } },
+    });
+    await adapter.start({ token: "keychain-only" });
+    expect(client.loginCalls).toEqual(["keychain-only"]);
+    await adapter.stop();
+  });
+
+  it("start({ token: '  ' }) treats whitespace as missing and falls back to config", async () => {
+    const client = makeMockClient();
+    setDiscordClientFactory(() => client);
+
+    const adapter = new DiscordChatAdapter({
+      configSource: { kind: "literal", config: { bot_token: "config-tok" } },
+    });
+    await adapter.start({ token: "   " });
+    expect(client.loginCalls).toEqual(["config-tok"]);
     await adapter.stop();
   });
 
@@ -253,8 +284,7 @@ describe("DiscordChatAdapter lifecycle", () => {
     setDiscordClientFactory(() => client);
 
     const adapter = new DiscordChatAdapter({
-      configSource: { kind: "literal", config: { bot_token_env: "T" } },
-      env: { T: "x" },
+      configSource: { kind: "literal", config: { bot_token: "x" } },
     });
     await adapter.start();
     await adapter.send({ channel: "channel-1", body: "hi" });
@@ -273,8 +303,7 @@ describe("DiscordChatAdapter lifecycle", () => {
     const client = makeMockClient(); // no channels
     setDiscordClientFactory(() => client);
     const adapter = new DiscordChatAdapter({
-      configSource: { kind: "literal", config: { bot_token_env: "T" } },
-      env: { T: "x" },
+      configSource: { kind: "literal", config: { bot_token: "x" } },
     });
     await adapter.start();
     await expect(adapter.send({ channel: "missing", body: "b" })).rejects.toThrow(
@@ -293,6 +322,9 @@ describe("attachMessageListener", () => {
       id: "m1",
       content: "ping",
       channelId: "channel-1",
+      // Default to a guild message so existing tests bypass DM pairing.
+      // DM-specific tests opt in via `guildId: null`.
+      guildId: "guild-1",
       author: { id: "u1", bot: false, username: "alice" },
       reply: mock(async (content: string) => {
         replyCalls.push(content);
@@ -364,6 +396,214 @@ describe("attachMessageListener", () => {
   });
 });
 
+// --- DM pairing ------------------------------------------------------------
+
+function makeFakePairingStore() {
+  // Use the real SqlitePairingStore against an in-memory DB so the listener
+  // tests exercise the same code path the SwiftUI client will hit. Avoids
+  // drift between a hand-rolled mock and the production store.
+  const db = new Database(":memory:");
+  runMigrations(db);
+  return createSqlitePairingStore(db);
+}
+
+describe("attachMessageListener DM pairing", () => {
+  function dmMessage(overrides: Partial<DiscordMessageLike> = {}): DiscordMessageLike {
+    return {
+      id: "dm-1",
+      content: "hello",
+      channelId: "dm-channel",
+      guildId: null,
+      author: { id: "user-42", bot: false, username: "bob", tag: "bob#0001" },
+      reply: mock(async () => ({ id: "r" })),
+      ...overrides,
+    } as DiscordMessageLike;
+  }
+
+  it("issues a pairing code and skips the handler on first DM", async () => {
+    const client = makeMockClient();
+    const handler = mock(async () => "should not run");
+    const store = makeFakePairingStore();
+    attachMessageListener(client, {
+      handler,
+      dmPolicy: "pairing",
+      pairingStore: store,
+    });
+
+    const msg = dmMessage();
+    await client.emit("messageCreate", msg);
+
+    expect(handler).not.toHaveBeenCalled();
+    expect(msg.reply).toHaveBeenCalledTimes(1);
+    const replyArg = (msg.reply as any).mock.calls[0][0] as string;
+    expect(replyArg).toContain("Pairing code:");
+    expect(store.listRequests("discord")).toHaveLength(1);
+    expect(store.listRequests("discord")[0]!.senderId).toBe("user-42");
+  });
+
+  it("only replies once for repeated DMs from the same sender", async () => {
+    const client = makeMockClient();
+    const store = makeFakePairingStore();
+    attachMessageListener(client, {
+      handler: async () => "noop",
+      dmPolicy: "pairing",
+      pairingStore: store,
+    });
+
+    const m1 = dmMessage({ id: "a" });
+    const m2 = dmMessage({ id: "b" });
+    await client.emit("messageCreate", m1);
+    await client.emit("messageCreate", m2);
+    expect(m1.reply).toHaveBeenCalledTimes(1);
+    expect(m2.reply).not.toHaveBeenCalled();
+    expect(store.listRequests("discord")).toHaveLength(1);
+  });
+
+  it("forwards DMs to the handler once the sender is approved", async () => {
+    const client = makeMockClient();
+    const handler = mock(async () => "pong");
+    const store = makeFakePairingStore();
+    attachMessageListener(client, {
+      handler,
+      dmPolicy: "pairing",
+      pairingStore: store,
+    });
+
+    const first = dmMessage();
+    await client.emit("messageCreate", first);
+    const code = store.listRequests("discord")[0]!.code;
+    expect(store.approveCode("discord", code)).not.toBeNull();
+
+    const second = dmMessage({ id: "dm-2" });
+    await client.emit("messageCreate", second);
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(second.reply).toHaveBeenCalledWith("pong");
+  });
+
+  it("drops DMs when policy is disabled", async () => {
+    const client = makeMockClient();
+    const handler = mock(async () => "no");
+    const store = makeFakePairingStore();
+    attachMessageListener(client, {
+      handler,
+      dmPolicy: "disabled",
+      pairingStore: store,
+    });
+
+    const msg = dmMessage();
+    await client.emit("messageCreate", msg);
+    expect(handler).not.toHaveBeenCalled();
+    expect(msg.reply).not.toHaveBeenCalled();
+    expect(store.listRequests("discord")).toHaveLength(0);
+  });
+
+  it("with policy=allowlist drops unknown senders without replying", async () => {
+    const client = makeMockClient();
+    const handler = mock(async () => "no");
+    const store = makeFakePairingStore();
+    attachMessageListener(client, {
+      handler,
+      dmPolicy: "allowlist",
+      pairingStore: store,
+    });
+
+    const msg = dmMessage();
+    await client.emit("messageCreate", msg);
+    expect(handler).not.toHaveBeenCalled();
+    expect(msg.reply).not.toHaveBeenCalled();
+    expect(store.listRequests("discord")).toHaveLength(0);
+  });
+
+  it("guild messages bypass DM pairing entirely", async () => {
+    const client = makeMockClient();
+    const handler = mock(async () => "pong");
+    const store = makeFakePairingStore();
+    attachMessageListener(client, {
+      handler,
+      dmPolicy: "pairing",
+      pairingStore: store,
+    });
+
+    const guild: DiscordMessageLike = {
+      id: "g1",
+      content: "in guild",
+      channelId: "ch-x",
+      guildId: "g-x",
+      author: { id: "u-x", bot: false },
+      reply: mock(async () => ({ id: "r" })),
+    } as DiscordMessageLike;
+    await client.emit("messageCreate", guild);
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(store.listRequests("discord")).toHaveLength(0);
+  });
+
+  it("guild messages flow through under every DM policy", async () => {
+    const policies = ["pairing", "allowlist", "disabled"] as const;
+    for (const policy of policies) {
+      const client = makeMockClient();
+      const handler = mock(async () => "pong");
+      const store = makeFakePairingStore();
+      attachMessageListener(client, {
+        handler,
+        dmPolicy: policy,
+        pairingStore: store,
+      });
+
+      const guild: DiscordMessageLike = {
+        id: `g-${policy}`,
+        content: "guild ping",
+        channelId: "ch-x",
+        guildId: "g-x",
+        author: { id: "u-x", bot: false },
+        reply: mock(async () => ({ id: "r" })),
+      } as DiscordMessageLike;
+      await client.emit("messageCreate", guild);
+      expect(handler).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  it("allowlist policy lets approved senders through to the handler", async () => {
+    const client = makeMockClient();
+    const handler = mock(async () => "yes");
+    const store = makeFakePairingStore();
+    // Pre-approve the sender directly (mimics SwiftUI approval).
+    const { code } = store.upsertRequest({
+      adapterId: "discord",
+      senderId: "user-42",
+    });
+    expect(store.approveCode("discord", code)).not.toBeNull();
+
+    attachMessageListener(client, {
+      handler,
+      dmPolicy: "allowlist",
+      pairingStore: store,
+    });
+    const msg = dmMessage();
+    await client.emit("messageCreate", msg);
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(msg.reply).toHaveBeenCalledWith("yes");
+  });
+
+  it("fails closed when DM policy needs the store but it is missing", async () => {
+    const client = makeMockClient();
+    const handler = mock(async () => "no");
+    attachMessageListener(client, {
+      handler,
+      dmPolicy: "pairing",
+      pairingStore: null,
+    });
+    const msg = dmMessage();
+    const errorSpy = spyOn(console, "error").mockImplementation(() => {});
+    try {
+      await client.emit("messageCreate", msg);
+    } finally {
+      errorSpy.mockRestore();
+    }
+    expect(handler).not.toHaveBeenCalled();
+    expect(msg.reply).not.toHaveBeenCalled();
+  });
+});
+
 describe("defaultLlmHandler", () => {
   it("returns null when no LLM is registered", async () => {
     const result = await defaultLlmHandler({
@@ -422,12 +662,11 @@ describe("chat.commands", () => {
     const client = makeMockClient();
     setDiscordClientFactory(() => client);
 
-    // Replace the auto-registered adapter with one wired to mock env.
+    // Replace the auto-registered adapter with one wired to a literal config.
     chatRegistry.clear();
     chatRegistry.register(
       new DiscordChatAdapter({
-        configSource: { kind: "literal", config: { bot_token_env: "T" } },
-        env: { T: "secret" },
+        configSource: { kind: "literal", config: { bot_token: "secret" } },
       })
     );
 
@@ -436,6 +675,23 @@ describe("chat.commands", () => {
 
     const stopped = await chatCommands["chat.stop"]({});
     expect(stopped.running).toBe(false);
+  });
+
+  it("chat.start forwards the token param to the adapter", async () => {
+    const client = makeMockClient();
+    setDiscordClientFactory(() => client);
+
+    chatRegistry.clear();
+    chatRegistry.register(
+      new DiscordChatAdapter({
+        configSource: { kind: "literal", config: { bot_token: "" } },
+      })
+    );
+
+    const started = await chatCommands["chat.start"]({ token: "keychain-tok" });
+    expect(started.running).toBe(true);
+    expect(client.loginCalls).toEqual(["keychain-tok"]);
+    await chatCommands["chat.stop"]({});
   });
 
   it("chat.send requires channel and body", async () => {
@@ -452,8 +708,7 @@ describe("chat.commands", () => {
     chatRegistry.clear();
     chatRegistry.register(
       new DiscordChatAdapter({
-        configSource: { kind: "literal", config: { bot_token_env: "T" } },
-        env: { T: "secret" },
+        configSource: { kind: "literal", config: { bot_token: "secret" } },
       })
     );
 

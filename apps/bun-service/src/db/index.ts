@@ -13,6 +13,7 @@ import seher002 from "./migrations/002-seher-config.sql" with { type: "text" };
 import skillsRealign003 from "./migrations/003-skills-realign.sql" with { type: "text" };
 import chatBubbles004 from "./migrations/004-chat-bubbles.sql" with { type: "text" };
 import memoryRealign005 from "./migrations/005-memory-realign.sql" with { type: "text" };
+import discordPairing006 from "./migrations/006-discord-pairing.sql" with { type: "text" };
 
 interface Migration {
   name: string;
@@ -26,6 +27,7 @@ const MIGRATIONS: readonly Migration[] = [
   { name: "003-skills-realign", sql: skillsRealign003 },
   { name: "004-chat-bubbles", sql: chatBubbles004 },
   { name: "005-memory-realign", sql: memoryRealign005 },
+  { name: "006-discord-pairing", sql: discordPairing006 },
 ];
 
 export interface OpenOptions {

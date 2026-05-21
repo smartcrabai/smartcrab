@@ -41,8 +41,8 @@
             try await stub.chatSend(content)
         }
 
-        public func chatStart(adapterId: String) async throws -> Bool {
-            try await stub.chatStart(adapterId: adapterId)
+        public func chatStart(adapterId: String, token: String? = nil) async throws -> Bool {
+            try await stub.chatStart(adapterId: adapterId, token: token)
         }
 
         public func chatStop(adapterId: String) async throws -> Bool {
@@ -51,6 +51,26 @@
 
         public func chatStatus(adapterId: String) async throws -> Bool {
             try await stub.chatStatus(adapterId: adapterId)
+        }
+
+        public func chatPairingList(adapterId: String) async throws -> [DiscordPairingRequest] {
+            try await stub.chatPairingList(adapterId: adapterId)
+        }
+
+        public func chatPairingApprove(adapterId: String, code: String) async throws -> DiscordAllowlistEntry? {
+            try await stub.chatPairingApprove(adapterId: adapterId, code: code)
+        }
+
+        public func chatPairingReject(adapterId: String, code: String) async throws -> Bool {
+            try await stub.chatPairingReject(adapterId: adapterId, code: code)
+        }
+
+        public func chatPairingAllowlist(adapterId: String) async throws -> [DiscordAllowlistEntry] {
+            try await stub.chatPairingAllowlist(adapterId: adapterId)
+        }
+
+        public func chatPairingAllowlistRemove(adapterId: String, senderId: String) async throws -> Bool {
+            try await stub.chatPairingAllowlistRemove(adapterId: adapterId, senderId: senderId)
         }
 
         public func pipelineList() async throws -> [PipelineSummary] {

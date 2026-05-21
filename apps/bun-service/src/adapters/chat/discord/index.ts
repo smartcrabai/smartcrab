@@ -2,6 +2,7 @@ import {
   type ChatAdapter,
   type ChatCapabilities,
   type ChatSendArgs,
+  type ChatStartOptions,
   chatRegistry,
 } from "../registry.js";
 import {
@@ -14,11 +15,11 @@ import {
   type DiscordMessageHandler,
 } from "./listener.js";
 import {
-  DEFAULT_DISCORD_CONFIG,
   DISCORD_ADAPTER_ID,
   type DiscordConfig,
   parseDiscordConfig,
   resolveDiscordToken,
+  resolveDmPolicy,
 } from "./types.js";
 
 /**
@@ -32,8 +33,6 @@ export type DiscordConfigSource =
 export interface DiscordChatAdapterOptions {
   /** Where the adapter pulls its configuration from. */
   configSource?: DiscordConfigSource;
-  /** Override the env source for token resolution (defaults to `process.env`). */
-  env?: Record<string, string | undefined>;
   /** Override the message handler / ignoreBots flag. */
   listenerOptions?: AttachListenerOptions;
 }
@@ -62,14 +61,27 @@ export class DiscordChatAdapter implements ChatAdapter {
 
   constructor(private readonly options: DiscordChatAdapterOptions = {}) {}
 
-  async start(): Promise<void> {
+  async start(options: ChatStartOptions = {}): Promise<void> {
     if (this.running) return;
 
     const config = await this.loadConfig();
-    const token = resolveDiscordToken(config, this.options.env);
+    // Per-call token wins (the macOS host sources it from Keychain on each
+    // chat.start). Falls back to the persisted config for headless runs.
+    const override = options.token?.trim();
+    const effective: DiscordConfig = override
+      ? { ...config, bot_token: override }
+      : config;
+    const token = resolveDiscordToken(effective);
+    const dmPolicy = resolveDmPolicy(effective);
 
     const client = await createDiscordClient({ intents: [] });
-    this.detachListener = attachMessageListener(client, this.options.listenerOptions);
+    const listenerOptions = {
+      ...(this.options.listenerOptions ?? {}),
+      // Explicit options win, but if the caller didn't pin dmPolicy we
+      // take it from the persisted config so the Settings tab drives it.
+      dmPolicy: this.options.listenerOptions?.dmPolicy ?? dmPolicy,
+    };
+    this.detachListener = attachMessageListener(client, listenerOptions);
     await client.login(token);
 
     this.client = client;
@@ -116,12 +128,8 @@ export class DiscordChatAdapter implements ChatAdapter {
       const raw = await source.load();
       return parseDiscordConfig(raw);
     }
-    // Module-level loader (set by server.ts at boot to read the persisted
-    // config out of SQLite via settings.adapter-load). Falls back to the
-    // env-only default when no loader is wired (tests, dev runs).
     const fromDefault = await defaultLoader?.();
-    if (fromDefault) return parseDiscordConfig(fromDefault);
-    return { bot_token_env: "DISCORD_BOT_TOKEN" };
+    return fromDefault ? parseDiscordConfig(fromDefault) : {};
   }
 }
 
@@ -141,9 +149,12 @@ chatRegistry.register(new DiscordChatAdapter());
 
 export {
   DEFAULT_DISCORD_CONFIG,
+  DEFAULT_DISCORD_DM_POLICY,
   DISCORD_ADAPTER_ID,
+  DISCORD_DM_POLICIES,
   parseDiscordConfig,
   resolveDiscordToken,
+  resolveDmPolicy,
 } from "./types.js";
-export type { DiscordConfig } from "./types.js";
+export type { DiscordConfig, DiscordDmPolicy } from "./types.js";
 export type { DiscordMessageHandler };

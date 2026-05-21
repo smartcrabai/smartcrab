@@ -101,15 +101,87 @@ public struct SeherDefaults: Hashable, Codable {
     }
 }
 
-public struct DiscordAdapterConfig: Hashable, Codable {
-    public var botTokenEnv: String
-    public var notificationChannelId: String
-    public var enabled: Bool
+public enum DiscordDmPolicy: String, CaseIterable, Hashable, Codable, Sendable {
+    /// Issue a pairing code to unknown DM senders. Default.
+    case pairing
+    /// Drop DMs from anyone not in the allowlist. No reply.
+    case allowlist
+    /// Ignore DMs entirely.
+    case disabled
+}
 
-    public init(botTokenEnv: String = "", notificationChannelId: String = "", enabled: Bool = false) {
-        self.botTokenEnv = botTokenEnv
-        self.notificationChannelId = notificationChannelId
+public struct DiscordAdapterConfig: Hashable, Codable {
+    public var enabled: Bool
+    public var dmPolicy: DiscordDmPolicy
+
+    public init(
+        enabled: Bool = false,
+        dmPolicy: DiscordDmPolicy = .pairing
+    ) {
         self.enabled = enabled
+        self.dmPolicy = dmPolicy
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case enabled
+        case dmPolicy
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        enabled = (try? c.decode(Bool.self, forKey: .enabled)) ?? false
+        // Tolerate older config rows that predate dmPolicy.
+        dmPolicy = (try? c.decode(DiscordDmPolicy.self, forKey: .dmPolicy)) ?? .pairing
+    }
+}
+
+public struct DiscordPairingRequest: Identifiable, Hashable, Codable, Sendable {
+    public let adapterId: String
+    public let senderId: String
+    public let code: String
+    public let meta: [String: String]
+    public let createdAt: Date
+    public let lastSeenAt: Date
+
+    public var id: String {
+        "\(adapterId):\(senderId)"
+    }
+
+    public init(adapterId: String, senderId: String, code: String,
+                meta: [String: String], createdAt: Date, lastSeenAt: Date)
+    {
+        self.adapterId = adapterId
+        self.senderId = senderId
+        self.code = code
+        self.meta = meta
+        self.createdAt = createdAt
+        self.lastSeenAt = lastSeenAt
+    }
+
+    public var displayName: String {
+        meta["tag"] ?? meta["name"] ?? senderId
+    }
+}
+
+public struct DiscordAllowlistEntry: Identifiable, Hashable, Codable, Sendable {
+    public let adapterId: String
+    public let senderId: String
+    public let meta: [String: String]
+    public let approvedAt: Date
+
+    public var id: String {
+        "\(adapterId):\(senderId)"
+    }
+
+    public init(adapterId: String, senderId: String, meta: [String: String], approvedAt: Date) {
+        self.adapterId = adapterId
+        self.senderId = senderId
+        self.meta = meta
+        self.approvedAt = approvedAt
+    }
+
+    public var displayName: String {
+        meta["tag"] ?? meta["name"] ?? senderId
     }
 }
 
@@ -341,6 +413,28 @@ public enum BunServiceError: Error, Sendable {
     case notImplemented(String)
 }
 
+extension JSONRPCError: LocalizedError {
+    /// Surface the RPC message instead of Swift's "(error N.)" fallback.
+    public var errorDescription: String? {
+        message
+    }
+}
+
+extension BunServiceError: LocalizedError {
+    public var errorDescription: String? {
+        switch self {
+        case .binaryMissing:
+            return "Embedded smartcrab-service binary is missing from the app bundle."
+        case .notRunning:
+            return "Bun service is not running."
+        case .malformedResponse:
+            return "Bun service returned a malformed response."
+        case let .notImplemented(name):
+            return "Operation '\(name)' is not implemented."
+        }
+    }
+}
+
 // MARK: - Protocol
 
 @MainActor
@@ -362,9 +456,16 @@ public protocol BunServiceProtocol: AnyObject {
     func chatSend(_ content: String) async throws -> ChatBubble
 
     // Chat adapter lifecycle
-    func chatStart(adapterId: String) async throws -> Bool
+    func chatStart(adapterId: String, token: String?) async throws -> Bool
     func chatStop(adapterId: String) async throws -> Bool
     func chatStatus(adapterId: String) async throws -> Bool
+
+    // Chat DM pairing
+    func chatPairingList(adapterId: String) async throws -> [DiscordPairingRequest]
+    func chatPairingApprove(adapterId: String, code: String) async throws -> DiscordAllowlistEntry?
+    func chatPairingReject(adapterId: String, code: String) async throws -> Bool
+    func chatPairingAllowlist(adapterId: String) async throws -> [DiscordAllowlistEntry]
+    func chatPairingAllowlistRemove(adapterId: String, senderId: String) async throws -> Bool
 
     // Pipelines
     func pipelineList() async throws -> [PipelineSummary]
@@ -441,7 +542,7 @@ public final class StubBunService: BunServiceProtocol {
     }
 
     private var adapterRunning: [String: Bool] = [:]
-    public func chatStart(adapterId: String) async throws -> Bool {
+    public func chatStart(adapterId: String, token _: String? = nil) async throws -> Bool {
         adapterRunning[adapterId] = true
         return true
     }
@@ -453,6 +554,50 @@ public final class StubBunService: BunServiceProtocol {
 
     public func chatStatus(adapterId: String) async throws -> Bool {
         adapterRunning[adapterId] ?? false
+    }
+
+    private var pairingRequests: [String: [DiscordPairingRequest]] = [:]
+    private var pairingAllowlist: [String: [DiscordAllowlistEntry]] = [:]
+
+    public func chatPairingList(adapterId: String) async throws -> [DiscordPairingRequest] {
+        pairingRequests[adapterId] ?? []
+    }
+
+    public func chatPairingApprove(adapterId: String, code: String) async throws -> DiscordAllowlistEntry? {
+        let normalized = code.uppercased()
+        let pending = pairingRequests[adapterId] ?? []
+        guard let request = pending.first(where: { $0.code == normalized }) else { return nil }
+        pairingRequests[adapterId] = pending.filter { $0.senderId != request.senderId }
+        let entry = DiscordAllowlistEntry(
+            adapterId: adapterId, senderId: request.senderId,
+            meta: request.meta, approvedAt: Date()
+        )
+        var list = pairingAllowlist[adapterId] ?? []
+        list.removeAll(where: { $0.senderId == entry.senderId })
+        list.append(entry)
+        pairingAllowlist[adapterId] = list
+        return entry
+    }
+
+    public func chatPairingReject(adapterId: String, code: String) async throws -> Bool {
+        let normalized = code.uppercased()
+        let pending = pairingRequests[adapterId] ?? []
+        let next = pending.filter { $0.code != normalized }
+        if next.count == pending.count { return false }
+        pairingRequests[adapterId] = next
+        return true
+    }
+
+    public func chatPairingAllowlist(adapterId: String) async throws -> [DiscordAllowlistEntry] {
+        pairingAllowlist[adapterId] ?? []
+    }
+
+    public func chatPairingAllowlistRemove(adapterId: String, senderId: String) async throws -> Bool {
+        let list = pairingAllowlist[adapterId] ?? []
+        let next = list.filter { $0.senderId != senderId }
+        if next.count == list.count { return false }
+        pairingAllowlist[adapterId] = next
+        return true
     }
 
     public func pipelineList() async throws -> [PipelineSummary] {

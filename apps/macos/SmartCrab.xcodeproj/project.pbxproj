@@ -13,6 +13,7 @@
 		A001000000000000000000A4 /* BunServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A4 /* BunServiceProtocol.swift */; };
 		A001000000000000000000A5 /* BunServiceMacOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A5 /* BunServiceMacOS.swift */; };
 		A001000000000000000000A6 /* BunServiceMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A6 /* BunServiceMock.swift */; };
+		A001000000000000000000AD /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000AD /* KeychainStore.swift */; };
 		A001000000000000000000A7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A7 /* Assets.xcassets */; };
 		A001000000000000000000A8 /* smartcrab-service in Resources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A8 /* smartcrab-service */; };
 		A001000000000000000000B1 /* SmartCrabApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A1 /* SmartCrabApp.swift */; };
@@ -21,6 +22,7 @@
 		A001000000000000000000B4 /* BunServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A4 /* BunServiceProtocol.swift */; };
 		A001000000000000000000B5 /* BunServiceMacOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A5 /* BunServiceMacOS.swift */; };
 		A001000000000000000000B6 /* BunServiceMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A6 /* BunServiceMock.swift */; };
+		A001000000000000000000BD /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000AD /* KeychainStore.swift */; };
 		A001000000000000000000B7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A7 /* Assets.xcassets */; };
 		A001000000000000000000C1 /* Chat in Resources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000C1 /* Chat */; };
 		A001000000000000000000C2 /* Settings in Resources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000C2 /* Settings */; };
@@ -77,6 +79,7 @@
 		B001000000000000000000A4 /* BunServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BunServiceProtocol.swift; sourceTree = "<group>"; };
 		B001000000000000000000A5 /* BunServiceMacOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BunServiceMacOS.swift; sourceTree = "<group>"; };
 		B001000000000000000000A6 /* BunServiceMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BunServiceMock.swift; sourceTree = "<group>"; };
+		B001000000000000000000AD /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
 		B001000000000000000000A7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B001000000000000000000A8 /* smartcrab-service */ = {isa = PBXFileReference; lastKnownFileType = text; path = "smartcrab-service"; sourceTree = "<group>"; };
 		B001000000000000000000A9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -183,6 +186,7 @@
 				B001000000000000000000A4 /* BunServiceProtocol.swift */,
 				B001000000000000000000A5 /* BunServiceMacOS.swift */,
 				B001000000000000000000A6 /* BunServiceMock.swift */,
+				B001000000000000000000AD /* KeychainStore.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -276,6 +280,7 @@
 				A001000000000000000000A4 /* BunServiceProtocol.swift in Sources */,
 				A001000000000000000000A5 /* BunServiceMacOS.swift in Sources */,
 				A001000000000000000000A6 /* BunServiceMock.swift in Sources */,
+				A001000000000000000000AD /* KeychainStore.swift in Sources */,
 				880FF8FFF954727BA59E3F7C /* ChatBubbleRow.swift in Sources */,
 				4518F522269DA11BB9ACEBD6 /* ChatComposer.swift in Sources */,
 				0D56FC0661BF25DC69D6C32B /* ChatView.swift in Sources */,
@@ -306,6 +311,7 @@
 				A001000000000000000000B4 /* BunServiceProtocol.swift in Sources */,
 				A001000000000000000000B5 /* BunServiceMacOS.swift in Sources */,
 				A001000000000000000000B6 /* BunServiceMock.swift in Sources */,
+				A001000000000000000000BD /* KeychainStore.swift in Sources */,
 				65E65DD7657E483F9CE23049 /* ChatBubbleRow.swift in Sources */,
 				F4EA1587A3E1E12617264A24 /* ChatComposer.swift in Sources */,
 				C85DAB5003C707B552B3B3EF /* ChatView.swift in Sources */,

@@ -10,11 +10,21 @@ export interface ChatSendArgs {
   body: string;
 }
 
+/**
+ * Optional per-call overrides that the dispatcher can hand to `start()`.
+ * Adapters that need credentials supplied at call time (e.g. Discord, where
+ * the token lives in the macOS Keychain) read `token` from here instead of
+ * the persisted SQLite config.
+ */
+export interface ChatStartOptions {
+  token?: string;
+}
+
 export interface ChatAdapter {
   readonly id: string;
   readonly name: string;
   readonly capabilities: ChatCapabilities;
-  start(): Promise<void>;
+  start(options?: ChatStartOptions): Promise<void>;
   stop(): Promise<void>;
   send(args: ChatSendArgs): Promise<void>;
   isRunning(): boolean;

@@ -10,6 +10,8 @@ import { chatRegistry } from "../adapters/chat/registry.js";
  */
 export interface ChatStartParams {
   adapter?: string;
+  /** Per-call secret (e.g. Discord bot token from the macOS Keychain). */
+  token?: string;
 }
 export interface ChatStopParams {
   adapter?: string;
@@ -37,7 +39,8 @@ function resolveAdapter(id?: string) {
 export const chatCommands = {
   "chat.start": async (params: ChatStartParams = {}) => {
     const adapter = resolveAdapter(params.adapter);
-    await adapter.start();
+    const token = typeof params.token === "string" ? params.token : undefined;
+    await adapter.start(token ? { token } : undefined);
     return { id: adapter.id, running: adapter.isRunning() };
   },
 
