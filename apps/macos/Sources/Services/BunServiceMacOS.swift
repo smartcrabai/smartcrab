@@ -17,10 +17,53 @@
         private nonisolated(unsafe) var buffer = Data()
         private nonisolated(unsafe) var idCounter: UInt64 = 0
         private nonisolated(unsafe) var started = false
+        private nonisolated(unsafe) var stderrLogHandle: FileHandle?
 
         private let fallback = StubBunService()
 
         public init() {}
+
+        private static let maxLogSizeBytes: UInt64 = 5 * 1024 * 1024
+        /// Skip the offset() syscall on most writes; rotate-check runs at most
+        /// every Nth chunk to keep the stderr hot-path syscall-free.
+        private static let rotateCheckEvery: Int = 256
+        private nonisolated(unsafe) var writesSinceRotateCheck: Int = 0
+
+        private static func openStderrLogFile() -> FileHandle? {
+            let url = SmartCrabPaths.bunServiceLog
+            let fm = FileManager.default
+            do {
+                try fm.createDirectory(at: url.deletingLastPathComponent(),
+                                       withIntermediateDirectories: true)
+                fm.createFile(atPath: url.path, contents: nil)
+                let handle = try FileHandle(forWritingTo: url)
+                try handle.seekToEnd()
+                return handle
+            } catch {
+                return nil
+            }
+        }
+
+        /// Drop the oldest half of the log file when it crosses the size cap.
+        private func rotateIfTooLarge() {
+            guard let handle = stderrLogHandle else { return }
+            do {
+                let size = try handle.offset()
+                guard size > Self.maxLogSizeBytes else { return }
+                try handle.synchronize()
+                try handle.close()
+                let url = SmartCrabPaths.bunServiceLog
+                if let data = try? Data(contentsOf: url) {
+                    let keep = data.suffix(Int(Self.maxLogSizeBytes / 2))
+                    try? keep.write(to: url)
+                }
+                let reopened = try FileHandle(forWritingTo: url)
+                try reopened.seekToEnd()
+                stderrLogHandle = reopened
+            } catch {
+                stderrLogHandle = nil
+            }
+        }
 
         /// Spawn the user's login shell once and capture `$PATH` so the
         /// bun-service subprocess sees the same paths the user gets in a
@@ -81,14 +124,26 @@
                     guard !chunk.isEmpty else { return }
                     self?.queue.async { self?.ingest(chunk) }
                 }
-                // Surface bun-service stderr in the host console so adapter
-                // failures (e.g. missing DISCORD_BOT_TOKEN) are diagnosable
-                // without re-running the service standalone.
-                stderrPipe.fileHandleForReading.readabilityHandler = { handle in
+                // Surface bun-service stderr in the host console AND tee to
+                // ~/Library/Logs/SmartCrab/bun-service.log so the LogsView (and
+                // `tail -f`) can inspect failures even when the GUI app's
+                // stderr is bound to /dev/null.
+                stderrLogHandle = Self.openStderrLogFile()
+                writesSinceRotateCheck = 0
+                stderrPipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
                     let chunk = handle.availableData
                     guard !chunk.isEmpty else { return }
-                    if let text = String(data: chunk, encoding: .utf8) {
-                        FileHandle.standardError.write(Data(text.utf8))
+                    FileHandle.standardError.write(chunk)
+                    guard let self else { return }
+                    self.queue.async {
+                        if let log = self.stderrLogHandle {
+                            try? log.write(contentsOf: chunk)
+                        }
+                        self.writesSinceRotateCheck += 1
+                        if self.writesSinceRotateCheck >= Self.rotateCheckEvery {
+                            self.writesSinceRotateCheck = 0
+                            self.rotateIfTooLarge()
+                        }
                     }
                 }
 
@@ -102,6 +157,9 @@
                 guard started else { return }
                 stdoutPipe.fileHandleForReading.readabilityHandler = nil
                 stderrPipe.fileHandleForReading.readabilityHandler = nil
+                try? stderrLogHandle?.synchronize()
+                try? stderrLogHandle?.close()
+                stderrLogHandle = nil
                 if process.isRunning { process.terminate() }
                 started = false
             }

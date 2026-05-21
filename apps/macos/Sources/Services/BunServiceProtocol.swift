@@ -4,6 +4,20 @@
 
 import Foundation
 
+// MARK: - Shared filesystem locations
+
+public enum SmartCrabPaths {
+    /// `~/Library/Logs/SmartCrab/bun-service.log`. `BunServiceMacOS` tees the
+    /// bun-service stderr to this file (GUI-launched apps otherwise lose
+    /// stderr to /dev/null); `LogsView` tails it for in-app inspection.
+    public static var bunServiceLog: URL {
+        let library = FileManager.default
+            .urls(for: .libraryDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Library")
+        return library.appendingPathComponent("Logs/SmartCrab/bun-service.log")
+    }
+}
+
 // MARK: - View-side domain types (consumed by SwiftUI views directly)
 
 public struct SeherConfig: Hashable, Codable {
