@@ -3,7 +3,8 @@
 // GUI editor for the smartcrab seher configuration. Users edit providers
 // (kind, model, env overrides), priority rules (weight, weekday/hour windows,
 // condition predicate) and defaults (fallback provider, rate-limit backoff).
-// Save persists via `BunServiceProtocol.settingsSave`.
+// Edits are auto-saved (debounced) via `BunServiceProtocol.settingsSave`;
+// the toolbar shows a live save-status indicator.
 
 import SwiftUI
 
@@ -12,8 +13,11 @@ public struct SeherConfigEditor: View {
 
     @State private var config: SeherConfig = .init()
     @State private var isLoading: Bool = true
-    @State private var saveError: String?
-    @State private var isSaving: Bool = false
+    @State private var saveStatus: SaveStatus = .idle
+    @State private var lastSavedConfig: SeherConfig?
+    @State private var saveTask: Task<Void, Never>?
+
+    private static let autoSaveDebounce: Duration = .milliseconds(500)
 
     public init(service: BunServiceProtocol) {
         self.service = service
@@ -27,30 +31,25 @@ public struct SeherConfigEditor: View {
                 providersSection
                 prioritiesSection
                 defaultsSection
-
-                if let error = saveError {
-                    Section {
-                        Text(error).foregroundStyle(.red)
-                    }
-                }
             }
         }
         .formStyle(.grouped)
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            HStack {
+                Spacer()
+                SaveStatusIndicator(status: saveStatus) {
                     Task { await save() }
-                } label: {
-                    if isSaving {
-                        ProgressView()
-                    } else {
-                        Text("Save")
-                    }
                 }
-                .disabled(isLoading || isSaving)
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 6)
+            .background(.bar)
         }
         .task { await load() }
+        .onChange(of: config) { _, newValue in
+            scheduleAutoSave(for: newValue)
+        }
+        .onDisappear { saveTask?.cancel() }
     }
 
     // MARK: Sections -----------------------------------------------------------
@@ -127,20 +126,83 @@ public struct SeherConfigEditor: View {
         isLoading = true
         defer { isLoading = false }
         do {
-            config = try await service.settingsLoad()
+            let loaded = try await service.settingsLoad()
+            config = loaded
+            lastSavedConfig = loaded
+            saveStatus = .idle
         } catch {
-            saveError = "Failed to load: \(error.localizedDescription)"
+            saveStatus = .failed("Failed to load: \(error.localizedDescription)")
+        }
+    }
+
+    private func scheduleAutoSave(for newValue: SeherConfig) {
+        // Skip until the initial load has populated `lastSavedConfig`. Cancel
+        // any pending debounce on every edit BEFORE the no-op guard — otherwise
+        // an A→B→A revert leaves the B-scheduled task to fire a useless save.
+        guard let baseline = lastSavedConfig else { return }
+        saveTask?.cancel()
+        guard baseline != newValue else { return }
+        saveTask = Task { @MainActor in
+            do {
+                try await Task.sleep(for: Self.autoSaveDebounce)
+            } catch {
+                return
+            }
+            await save()
         }
     }
 
     private func save() async {
-        isSaving = true
-        defer { isSaving = false }
-        saveError = nil
+        saveStatus = .saving
         do {
-            try await service.settingsSave(config)
+            let snapshot = config
+            try await service.settingsSave(snapshot)
+            lastSavedConfig = snapshot
+            saveStatus = .saved(Date())
         } catch {
-            saveError = "Failed to save: \(error.localizedDescription)"
+            saveStatus = .failed("Failed to save: \(error.localizedDescription)")
+        }
+    }
+}
+
+// MARK: - Save status (shared with AdapterSettings) -----------------------------
+
+enum SaveStatus: Equatable {
+    case idle
+    case saving
+    case saved(Date)
+    case failed(String)
+}
+
+struct SaveStatusIndicator: View {
+    let status: SaveStatus
+    let retry: () -> Void
+
+    var body: some View {
+        switch status {
+        case .idle:
+            Text("Up to date")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        case .saving:
+            HStack(spacing: 6) {
+                ProgressView().controlSize(.small)
+                Text("Saving…").font(.caption).foregroundStyle(.secondary)
+            }
+        case let .saved(at):
+            Text("Saved \(at.formatted(date: .omitted, time: .shortened))")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        case let .failed(message):
+            HStack(spacing: 6) {
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .lineLimit(1)
+                    .help(message)
+                Button("Retry", action: retry)
+                    .controlSize(.small)
+            }
         }
     }
 }
