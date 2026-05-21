@@ -129,9 +129,9 @@ public struct DiscordAdapterConfig: Hashable, Codable {
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        self.enabled = (try? c.decode(Bool.self, forKey: .enabled)) ?? false
+        enabled = (try? c.decode(Bool.self, forKey: .enabled)) ?? false
         // Tolerate older config rows that predate dmPolicy.
-        self.dmPolicy = (try? c.decode(DiscordDmPolicy.self, forKey: .dmPolicy)) ?? .pairing
+        dmPolicy = (try? c.decode(DiscordDmPolicy.self, forKey: .dmPolicy)) ?? .pairing
     }
 }
 
@@ -143,10 +143,13 @@ public struct DiscordPairingRequest: Identifiable, Hashable, Codable, Sendable {
     public let createdAt: Date
     public let lastSeenAt: Date
 
-    public var id: String { "\(adapterId):\(senderId)" }
+    public var id: String {
+        "\(adapterId):\(senderId)"
+    }
 
     public init(adapterId: String, senderId: String, code: String,
-                meta: [String: String], createdAt: Date, lastSeenAt: Date) {
+                meta: [String: String], createdAt: Date, lastSeenAt: Date)
+    {
         self.adapterId = adapterId
         self.senderId = senderId
         self.code = code
@@ -166,7 +169,9 @@ public struct DiscordAllowlistEntry: Identifiable, Hashable, Codable, Sendable {
     public let meta: [String: String]
     public let approvedAt: Date
 
-    public var id: String { "\(adapterId):\(senderId)" }
+    public var id: String {
+        "\(adapterId):\(senderId)"
+    }
 
     public init(adapterId: String, senderId: String, meta: [String: String], approvedAt: Date) {
         self.adapterId = adapterId
@@ -410,7 +415,9 @@ public enum BunServiceError: Error, Sendable {
 
 extension JSONRPCError: LocalizedError {
     /// Surface the RPC message instead of Swift's "(error N.)" fallback.
-    public var errorDescription: String? { message }
+    public var errorDescription: String? {
+        message
+    }
 }
 
 extension BunServiceError: LocalizedError {
@@ -563,7 +570,7 @@ public final class StubBunService: BunServiceProtocol {
         pairingRequests[adapterId] = pending.filter { $0.senderId != request.senderId }
         let entry = DiscordAllowlistEntry(
             adapterId: adapterId, senderId: request.senderId,
-            meta: request.meta, approvedAt: Date(),
+            meta: request.meta, approvedAt: Date()
         )
         var list = pairingAllowlist[adapterId] ?? []
         list.removeAll(where: { $0.senderId == entry.senderId })

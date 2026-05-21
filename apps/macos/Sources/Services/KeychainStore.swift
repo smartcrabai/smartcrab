@@ -43,7 +43,7 @@ public enum KeychainStore {
     public static func set(
         _ value: String,
         for account: String,
-        service: String = defaultService,
+        service: String = defaultService
     ) throws {
         if value.isEmpty {
             try delete(account: account, service: service)
@@ -83,7 +83,7 @@ public enum KeychainStore {
     /// matching item exists.
     public static func get(
         account: String,
-        service: String = defaultService,
+        service: String = defaultService
     ) throws -> String? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
@@ -108,7 +108,7 @@ public enum KeychainStore {
     /// Remove the item under `account`. No-op when absent.
     public static func delete(
         account: String,
-        service: String = defaultService,
+        service: String = defaultService
     ) throws {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,

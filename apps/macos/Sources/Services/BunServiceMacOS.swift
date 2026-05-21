@@ -187,7 +187,7 @@
             struct Result: Decodable, Sendable { let running: Bool }
             let r: Result = try await call(
                 method: "chat.start",
-                params: Params(adapter: adapterId, token: token),
+                params: Params(adapter: adapterId, token: token)
             )
             return r.running
         }
@@ -209,7 +209,7 @@
 
         // MARK: - Chat DM pairing
 
-        private struct WirePairingRequest: Decodable, Sendable {
+        private struct WirePairingRequest: Decodable {
             let adapterId: String
             let senderId: String
             let code: String
@@ -218,7 +218,7 @@
             let lastSeenAt: Int64
         }
 
-        private struct WireAllowlistEntry: Decodable, Sendable {
+        private struct WireAllowlistEntry: Decodable {
             let adapterId: String
             let senderId: String
             let meta: [String: String]?
@@ -238,7 +238,7 @@
                     adapterId: wire.adapterId, senderId: wire.senderId,
                     code: wire.code, meta: wire.meta ?? [:],
                     createdAt: Self.msToDate(wire.createdAt),
-                    lastSeenAt: Self.msToDate(wire.lastSeenAt),
+                    lastSeenAt: Self.msToDate(wire.lastSeenAt)
                 )
             }
         }
@@ -254,7 +254,7 @@
             return DiscordAllowlistEntry(
                 adapterId: wire.adapterId, senderId: wire.senderId,
                 meta: wire.meta ?? [:],
-                approvedAt: Self.msToDate(wire.approvedAt),
+                approvedAt: Self.msToDate(wire.approvedAt)
             )
         }
 
@@ -273,7 +273,7 @@
                 DiscordAllowlistEntry(
                     adapterId: wire.adapterId, senderId: wire.senderId,
                     meta: wire.meta ?? [:],
-                    approvedAt: Self.msToDate(wire.approvedAt),
+                    approvedAt: Self.msToDate(wire.approvedAt)
                 )
             }
         }

@@ -125,7 +125,6 @@ public struct AdapterSettings: View {
 
     // MARK: - Pairing UI
 
-    @ViewBuilder
     private var pendingPairingSection: some View {
         Section {
             if pendingRequests.isEmpty {
@@ -183,7 +182,6 @@ public struct AdapterSettings: View {
         }
     }
 
-    @ViewBuilder
     private var allowlistSection: some View {
         Section {
             if allowlist.isEmpty {
@@ -236,7 +234,7 @@ public struct AdapterSettings: View {
             discord = loaded
             lastSavedConfig = loaded
             do {
-                token = (try loadStoredToken()) ?? ""
+                token = try (loadStoredToken()) ?? ""
                 lastSavedToken = token
             } catch {
                 adapterError = "Keychain read failed: \(error.localizedDescription)"
@@ -276,7 +274,7 @@ public struct AdapterSettings: View {
                 let trimmed = token.trimmingCharacters(in: .whitespacesAndNewlines)
                 let tokenParam: String? = trimmed.isEmpty ? nil : trimmed
                 isRunning = try await service.chatStart(
-                    adapterId: Self.discordAdapterId, token: tokenParam,
+                    adapterId: Self.discordAdapterId, token: tokenParam
                 )
             }
         } catch {
@@ -352,7 +350,7 @@ public struct AdapterSettings: View {
         defer { pairingBusyId = nil }
         do {
             _ = try await service.chatPairingApprove(
-                adapterId: Self.discordAdapterId, code: request.code,
+                adapterId: Self.discordAdapterId, code: request.code
             )
             await refreshPairing()
         } catch {
@@ -365,7 +363,7 @@ public struct AdapterSettings: View {
         defer { pairingBusyId = nil }
         do {
             _ = try await service.chatPairingReject(
-                adapterId: Self.discordAdapterId, code: request.code,
+                adapterId: Self.discordAdapterId, code: request.code
             )
             await refreshPairing()
         } catch {
@@ -378,7 +376,7 @@ public struct AdapterSettings: View {
         defer { pairingBusyId = nil }
         do {
             _ = try await service.chatPairingAllowlistRemove(
-                adapterId: Self.discordAdapterId, senderId: entry.senderId,
+                adapterId: Self.discordAdapterId, senderId: entry.senderId
             )
             await refreshPairing()
         } catch {
