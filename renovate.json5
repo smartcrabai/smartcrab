@@ -52,7 +52,8 @@
         "packages/**",
         "package.json"
       ],
-      groupName: "JavaScript/TypeScript dependencies"
+      groupName: "JavaScript/TypeScript dependencies",
+      rangeStrategy: "bump"
     }
   ]
 }
