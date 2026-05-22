@@ -17,6 +17,7 @@ public struct PipelineEditorView: View {
     public let pipelineId: String?
     public var initialName: String = "Untitled pipeline"
     public var service: BunServiceProtocol
+    public var onSaved: ((PipelineSummary) -> Void)?
 
     @State private var graph: PipelineGraph
     @State private var info: PipelineSummary
@@ -39,11 +40,13 @@ public struct PipelineEditorView: View {
         pipelineId: String?,
         initialName: String = "Untitled pipeline",
         service: BunServiceProtocol = StubBunService.shared,
-        graph: PipelineGraph = .sample
+        graph: PipelineGraph = .sample,
+        onSaved: ((PipelineSummary) -> Void)? = nil
     ) {
         self.pipelineId = pipelineId
         self.initialName = initialName
         self.service = service
+        self.onSaved = onSaved
         _graph = State(initialValue: graph)
         _info = State(initialValue: PipelineSummary(
             id: pipelineId ?? UUID().uuidString,
@@ -342,6 +345,7 @@ public struct PipelineEditorView: View {
             let now = Date()
             lastSavedAt = now
             validationMessage = "Saved at \(now.formatted(date: .omitted, time: .standard))"
+            onSaved?(detail.info)
         } catch {
             validationMessage = "Save failed: \(error.localizedDescription)"
         }

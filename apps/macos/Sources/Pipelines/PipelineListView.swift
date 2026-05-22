@@ -1,7 +1,11 @@
 import SwiftUI
 
-/// Sidebar/list of pipelines. Tapping a row navigates to the editor; the
-/// "New" button opens an empty editor that will save as a new pipeline.
+/// List of pipelines plus an embedded editor pane.
+///
+/// `AppRoot` already wraps this view in a `NavigationSplitView`. We avoid
+/// nesting another one (which made the inner column's `+` / refresh toolbar
+/// overlap the outer split's divider) and instead use an `HSplitView` on
+/// macOS and a `NavigationStack` with push navigation on iOS.
 public struct PipelineListView: View {
     public var service: BunServiceProtocol
 
@@ -9,56 +13,84 @@ public struct PipelineListView: View {
     @State private var loadError: String?
     @State private var isLoading = false
     @State private var selection: PipelineSummary.ID?
+    @State private var isCreating = false
+    #if !os(macOS)
+        @State private var path: [PipelineTarget] = []
+    #endif
+
+    private enum PipelineTarget: Hashable {
+        case new
+        case existing(String)
+    }
 
     public init(service: BunServiceProtocol = StubBunService.shared) {
         self.service = service
     }
 
     public var body: some View {
-        NavigationSplitView {
-            sidebar
-                .navigationTitle("Pipelines")
-                .toolbar {
-                    ToolbarItem {
-                        NavigationLink {
-                            PipelineEditorView(
-                                pipelineId: nil,
-                                initialName: "New pipeline",
-                                service: service,
-                                graph: .empty
-                            )
-                        } label: {
-                            Label("New", systemImage: "plus")
-                        }
-                    }
-                    ToolbarItem(placement: .automatic) {
-                        Button {
-                            Task { await load() }
-                        } label: {
-                            Label("Refresh", systemImage: "arrow.clockwise")
-                        }
-                    }
-                }
-        } detail: {
-            if let selection, let detail = pipelines.first(where: { $0.id == selection }) {
-                PipelineEditorView(
-                    pipelineId: detail.id,
-                    initialName: detail.name,
-                    service: service
-                )
-            } else {
-                ContentUnavailableView(
-                    "No pipeline selected",
-                    systemImage: "rectangle.stack.badge.plus",
-                    description: Text("Pick a pipeline from the sidebar or create a new one.")
-                )
+        #if os(macOS)
+            HSplitView {
+                sidebarColumn
+                    .frame(minWidth: 220, idealWidth: 280)
+                detailColumn
+                    .frame(minWidth: 420)
             }
-        }
-        .task { await load() }
+            .navigationTitle("Pipelines")
+            .onChange(of: selection) { _, newValue in
+                if newValue != nil { isCreating = false }
+            }
+            .toolbar {
+                ToolbarItemGroup(placement: .primaryAction) {
+                    Button {
+                        selection = nil
+                        isCreating = true
+                    } label: {
+                        Label("New", systemImage: "plus")
+                    }
+                    .disabled(isLoading)
+
+                    Button {
+                        Task { await load() }
+                    } label: {
+                        Label("Refresh", systemImage: "arrow.clockwise")
+                    }
+                    .disabled(isLoading)
+                }
+            }
+            .task { await load() }
+        #else
+            NavigationStack(path: $path) {
+                sidebarColumn
+                    .navigationTitle("Pipelines")
+                    .toolbar {
+                        ToolbarItemGroup(placement: .primaryAction) {
+                            NavigationLink(value: PipelineTarget.new) {
+                                Label("New", systemImage: "plus")
+                            }
+                            Button {
+                                Task { await load() }
+                            } label: {
+                                Label("Refresh", systemImage: "arrow.clockwise")
+                            }
+                            .disabled(isLoading)
+                        }
+                    }
+                    .navigationDestination(for: PipelineTarget.self) { target in
+                        editor(for: target)
+                    }
+            }
+            .task { await load() }
+        #endif
+    }
+
+    // MARK: - Sidebar
+
+    private var sidebarColumn: some View {
+        sidebarContent
     }
 
     @ViewBuilder
-    private var sidebar: some View {
+    private var sidebarContent: some View {
         if isLoading && pipelines.isEmpty {
             ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if pipelines.isEmpty {
@@ -68,11 +100,70 @@ public struct PipelineListView: View {
                 description: Text(loadError ?? "Tap the + button to create your first pipeline.")
             )
         } else {
-            List(selection: $selection) {
-                ForEach(pipelines) { pipeline in
-                    row(for: pipeline)
-                        .tag(pipeline.id)
+            #if os(macOS)
+                List(selection: $selection) {
+                    ForEach(pipelines) { pipeline in
+                        row(for: pipeline)
+                            .tag(pipeline.id)
+                    }
                 }
+            #else
+                List {
+                    ForEach(pipelines) { pipeline in
+                        NavigationLink(value: PipelineTarget.existing(pipeline.id)) {
+                            row(for: pipeline)
+                        }
+                    }
+                }
+            #endif
+        }
+    }
+
+    // MARK: - Detail / editor
+
+    #if os(macOS)
+        @ViewBuilder
+        private var detailColumn: some View {
+            if isCreating {
+                editor(for: .new)
+            } else if let selection, let detail = pipelines.first(where: { $0.id == selection }) {
+                editor(for: .existing(detail.id))
+                    .id(detail.id)
+            } else {
+                ContentUnavailableView(
+                    "No pipeline selected",
+                    systemImage: "rectangle.stack.badge.plus",
+                    description: Text("Pick a pipeline from the sidebar or create a new one.")
+                )
+            }
+        }
+    #endif
+
+    @ViewBuilder
+    private func editor(for target: PipelineTarget) -> some View {
+        switch target {
+        case .new:
+            PipelineEditorView(
+                pipelineId: nil,
+                initialName: "New pipeline",
+                service: service,
+                graph: .empty,
+                onSaved: handleSaved
+            )
+        case let .existing(id):
+            if let detail = pipelines.first(where: { $0.id == id }) {
+                PipelineEditorView(
+                    pipelineId: detail.id,
+                    initialName: detail.name,
+                    service: service,
+                    onSaved: handleSaved
+                )
+            } else {
+                ContentUnavailableView(
+                    "Pipeline not found",
+                    systemImage: "questionmark.folder",
+                    description: Text("The pipeline may have been deleted.")
+                )
             }
         }
     }
@@ -98,13 +189,27 @@ public struct PipelineListView: View {
         .padding(.vertical, 2)
     }
 
+    // MARK: - Actions
+
+    private func handleSaved(_ saved: PipelineSummary) {
+        Task {
+            await load()
+            await MainActor.run {
+                isCreating = false
+                selection = saved.id
+            }
+        }
+    }
+
     private func load() async {
         isLoading = true
         defer { isLoading = false }
         do {
             pipelines = try await service.pipelineList()
             loadError = nil
-            if selection == nil { selection = pipelines.first?.id }
+            if selection == nil && !isCreating {
+                selection = pipelines.first?.id
+            }
         } catch {
             loadError = error.localizedDescription
         }
