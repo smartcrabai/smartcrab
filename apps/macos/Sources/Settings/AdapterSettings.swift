@@ -8,7 +8,7 @@
 import SwiftUI
 
 public struct AdapterSettings: View {
-    private static let discordAdapterId = "discord"
+    static let discordAdapterId = "discord"
     private static let autoSaveDebounce: Duration = .milliseconds(500)
     private static let pairingPollInterval: Duration = .seconds(5)
 
