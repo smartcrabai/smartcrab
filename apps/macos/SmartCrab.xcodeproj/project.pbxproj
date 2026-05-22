@@ -70,6 +70,7 @@
 		B0B931C7291E83A64E4F2A46 /* SkillsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F765B20DB5CA7F98606F41E /* SkillsView.swift */; };
 		6E86DFDDC704F5A830A2434C /* ExecutionHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1557E9C0F2439777FC634982 /* ExecutionHistoryView.swift */; };
 		A84C11CC29FFB5EF8C10CFF3 /* ExecutionLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D7124235066B6F7D5FD83CC /* ExecutionLogView.swift */; };
+		T001000000000000000000B1 /* BunServiceContainerAutostartTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T001000000000000000000A1 /* BunServiceContainerAutostartTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -105,6 +106,8 @@
 		5F765B20DB5CA7F98606F41E /* SkillsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkillsView.swift; sourceTree = "<group>"; };
 		1557E9C0F2439777FC634982 /* ExecutionHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExecutionHistoryView.swift; sourceTree = "<group>"; };
 		9D7124235066B6F7D5FD83CC /* ExecutionLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExecutionLogView.swift; sourceTree = "<group>"; };
+		T001000000000000000000A1 /* BunServiceContainerAutostartTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BunServiceContainerAutostartTests.swift; sourceTree = "<group>"; };
+		T001000000000000000000P1 /* SmartCrabMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SmartCrabMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -131,6 +134,7 @@
 				F001000000000000000000A3 /* SmartCrab */,
 				F001000000000000000000A4 /* Sources */,
 				F001000000000000000000A5 /* Resources */,
+				T001000000000000000000F1 /* Tests */,
 			);
 			path = macos;
 			sourceTree = "<group>";
@@ -199,11 +203,20 @@
 			path = Generated;
 			sourceTree = "<group>";
 		};
+		T001000000000000000000F1 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				T001000000000000000000A1 /* BunServiceContainerAutostartTests.swift */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
 		F001000000000000000000F0 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				E001000000000000000000A1 /* SmartCrab.app */,
 				E001000000000000000000A2 /* SmartCrabPreview.app */,
+				T001000000000000000000P1 /* SmartCrabMacTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -332,6 +345,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		T001000000000000000000C1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				T001000000000000000000B1 /* BunServiceContainerAutostartTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXResourcesBuildPhase section */
@@ -353,6 +374,24 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXContainerItemProxy section */
+		T001000000000000000000Y1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = H001000000000000000000A1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D001000000000000000000A1;
+			remoteInfo = SmartCrabMac;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXTargetDependency section */
+		T001000000000000000000X1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D001000000000000000000A1 /* SmartCrabMac */;
+			targetProxy = T001000000000000000000Y1 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXNativeTarget section */
 		D001000000000000000000A1 /* SmartCrabMac */ = {
@@ -387,6 +426,22 @@
 			productReference = E001000000000000000000A2 /* SmartCrabPreview.app */;
 			productType = "com.apple.product-type.application";
 		};
+		T001000000000000000000D1 /* SmartCrabMacTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = T001000000000000000000G1 /* Build configuration list for PBXNativeTarget "SmartCrabMacTests" */;
+			buildPhases = (
+				T001000000000000000000C1 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				T001000000000000000000X1 /* PBXTargetDependency */,
+			);
+			name = SmartCrabMacTests;
+			productName = SmartCrabMacTests;
+			productReference = T001000000000000000000P1 /* SmartCrabMacTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -402,6 +457,10 @@
 					};
 					D001000000000000000000A2 = {
 						CreatedOnToolsVersion = 15.0;
+					};
+					T001000000000000000000D1 = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = D001000000000000000000A1;
 					};
 				};
 			};
@@ -420,6 +479,7 @@
 			targets = (
 				D001000000000000000000A1 /* SmartCrabMac */,
 				D001000000000000000000A2 /* SmartCrabPreview */,
+				T001000000000000000000D1 /* SmartCrabMacTests */,
 			);
 		};
 /* End PBXProject section */
@@ -584,6 +644,40 @@
 			};
 			name = Release;
 		};
+		T001000000000000000000E1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ai.smartcrab.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SmartCrab.app/Contents/MacOS/SmartCrab";
+			};
+			name = Debug;
+		};
+		T001000000000000000000E2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ai.smartcrab.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SmartCrab.app/Contents/MacOS/SmartCrab";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -610,6 +704,15 @@
 			buildConfigurations = (
 				I001000000000000000000C1 /* Debug */,
 				I001000000000000000000C2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		T001000000000000000000G1 /* Build configuration list for PBXNativeTarget "SmartCrabMacTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				T001000000000000000000E1 /* Debug */,
+				T001000000000000000000E2 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
