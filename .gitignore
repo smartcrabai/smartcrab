@@ -1,8 +1,8 @@
 /target
 .env*
 /testcrab/
-/.claude/
 node_modules/
+.claude/scheduled_tasks.lock
 
 .build/
 
