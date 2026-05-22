@@ -19,6 +19,7 @@ import {
 
 interface SettingsContext {
   db: Database;
+  seherConfigPath: string;
 }
 
 let currentContext: SettingsContext | null = null;
@@ -55,7 +56,7 @@ const handlers = {
     return loadSeherConfig(db);
   },
   "settings.app-save": (params: { config: unknown }): { saved: true } => {
-    const { db } = requireContext();
+    const { db, seherConfigPath } = requireContext();
     const config = params.config as InAppSeherConfig;
     if (!config || !Array.isArray(config.providers)) {
       throw new Error("[settings] invalid config: missing providers array");
@@ -69,7 +70,7 @@ const handlers = {
     // Mirror the saved config out to a seher-ts-compatible config.yaml so
     // `router.ts`'s SeherSDK reads it on the next chat.bubble-send.
     try {
-      writeSeherConfig(config);
+      writeSeherConfig(config, seherConfigPath);
     } catch (err) {
       console.error("[settings] failed to write seher-config.yaml:", err);
     }

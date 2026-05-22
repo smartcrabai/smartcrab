@@ -4,6 +4,7 @@ import { CronScheduler } from "./cron/scheduler";
 import { configurePipelineCommands } from "./commands/pipeline.commands";
 import { configureChatPairingCommands } from "./commands/chat-pairing.commands";
 import { configureSettingsCommands } from "./commands/settings.commands";
+import { defaultSeherConfigPath } from "./seher/write-settings";
 import { configureSkillsCommands } from "./commands/skills.commands";
 import { openDb, runMigrations } from "./db";
 import { SqliteCronStore } from "./db/cron";
@@ -102,7 +103,7 @@ async function main(): Promise<void> {
       llmRegistry: llmRegistry as any,
     },
   });
-  configureSettingsCommands({ db });
+  configureSettingsCommands({ db, seherConfigPath: defaultSeherConfigPath() });
 
   const pairingStore = createSqlitePairingStore(db);
   setPairingStore(pairingStore);

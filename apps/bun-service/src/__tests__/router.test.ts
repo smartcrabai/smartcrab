@@ -19,12 +19,13 @@ mock.module("@seher-ts/sdk", () => ({
   },
 }));
 
-mock.module("../seher/write-settings", () => ({
-  defaultSeherConfigPath: () => "/mock/seher/config.jsonc",
-}));
-
 mock.module("zod-to-json-schema", () => ({
   zodToJsonSchema: (_schema: unknown) => ({ type: "object", properties: {} }),
+}));
+
+// Bun hoists mock.module() before const declarations, so MOCK_SEHER_CONFIG_PATH can't be referenced here.
+mock.module("../seher/write-settings", () => ({
+  defaultSeherConfigPath: () => "/mock/seher/config.jsonc",
 }));
 
 // ── Imports ───────────────────────────────────────────────────────────────────
@@ -74,6 +75,8 @@ function mockTool(
 // ── Test setup ────────────────────────────────────────────────────────────────
 
 const consoleSpy = silenceConsoleError();
+
+const MOCK_SEHER_CONFIG_PATH = "/mock/seher/config.jsonc";
 
 beforeEach(() => {
   seherRunBehavior = "throw"; // default: force fallback path so most tests stay isolated
@@ -136,7 +139,7 @@ describe("route() — SeherSDK path", () => {
   it("passes configPath to the SeherSDK constructor", async () => {
     await route({ prompt: "hello" });
 
-    expect(seherConstructorLastOpts?.configPath).toBe("/mock/seher/config.jsonc");
+    expect(seherConstructorLastOpts?.configPath).toBe(MOCK_SEHER_CONFIG_PATH);
   });
 
   it("sets noWait: true on the SeherSDK constructor", async () => {
