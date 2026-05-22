@@ -30,14 +30,13 @@ describe("settings.app-save — DB persistence", () => {
 
   beforeEach(async () => {
     tmpDir = await mkdtemp(join(tmpdir(), "settings-db-test-"));
-    process.env.SMARTCRAB_SEHER_CONFIG = join(tmpDir, "seher-config.yaml");
+    const seherConfigPath = join(tmpDir, "seher-config.yaml");
     db = openDb({ path: ":memory:" });
-    configureSettingsCommands({ db });
+    configureSettingsCommands({ db, seherConfigPath });
   });
 
   afterEach(async () => {
     db.close();
-    delete process.env.SMARTCRAB_SEHER_CONFIG;
     await rm(tmpDir, { recursive: true, force: true });
   });
 
