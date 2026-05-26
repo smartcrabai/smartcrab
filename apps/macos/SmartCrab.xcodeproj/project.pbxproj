@@ -72,6 +72,7 @@
 		A84C11CC29FFB5EF8C10CFF3 /* ExecutionLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D7124235066B6F7D5FD83CC /* ExecutionLogView.swift */; };
 		T001000000000000000000B1 /* BunServiceContainerAutostartTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T001000000000000000000A1 /* BunServiceContainerAutostartTests.swift */; };
 		T001000000000000000000B2 /* SidebarTabTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T001000000000000000000A2 /* SidebarTabTests.swift */; };
+		T001000000000000000000B3 /* BunServiceISO8601ParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T001000000000000000000A3 /* BunServiceISO8601ParsingTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -109,6 +110,7 @@
 		9D7124235066B6F7D5FD83CC /* ExecutionLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExecutionLogView.swift; sourceTree = "<group>"; };
 		T001000000000000000000A1 /* BunServiceContainerAutostartTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BunServiceContainerAutostartTests.swift; sourceTree = "<group>"; };
 		T001000000000000000000A2 /* SidebarTabTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarTabTests.swift; sourceTree = "<group>"; };
+		T001000000000000000000A3 /* BunServiceISO8601ParsingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BunServiceISO8601ParsingTests.swift; sourceTree = "<group>"; };
 		T001000000000000000000P1 /* SmartCrabMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SmartCrabMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -210,6 +212,7 @@
 			children = (
 				T001000000000000000000A1 /* BunServiceContainerAutostartTests.swift */,
 				T001000000000000000000A2 /* SidebarTabTests.swift */,
+				T001000000000000000000A3 /* BunServiceISO8601ParsingTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -354,6 +357,7 @@
 			files = (
 				T001000000000000000000B1 /* BunServiceContainerAutostartTests.swift in Sources */,
 				T001000000000000000000B2 /* SidebarTabTests.swift in Sources */,
+				T001000000000000000000B3 /* BunServiceISO8601ParsingTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -23,6 +23,18 @@
 
         public init() {}
 
+        private nonisolated(unsafe) static let iso8601WithMs: ISO8601DateFormatter = {
+            let f = ISO8601DateFormatter()
+            f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            return f
+        }()
+
+        private nonisolated(unsafe) static let iso8601Plain: ISO8601DateFormatter = ISO8601DateFormatter()
+
+        static func parseISO8601(_ s: String) -> Date? {
+            iso8601WithMs.date(from: s) ?? iso8601Plain.date(from: s)
+        }
+
         private static let maxLogSizeBytes: UInt64 = 5 * 1024 * 1024
         /// Skip the offset() syscall on most writes; rotate-check runs at most
         /// every Nth chunk to keep the stderr hot-path syscall-free.
@@ -216,8 +228,7 @@
             return rows.compactMap { wire in
                 guard let role = ChatBubble.Role(rawValue: wire.role),
                       let uuid = UUID(uuidString: wire.id),
-                      let date = ISO8601DateFormatter().date(from: wire.createdAt)
-                else { return nil }
+                      let date = Self.parseISO8601(wire.createdAt) else { return nil }
                 return ChatBubble(id: uuid, role: role, content: wire.content, createdAt: date)
             }
         }
@@ -233,7 +244,9 @@
             let wire: WireBubble = try await call(method: "chat.bubble-send", params: Params(content: content))
             let role = ChatBubble.Role(rawValue: wire.role) ?? .assistant
             let uuid = UUID(uuidString: wire.id) ?? UUID()
-            let date = ISO8601DateFormatter().date(from: wire.createdAt) ?? Date()
+            guard let date = Self.parseISO8601(wire.createdAt) else {
+                throw BunServiceError.malformedResponse
+            }
             return ChatBubble(id: uuid, role: role, content: wire.content, createdAt: date)
         }
 
@@ -570,5 +583,6 @@
             else { return }
             cont(.success(data))
         }
+
     }
 #endif
