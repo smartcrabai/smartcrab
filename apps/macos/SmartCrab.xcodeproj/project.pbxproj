@@ -71,6 +71,7 @@
 		6E86DFDDC704F5A830A2434C /* ExecutionHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1557E9C0F2439777FC634982 /* ExecutionHistoryView.swift */; };
 		A84C11CC29FFB5EF8C10CFF3 /* ExecutionLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D7124235066B6F7D5FD83CC /* ExecutionLogView.swift */; };
 		T001000000000000000000B1 /* BunServiceContainerAutostartTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T001000000000000000000A1 /* BunServiceContainerAutostartTests.swift */; };
+		T001000000000000000000B2 /* SidebarTabTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T001000000000000000000A2 /* SidebarTabTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -107,6 +108,7 @@
 		1557E9C0F2439777FC634982 /* ExecutionHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExecutionHistoryView.swift; sourceTree = "<group>"; };
 		9D7124235066B6F7D5FD83CC /* ExecutionLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExecutionLogView.swift; sourceTree = "<group>"; };
 		T001000000000000000000A1 /* BunServiceContainerAutostartTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BunServiceContainerAutostartTests.swift; sourceTree = "<group>"; };
+		T001000000000000000000A2 /* SidebarTabTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarTabTests.swift; sourceTree = "<group>"; };
 		T001000000000000000000P1 /* SmartCrabMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SmartCrabMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -207,6 +209,7 @@
 			isa = PBXGroup;
 			children = (
 				T001000000000000000000A1 /* BunServiceContainerAutostartTests.swift */,
+				T001000000000000000000A2 /* SidebarTabTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -350,6 +353,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				T001000000000000000000B1 /* BunServiceContainerAutostartTests.swift in Sources */,
+				T001000000000000000000B2 /* SidebarTabTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

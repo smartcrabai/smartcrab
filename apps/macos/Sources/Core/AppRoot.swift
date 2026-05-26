@@ -28,8 +28,11 @@ enum SidebarTab: String, CaseIterable, Identifiable, Hashable {
 
     /// 1-based shortcut number for the View menu (Cmd+1 ... Cmd+6).
     var shortcutNumber: Int {
-        guard let idx = SidebarTab.allCases.firstIndex(of: self) else { return 0 }
-        return idx + 1
+        SidebarTab.allCases.firstIndex(of: self)! + 1
+    }
+
+    var shortcutKey: KeyEquivalent {
+        KeyEquivalent(Character(String(shortcutNumber)))
     }
 }
 
@@ -49,40 +52,42 @@ struct AppRoot: View {
         }
     }
 
-    /// Hand-rolled VStack instead of `List(selection:)` because the latter
-    /// stops propagating real mouse clicks to its binding on macOS 15
-    /// (AXSelected still works; clicks no-op).
+    /// Uses `List` (without `selection:`) to get the sidebar material that
+    /// enables subpixel anti-aliasing, fixing blurry/jagged text.
+    /// `List(selection:)` is intentionally avoided — it stops propagating
+    /// real mouse clicks to its binding on macOS 15 (AXSelected still works;
+    /// clicks no-op). Selection is managed by the Button closures instead.
     private var sidebar: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        List {
             ForEach(SidebarTab.allCases) { tab in
                 sidebarRow(for: tab)
             }
-            Spacer()
         }
-        .padding(8)
-        .frame(maxWidth: .infinity, alignment: .topLeading)
+        #if os(macOS)
+        .listStyle(.sidebar)
+        #endif
     }
 
-    @ViewBuilder
     private func sidebarRow(for tab: SidebarTab) -> some View {
-        let shape = RoundedRectangle(cornerRadius: 6)
+        #if os(macOS)
+            rowContent(for: tab).keyboardShortcut(tab.shortcutKey, modifiers: .command)
+        #else
+            rowContent(for: tab)
+        #endif
+    }
+
+    private func rowContent(for tab: SidebarTab) -> some View {
         Button {
             selection = tab
         } label: {
             Label(tab.rawValue, systemImage: tab.systemImage)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 5)
-                .background(selection == tab ? Color.accentColor.opacity(0.25) : .clear, in: shape)
-                .contentShape(shape)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        #if os(macOS)
-            .keyboardShortcut(
-                KeyEquivalent(Character("\(tab.shortcutNumber)")),
-                modifiers: .command
-            )
-        #endif
+        .listRowBackground(
+            selection == tab ? Color.accentColor.opacity(0.25) : Color.clear
+        )
     }
 
     @ViewBuilder
