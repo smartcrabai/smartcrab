@@ -34,7 +34,7 @@ struct SmartCrabApp: App {
 final class BunServiceContainer {
     let service: BunServiceProtocol
     #if os(macOS)
-    private let keychainProvider: () throws -> String?
+        private let keychainProvider: () throws -> String?
     #endif
 
     init() {
@@ -47,10 +47,10 @@ final class BunServiceContainer {
     }
 
     #if os(macOS)
-    init(service: BunServiceProtocol, keychainProvider: @escaping () throws -> String?) {
-        self.service = service
-        self.keychainProvider = keychainProvider
-    }
+        init(service: BunServiceProtocol, keychainProvider: @escaping () throws -> String?) {
+            self.service = service
+            self.keychainProvider = keychainProvider
+        }
     #endif
 
     func start() async {
@@ -67,33 +67,33 @@ final class BunServiceContainer {
     }
 
     #if os(macOS)
-    // Restores enabled adapters on launch; failures are ignored — user recovers via Settings.
-    private func autostartDiscordAdapter() async {
-        let adapterId = AdapterSettings.discordAdapterId
-        let config: DiscordAdapterConfig
-        do {
-            config = try await service.adapterLoad(adapterId: adapterId)
-        } catch {
-            print("Adapter autostart: adapterLoad(\(adapterId)) failed: \(error)")
-            return
-        }
-        guard config.enabled else { return }
+        /// Restores enabled adapters on launch; failures are ignored — user recovers via Settings.
+        private func autostartDiscordAdapter() async {
+            let adapterId = AdapterSettings.discordAdapterId
+            let config: DiscordAdapterConfig
+            do {
+                config = try await service.adapterLoad(adapterId: adapterId)
+            } catch {
+                print("Adapter autostart: adapterLoad(\(adapterId)) failed: \(error)")
+                return
+            }
+            guard config.enabled else { return }
 
-        let token: String
-        do {
-            guard let stored = try keychainProvider() else { return }
-            token = stored.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !token.isEmpty else { return }
-        } catch {
-            print("Adapter autostart: keychain read failed for \(adapterId): \(error)")
-            return
-        }
+            let token: String
+            do {
+                guard let stored = try keychainProvider() else { return }
+                token = stored.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !token.isEmpty else { return }
+            } catch {
+                print("Adapter autostart: keychain read failed for \(adapterId): \(error)")
+                return
+            }
 
-        do {
-            _ = try await service.chatStart(adapterId: adapterId, token: token)
-        } catch {
-            print("Adapter autostart: chat.start(\(adapterId)) failed: \(error)")
+            do {
+                _ = try await service.chatStart(adapterId: adapterId, token: token)
+            } catch {
+                print("Adapter autostart: chat.start(\(adapterId)) failed: \(error)")
+            }
         }
-    }
     #endif
 }

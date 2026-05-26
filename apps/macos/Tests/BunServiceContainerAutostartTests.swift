@@ -3,8 +3,8 @@
 // Verifies that chat adapters with `enabled = true` and a valid Keychain token
 // are automatically started via `chatStart` when the app launches.
 
-import XCTest
 @testable import SmartCrab
+import XCTest
 
 // MARK: - SpyBunService
 
@@ -15,71 +15,142 @@ private final class SpyBunService: BunServiceProtocol {
     private let stub = StubBunService()
 
     // MARK: adapterLoad spy
+
     var adapterLoadStub: DiscordAdapterConfig = .init()
-    var adapterLoadShouldThrow: Error? = nil
+    var adapterLoadShouldThrow: Error?
     var adapterLoadAdapterIds: [String] = []
 
     // MARK: chatStart spy
+
     var chatStartCallCount = 0
     var chatStartAdapterIds: [String] = []
     var chatStartTokens: [String?] = []
-    var chatStartShouldThrow: Error? = nil
+    var chatStartShouldThrow: Error?
 
     // MARK: BunServiceProtocol — delegate to stub for unrelated methods
-    func start() async throws { try await stub.start() }
-    func stop() async { await stub.stop() }
-    func ping(nonce: String) async throws -> PingResponse { try await stub.ping(nonce: nonce) }
-    func settingsLoad() async throws -> SeherConfig { try await stub.settingsLoad() }
-    func settingsSave(_ config: SeherConfig) async throws { try await stub.settingsSave(config) }
+
+    func start() async throws {
+        try await stub.start()
+    }
+
+    func stop() async {
+        await stub.stop()
+    }
+
+    func ping(nonce: String) async throws -> PingResponse {
+        try await stub.ping(nonce: nonce)
+    }
+
+    func settingsLoad() async throws -> SeherConfig {
+        try await stub.settingsLoad()
+    }
+
+    func settingsSave(_ config: SeherConfig) async throws {
+        try await stub.settingsSave(config)
+    }
+
     func adapterSave(adapterId: String, config: DiscordAdapterConfig) async throws {
         try await stub.adapterSave(adapterId: adapterId, config: config)
     }
-    func chatHistory() async throws -> [ChatBubble] { try await stub.chatHistory() }
-    func chatSend(_ content: String) async throws -> ChatBubble { try await stub.chatSend(content) }
-    func chatStop(adapterId: String) async throws -> Bool { try await stub.chatStop(adapterId: adapterId) }
-    func chatStatus(adapterId: String) async throws -> Bool { try await stub.chatStatus(adapterId: adapterId) }
+
+    func chatHistory() async throws -> [ChatBubble] {
+        try await stub.chatHistory()
+    }
+
+    func chatSend(_ content: String) async throws -> ChatBubble {
+        try await stub.chatSend(content)
+    }
+
+    func chatStop(adapterId: String) async throws -> Bool {
+        try await stub.chatStop(adapterId: adapterId)
+    }
+
+    func chatStatus(adapterId: String) async throws -> Bool {
+        try await stub.chatStatus(adapterId: adapterId)
+    }
+
     func chatPairingList(adapterId: String) async throws -> [DiscordPairingRequest] {
         try await stub.chatPairingList(adapterId: adapterId)
     }
+
     func chatPairingApprove(adapterId: String, code: String) async throws -> DiscordAllowlistEntry? {
         try await stub.chatPairingApprove(adapterId: adapterId, code: code)
     }
+
     func chatPairingReject(adapterId: String, code: String) async throws -> Bool {
         try await stub.chatPairingReject(adapterId: adapterId, code: code)
     }
+
     func chatPairingAllowlist(adapterId: String) async throws -> [DiscordAllowlistEntry] {
         try await stub.chatPairingAllowlist(adapterId: adapterId)
     }
+
     func chatPairingAllowlistRemove(adapterId: String, senderId: String) async throws -> Bool {
         try await stub.chatPairingAllowlistRemove(adapterId: adapterId, senderId: senderId)
     }
-    func pipelineList() async throws -> [PipelineSummary] { try await stub.pipelineList() }
-    func pipelineGet(id: String) async throws -> PipelineDetail { try await stub.pipelineGet(id: id) }
-    func pipelineSave(_ detail: PipelineDetail) async throws -> PipelineDetail { try await stub.pipelineSave(detail) }
-    func pipelineValidate(yaml: String) async throws -> PipelineValidation { try await stub.pipelineValidate(yaml: yaml) }
-    func pipelineExecute(id: String) async throws { try await stub.pipelineExecute(id: id) }
-    func cronList() async throws -> [CronJob] { try await stub.cronList() }
+
+    func pipelineList() async throws -> [PipelineSummary] {
+        try await stub.pipelineList()
+    }
+
+    func pipelineGet(id: String) async throws -> PipelineDetail {
+        try await stub.pipelineGet(id: id)
+    }
+
+    func pipelineSave(_ detail: PipelineDetail) async throws -> PipelineDetail {
+        try await stub.pipelineSave(detail)
+    }
+
+    func pipelineValidate(yaml: String) async throws -> PipelineValidation {
+        try await stub.pipelineValidate(yaml: yaml)
+    }
+
+    func pipelineExecute(id: String) async throws {
+        try await stub.pipelineExecute(id: id)
+    }
+
+    func cronList() async throws -> [CronJob] {
+        try await stub.cronList()
+    }
+
     func cronCreate(pipelineId: String, schedule: String) async throws -> CronJob {
         try await stub.cronCreate(pipelineId: pipelineId, schedule: schedule)
     }
+
     func cronUpdate(id: String, schedule: String?, isActive: Bool?) async throws -> CronJob {
         try await stub.cronUpdate(id: id, schedule: schedule, isActive: isActive)
     }
-    func cronDelete(id: String) async throws { try await stub.cronDelete(id: id) }
-    func skillList() async throws -> [SkillInfo] { try await stub.skillList() }
+
+    func cronDelete(id: String) async throws {
+        try await stub.cronDelete(id: id)
+    }
+
+    func skillList() async throws -> [SkillInfo] {
+        try await stub.skillList()
+    }
+
     func skillAutoGenerate(pipelineId: String) async throws -> SkillInfo {
         try await stub.skillAutoGenerate(pipelineId: pipelineId)
     }
+
     func skillInvoke(skillId: String, input: String) async throws -> SkillInvocationResult {
         try await stub.skillInvoke(skillId: skillId, input: input)
     }
-    func skillDelete(id: String) async throws { try await stub.skillDelete(id: id) }
+
+    func skillDelete(id: String) async throws {
+        try await stub.skillDelete(id: id)
+    }
+
     func executionHistory(limit: Int, offset: Int, statusFilter: String?) async throws -> [ExecutionSummary] {
         try await stub.executionHistory(limit: limit, offset: offset, statusFilter: statusFilter)
     }
-    func executionDetail(id: String) async throws -> ExecutionDetail { try await stub.executionDetail(id: id) }
+
+    func executionDetail(id: String) async throws -> ExecutionDetail {
+        try await stub.executionDetail(id: id)
+    }
 
     // MARK: Spied methods
+
     func adapterLoad(adapterId: String) async throws -> DiscordAdapterConfig {
         adapterLoadAdapterIds.append(adapterId)
         if let error = adapterLoadShouldThrow { throw error }
@@ -99,7 +170,6 @@ private final class SpyBunService: BunServiceProtocol {
 
 @MainActor
 final class BunServiceContainerAutostartTests: XCTestCase {
-
     // MARK: Happy path
 
     /// Given an enabled adapter and a valid Keychain token,

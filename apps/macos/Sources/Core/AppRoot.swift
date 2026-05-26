@@ -70,9 +70,9 @@ struct AppRoot: View {
 
     private func sidebarRow(for tab: SidebarTab) -> some View {
         #if os(macOS)
-        rowContent(for: tab).keyboardShortcut(tab.shortcutKey, modifiers: .command)
+            rowContent(for: tab).keyboardShortcut(tab.shortcutKey, modifiers: .command)
         #else
-        rowContent(for: tab)
+            rowContent(for: tab)
         #endif
     }
 

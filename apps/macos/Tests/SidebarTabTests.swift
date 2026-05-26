@@ -3,12 +3,11 @@
 // shortcut numbers, and ordering that the sidebar and Cmd+1..6 depend on.
 
 import AppKit
+@testable import SmartCrab
 import SwiftUI
 import XCTest
-@testable import SmartCrab
 
 final class SidebarTabTests: XCTestCase {
-
     // MARK: allCases
 
     /// Given the SidebarTab enum,

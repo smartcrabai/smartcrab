@@ -207,7 +207,7 @@ public struct PipelineListView: View {
         do {
             pipelines = try await service.pipelineList()
             loadError = nil
-            if selection == nil && !isCreating {
+            if selection == nil, !isCreating {
                 selection = pipelines.first?.id
             }
         } catch {
