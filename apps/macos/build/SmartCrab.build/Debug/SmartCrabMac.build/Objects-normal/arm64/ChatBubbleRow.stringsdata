@@ -1,0 +1,16 @@
+{
+  "source": "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Chat/ChatBubbleRow.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "%@: %@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 37
+        }
+      }
+    ]
+  },
+  "version": 1
+}

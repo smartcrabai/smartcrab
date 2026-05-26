@@ -1,0 +1,136 @@
+{
+  "" : {
+    "const-values" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/SmartCrabMac-primary.swiftconstvalues",
+    "dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/SmartCrabMac-primary.d",
+    "diagnostics" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/SmartCrabMac-primary.dia",
+    "emit-module-dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/SmartCrabMac-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/SmartCrabMac-primary-emit-module.dia",
+    "pch" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/SmartCrabMac-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/SmartCrabMac-primary.swiftdeps"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Chat/ChatBubbleRow.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/ChatBubbleRow.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/ChatBubbleRow.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/ChatBubbleRow.o"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Chat/ChatComposer.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/ChatComposer.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/ChatComposer.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/ChatComposer.o"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Chat/ChatView.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/ChatView.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/ChatView.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/ChatView.o"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Core/AppRoot.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/AppRoot.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/AppRoot.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/AppRoot.o"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Core/Generated/RPCTypes.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/RPCTypes.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/RPCTypes.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/RPCTypes.o"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Core/SmartCrabApp.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/SmartCrabApp.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/SmartCrabApp.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/SmartCrabApp.o"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Cron/CronEditView.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/CronEditView.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/CronEditView.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/CronEditView.o"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Cron/CronListView.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/CronListView.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/CronListView.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/CronListView.o"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/History/ExecutionHistoryView.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/ExecutionHistoryView.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/ExecutionHistoryView.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/ExecutionHistoryView.o"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/History/ExecutionLogView.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/ExecutionLogView.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/ExecutionLogView.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/ExecutionLogView.o"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Pipelines/EdgeShape.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/EdgeShape.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/EdgeShape.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/EdgeShape.o"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Pipelines/NodeView.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/NodeView.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/NodeView.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/NodeView.o"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Pipelines/PipelineEditorView.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/PipelineEditorView.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/PipelineEditorView.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/PipelineEditorView.o"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Pipelines/PipelineGraphModel.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/PipelineGraphModel.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/PipelineGraphModel.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/PipelineGraphModel.o"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Pipelines/PipelineListView.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/PipelineListView.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/PipelineListView.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/PipelineListView.o"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Pipelines/YAMLBridge.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/YAMLBridge.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/YAMLBridge.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/YAMLBridge.o"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Services/BunServiceMacOS.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/BunServiceMacOS.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/BunServiceMacOS.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/BunServiceMacOS.o"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Services/BunServiceMock.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/BunServiceMock.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/BunServiceMock.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/BunServiceMock.o"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Services/BunServiceProtocol.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/BunServiceProtocol.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/BunServiceProtocol.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/BunServiceProtocol.o"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Services/KeychainStore.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/KeychainStore.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/KeychainStore.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/KeychainStore.o"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Settings/AdapterSettings.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/AdapterSettings.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/AdapterSettings.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/AdapterSettings.o"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Settings/SeherConfigEditor.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/SeherConfigEditor.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/SeherConfigEditor.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/SeherConfigEditor.o"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Settings/SettingsView.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/SettingsView.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/SettingsView.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/SettingsView.o"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Skills/SkillsView.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/SkillsView.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/SkillsView.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/SkillsView.o"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMac.build/Objects-normal/x86_64/GeneratedAssetSymbols.o"
+  }
+}

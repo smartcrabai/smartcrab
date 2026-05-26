@@ -1,0 +1,23 @@
+{
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Chat/ChatBubbleRow.swift" : {
+    "const-values" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/ChatBubbleRow.swiftconstvalues",
+    "dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/ChatBubbleRow.d",
+    "diagnostics" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/ChatBubbleRow.dia",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/ChatBubbleRow.o",
+    "swift-dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/ChatBubbleRow.swiftdeps"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Chat/ChatComposer.swift" : {
+    "const-values" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/ChatComposer.swiftconstvalues",
+    "dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/ChatComposer.d",
+    "diagnostics" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/ChatComposer.dia",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/ChatComposer.o",
+    "swift-dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/ChatComposer.swiftdeps"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Chat/ChatView.swift" : {
+    "const-values" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/ChatView.swiftconstvalues",
+    "dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/ChatView.d",
+    "diagnostics" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/ChatView.dia",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/ChatView.o",
+    "swift-dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/ChatView.swiftdeps"
+  }
+}

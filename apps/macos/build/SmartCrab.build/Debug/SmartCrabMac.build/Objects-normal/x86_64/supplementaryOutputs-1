@@ -1,0 +1,30 @@
+{
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Core/AppRoot.swift" : {
+    "const-values" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/AppRoot.swiftconstvalues",
+    "dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/AppRoot.d",
+    "diagnostics" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/AppRoot.dia",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/AppRoot.o",
+    "swift-dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/AppRoot.swiftdeps"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Core/Generated/RPCTypes.swift" : {
+    "const-values" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/RPCTypes.swiftconstvalues",
+    "dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/RPCTypes.d",
+    "diagnostics" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/RPCTypes.dia",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/RPCTypes.o",
+    "swift-dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/RPCTypes.swiftdeps"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Core/SmartCrabApp.swift" : {
+    "const-values" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/SmartCrabApp.swiftconstvalues",
+    "dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/SmartCrabApp.d",
+    "diagnostics" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/SmartCrabApp.dia",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/SmartCrabApp.o",
+    "swift-dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/SmartCrabApp.swiftdeps"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Services/BunServiceProtocol.swift" : {
+    "const-values" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/BunServiceProtocol.swiftconstvalues",
+    "dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/BunServiceProtocol.d",
+    "diagnostics" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/BunServiceProtocol.dia",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/BunServiceProtocol.o",
+    "swift-dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/BunServiceProtocol.swiftdeps"
+  }
+}

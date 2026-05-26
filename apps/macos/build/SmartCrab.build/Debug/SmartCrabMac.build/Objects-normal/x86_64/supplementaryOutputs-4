@@ -1,0 +1,23 @@
+{
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Settings/AdapterSettings.swift" : {
+    "const-values" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/AdapterSettings.swiftconstvalues",
+    "dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/AdapterSettings.d",
+    "diagnostics" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/AdapterSettings.dia",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/AdapterSettings.o",
+    "swift-dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/AdapterSettings.swiftdeps"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Settings/SeherConfigEditor.swift" : {
+    "const-values" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/SeherConfigEditor.swiftconstvalues",
+    "dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/SeherConfigEditor.d",
+    "diagnostics" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/SeherConfigEditor.dia",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/SeherConfigEditor.o",
+    "swift-dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/SeherConfigEditor.swiftdeps"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Settings/SettingsView.swift" : {
+    "const-values" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/SettingsView.swiftconstvalues",
+    "dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/SettingsView.d",
+    "diagnostics" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/SettingsView.dia",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/SettingsView.o",
+    "swift-dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/x86_64/SettingsView.swiftdeps"
+  }
+}

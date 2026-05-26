@@ -1,0 +1,4 @@
+Target dependency graph (2 targets)
+Target 'SmartCrabMacTests' in project 'SmartCrab'
+➜ Explicit dependency on target 'SmartCrabMac' in project 'SmartCrab'
+Target 'SmartCrabMac' in project 'SmartCrab' (no dependencies)

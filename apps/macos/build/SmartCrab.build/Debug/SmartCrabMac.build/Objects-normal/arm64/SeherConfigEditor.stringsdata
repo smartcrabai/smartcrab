@@ -1,0 +1,240 @@
+{
+  "source": "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/Settings/SeherConfigEditor.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Loading configuration…",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 29
+        }
+      },
+      {
+        "comment": "",
+        "key": "Defaults",
+        "location": {
+          "startingColumn": 17,
+          "startingLine": 104
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add provider",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 71
+        }
+      },
+      {
+        "comment": "",
+        "key": "Providers",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 74
+        }
+      },
+      {
+        "comment": "",
+        "key": "Each provider id must be unique and is referenced by priority rules and the fallback default.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 76
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add priority rule",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 93
+        }
+      },
+      {
+        "comment": "",
+        "key": "Priority rules",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 97
+        }
+      },
+      {
+        "comment": "",
+        "key": "Higher weight wins. Rules are scoped by weekday and hour window; an empty weekday filter matches every day.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 99
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fallback provider",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 105
+        }
+      },
+      {
+        "comment": "",
+        "key": "(none)",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 106
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rate-limit backoff (s)",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 116
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 117
+        }
+      },
+      {
+        "comment": "",
+        "key": "Up to date",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 184
+        }
+      },
+      {
+        "comment": "",
+        "key": "Saved %@",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 193
+        }
+      },
+      {
+        "comment": "",
+        "key": "Saving…",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 190
+        }
+      },
+      {
+        "comment": "",
+        "key": "Retry",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 203
+        }
+      },
+      {
+        "comment": "",
+        "key": "model",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 234
+        }
+      },
+      {
+        "comment": "",
+        "key": "Env overrides (%lld)",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 237
+        }
+      },
+      {
+        "comment": "",
+        "key": "id",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 226
+        }
+      },
+      {
+        "comment": "",
+        "key": "kind",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 228
+        }
+      },
+      {
+        "comment": "",
+        "key": "KEY",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 254
+        }
+      },
+      {
+        "comment": "",
+        "key": "value",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 256
+        }
+      },
+      {
+        "comment": "",
+        "key": "condition (e.g. task.kind == \"code\")",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 316
+        }
+      },
+      {
+        "comment": "",
+        "key": "Provider",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 287
+        }
+      },
+      {
+        "comment": "",
+        "key": "Weight",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 293
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 293
+        }
+      },
+      {
+        "comment": "",
+        "key": "Weekdays",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 299
+        }
+      },
+      {
+        "comment": "",
+        "key": "From",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 309
+        }
+      },
+      {
+        "comment": "",
+        "key": "To",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 312
+        }
+      }
+    ]
+  },
+  "version": 1
+}

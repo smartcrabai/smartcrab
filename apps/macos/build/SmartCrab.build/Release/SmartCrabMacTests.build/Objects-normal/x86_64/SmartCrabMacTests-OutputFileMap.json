@@ -1,0 +1,21 @@
+{
+  "" : {
+    "const-values" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMacTests.build/Objects-normal/x86_64/SmartCrabMacTests-primary.swiftconstvalues",
+    "dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMacTests.build/Objects-normal/x86_64/SmartCrabMacTests-primary.d",
+    "diagnostics" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMacTests.build/Objects-normal/x86_64/SmartCrabMacTests-primary.dia",
+    "emit-module-dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMacTests.build/Objects-normal/x86_64/SmartCrabMacTests-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMacTests.build/Objects-normal/x86_64/SmartCrabMacTests-primary-emit-module.dia",
+    "pch" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMacTests.build/Objects-normal/x86_64/SmartCrabMacTests-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMacTests.build/Objects-normal/x86_64/SmartCrabMacTests-primary.swiftdeps"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Tests/BunServiceContainerAutostartTests.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMacTests.build/Objects-normal/x86_64/BunServiceContainerAutostartTests.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMacTests.build/Objects-normal/x86_64/BunServiceContainerAutostartTests.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMacTests.build/Objects-normal/x86_64/BunServiceContainerAutostartTests.o"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Tests/SidebarTabTests.swift" : {
+    "index-unit-output-path" : "/SmartCrab.build/Release/SmartCrabMacTests.build/Objects-normal/x86_64/SidebarTabTests.o",
+    "llvm-bc" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMacTests.build/Objects-normal/x86_64/SidebarTabTests.bc",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Release/SmartCrabMacTests.build/Objects-normal/x86_64/SidebarTabTests.o"
+  }
+}

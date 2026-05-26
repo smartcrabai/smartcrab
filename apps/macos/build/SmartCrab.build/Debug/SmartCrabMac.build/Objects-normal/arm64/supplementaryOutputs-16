@@ -1,0 +1,23 @@
+{
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/History/ExecutionHistoryView.swift" : {
+    "const-values" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/arm64/ExecutionHistoryView.swiftconstvalues",
+    "dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/arm64/ExecutionHistoryView.d",
+    "diagnostics" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/arm64/ExecutionHistoryView.dia",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/arm64/ExecutionHistoryView.o",
+    "swift-dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/arm64/ExecutionHistoryView.swiftdeps"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/Sources/History/ExecutionLogView.swift" : {
+    "const-values" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/arm64/ExecutionLogView.swiftconstvalues",
+    "dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/arm64/ExecutionLogView.d",
+    "diagnostics" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/arm64/ExecutionLogView.dia",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/arm64/ExecutionLogView.o",
+    "swift-dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/arm64/ExecutionLogView.swiftdeps"
+  },
+  "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "object" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/takumi/.cruise/worktrees/20260522114813/apps/macos/build/SmartCrab.build/Debug/SmartCrabMac.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps"
+  }
+}
