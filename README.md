@@ -76,6 +76,28 @@ The end-to-end build scripts compile the Bun service into a single binary, copy 
 open .build/dd-mac/Build/Products/Debug/SmartCrab.app
 ```
 
+#### Stop repeated Keychain password prompts (optional)
+
+Dev builds are ad-hoc signed, so the app's code-signing identity changes on
+every rebuild. macOS treats each rebuild as a different app and re-prompts for
+access to Keychain secrets (e.g. the Discord bot token) on launch. To get a
+stable identity that survives rebuilds, create a local self-signed
+code-signing certificate once:
+
+```sh
+./scripts/setup-dev-signing.sh
+```
+
+Follow the printed steps to set the certificate's **Code Signing** trust to
+**Always Trust** in Keychain Access. After that `build-app.sh` signs **Debug**
+builds with it automatically — no env vars or repo changes — and the prompts
+stop. The certificate lives only in your login keychain; nothing is committed.
+
+This stable-signing path applies to **Debug builds only** (Release keeps the
+project's default signing). Override the identity via `APP_IDENTITY=...` (e.g.
+an Apple Development cert) if you prefer. To undo, delete the **SmartCrab
+Development** certificate from the *login* keychain in Keychain Access.
+
 A no-credentials smoke test of the embedded service:
 
 ```sh
