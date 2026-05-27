@@ -13,8 +13,23 @@
 import { llmRegistry } from "./adapters/llm/registry";
 import { defaultSeherConfigPath } from "./seher/write-settings";
 import type { SeherTool } from "@seher-ts/sdk";
-import { zodToJsonSchema } from "zod-to-json-schema";
+import { z } from "zod";
 import type { LlmMessage, LlmResponse } from "./adapters/llm/types.ts";
+
+/**
+ * Convert a SeherTool's `parameters` (a zod v4 ZodObject) into a JSON Schema
+ * for the registry-adapter fallback path. Uses zod v4's native
+ * `z.toJSONSchema` — `zod-to-json-schema@3` only understands zod v3 and
+ * returns `{}` for v4 schemas. Falls back to a permissive object schema for
+ * non-zod inputs (e.g. test mocks).
+ */
+function toInputSchema(parameters: unknown): Record<string, unknown> {
+  try {
+    return z.toJSONSchema(parameters as z.ZodType) as Record<string, unknown>;
+  } catch {
+    return { type: "object", properties: {} };
+  }
+}
 
 export interface RouteRequest {
   prompt: string;
@@ -92,7 +107,7 @@ export async function route(request: RouteRequest): Promise<RouteResponse> {
   const toolDefs = request.tools?.map((t) => ({
     name: t.name,
     description: t.description,
-    input_schema: zodToJsonSchema(t.parameters, { target: "openApi3" }) as Record<string, unknown>,
+    input_schema: toInputSchema(t.parameters),
   }));
 
   const toolMap = new Map(request.tools?.map((t) => [t.name, t]) ?? []);

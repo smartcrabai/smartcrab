@@ -2,6 +2,10 @@ import { setCronStore, setCronJobCallback } from "./commands/cron.commands";
 import { bootstrapCronRunner } from "./cron/runner";
 import { CronScheduler } from "./cron/scheduler";
 import { configurePipelineCommands } from "./commands/pipeline.commands";
+import {
+  configurePipelineAuthorCommands,
+  makeDbProviderLister,
+} from "./commands/pipeline-author.commands";
 import { configureChatPairingCommands } from "./commands/chat-pairing.commands";
 import { configureSettingsCommands } from "./commands/settings.commands";
 import { defaultSeherConfigPath } from "./seher/write-settings";
@@ -14,7 +18,7 @@ import { createSqlitePairingStore, setPairingStore } from "./adapters/chat/pairi
 import { rebindSharedToDb } from "./memory/shared-store";
 import { SkillsRegistry } from "./skills/registry";
 import { dispatch } from "./dispatcher";
-import { ensureAdaptersLoaded } from "./registry";
+import { chatRegistry, ensureAdaptersLoaded } from "./registry";
 import {
   JSON_RPC_ERRORS,
   type JsonRpcRequest,
@@ -104,6 +108,10 @@ async function main(): Promise<void> {
     },
   });
   configureSettingsCommands({ db, seherConfigPath: defaultSeherConfigPath() });
+  configurePipelineAuthorCommands({
+    listProviders: makeDbProviderLister(db),
+    listChatAdapters: () => chatRegistry.list(),
+  });
 
   const pairingStore = createSqlitePairingStore(db);
   setPairingStore(pairingStore);

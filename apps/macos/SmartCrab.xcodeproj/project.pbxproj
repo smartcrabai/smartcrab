@@ -44,7 +44,10 @@
 		2D7A767A28FF7A7F0EF8A168 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CA7130C2605DFC6A7EF260D /* SettingsView.swift */; };
 		F85189E0342274F66D075679 /* EdgeShape.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA180D2A8D18BF2C0BD2CB2 /* EdgeShape.swift */; };
 		2D53007C3CBD8FA05947F981 /* NodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69FF220B4BFC3F8A29D5644F /* NodeView.swift */; };
-		3F47BA54D5BB9807509E3438 /* PipelineEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92521E7A43A0E386ED4E5B0F /* PipelineEditorView.swift */; };
+		B1B1B1B1B1B1B1B1B1B10001 /* PipelineGraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A1A1A10001 /* PipelineGraphView.swift */; };
+		B1B1B1B1B1B1B1B1B1B10002 /* PipelineYamlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A1A1A10002 /* PipelineYamlView.swift */; };
+		B1B1B1B1B1B1B1B1B1B10003 /* PipelineAuthoringView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A1A1A10003 /* PipelineAuthoringView.swift */; };
+		B1B1B1B1B1B1B1B1B1B10004 /* PipelineAutoLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A1A1A10004 /* PipelineAutoLayout.swift */; };
 		A686CAC3A98562C295D9EF28 /* PipelineGraphModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77913F0D6640FDAFBAC33005 /* PipelineGraphModel.swift */; };
 		214D14AD917B12B2815643B5 /* PipelineListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 014AA9CA46D73C784A08EBD7 /* PipelineListView.swift */; };
 		3968A27223BA298386D23A70 /* YAMLBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C8F1FAF56935F1FA8FF8A5D /* YAMLBridge.swift */; };
@@ -61,7 +64,10 @@
 		58602C0C51859DF7DA1AAC42 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CA7130C2605DFC6A7EF260D /* SettingsView.swift */; };
 		CD2A78E0F922845A2F4C5574 /* EdgeShape.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA180D2A8D18BF2C0BD2CB2 /* EdgeShape.swift */; };
 		E8BD0C3774FF2D6A4CE88ACC /* NodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69FF220B4BFC3F8A29D5644F /* NodeView.swift */; };
-		98D93A753DBF5C114579C170 /* PipelineEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92521E7A43A0E386ED4E5B0F /* PipelineEditorView.swift */; };
+		C1C1C1C1C1C1C1C1C1C10001 /* PipelineGraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A1A1A10001 /* PipelineGraphView.swift */; };
+		C1C1C1C1C1C1C1C1C1C10002 /* PipelineYamlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A1A1A10002 /* PipelineYamlView.swift */; };
+		C1C1C1C1C1C1C1C1C1C10003 /* PipelineAuthoringView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A1A1A10003 /* PipelineAuthoringView.swift */; };
+		C1C1C1C1C1C1C1C1C1C10004 /* PipelineAutoLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A1A1A10004 /* PipelineAutoLayout.swift */; };
 		A5EF8FF9F0845E93D1DAE64C /* PipelineGraphModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77913F0D6640FDAFBAC33005 /* PipelineGraphModel.swift */; };
 		D7C63EAEBFC38110ECF74364 /* PipelineListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 014AA9CA46D73C784A08EBD7 /* PipelineListView.swift */; };
 		E7988210D8C109545ED3389B /* YAMLBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C8F1FAF56935F1FA8FF8A5D /* YAMLBridge.swift */; };
@@ -73,6 +79,7 @@
 		T001000000000000000000B1 /* BunServiceContainerAutostartTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T001000000000000000000A1 /* BunServiceContainerAutostartTests.swift */; };
 		T001000000000000000000B2 /* SidebarTabTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T001000000000000000000A2 /* SidebarTabTests.swift */; };
 		T001000000000000000000B3 /* BunServiceISO8601ParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T001000000000000000000A3 /* BunServiceISO8601ParsingTests.swift */; };
+		T001000000000000000000B4 /* PipelineAuthoringTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T001000000000000000000A4 /* PipelineAuthoringTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -99,7 +106,10 @@
 		4CA7130C2605DFC6A7EF260D /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		AAA180D2A8D18BF2C0BD2CB2 /* EdgeShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeShape.swift; sourceTree = "<group>"; };
 		69FF220B4BFC3F8A29D5644F /* NodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NodeView.swift; sourceTree = "<group>"; };
-		92521E7A43A0E386ED4E5B0F /* PipelineEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipelineEditorView.swift; sourceTree = "<group>"; };
+		A1A1A1A1A1A1A1A1A1A10001 /* PipelineGraphView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipelineGraphView.swift; sourceTree = "<group>"; };
+		A1A1A1A1A1A1A1A1A1A10002 /* PipelineYamlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipelineYamlView.swift; sourceTree = "<group>"; };
+		A1A1A1A1A1A1A1A1A1A10003 /* PipelineAuthoringView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipelineAuthoringView.swift; sourceTree = "<group>"; };
+		A1A1A1A1A1A1A1A1A1A10004 /* PipelineAutoLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipelineAutoLayout.swift; sourceTree = "<group>"; };
 		77913F0D6640FDAFBAC33005 /* PipelineGraphModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipelineGraphModel.swift; sourceTree = "<group>"; };
 		014AA9CA46D73C784A08EBD7 /* PipelineListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipelineListView.swift; sourceTree = "<group>"; };
 		3C8F1FAF56935F1FA8FF8A5D /* YAMLBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YAMLBridge.swift; sourceTree = "<group>"; };
@@ -111,6 +121,7 @@
 		T001000000000000000000A1 /* BunServiceContainerAutostartTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BunServiceContainerAutostartTests.swift; sourceTree = "<group>"; };
 		T001000000000000000000A2 /* SidebarTabTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarTabTests.swift; sourceTree = "<group>"; };
 		T001000000000000000000A3 /* BunServiceISO8601ParsingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BunServiceISO8601ParsingTests.swift; sourceTree = "<group>"; };
+		T001000000000000000000A4 /* PipelineAuthoringTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipelineAuthoringTests.swift; sourceTree = "<group>"; };
 		T001000000000000000000P1 /* SmartCrabMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SmartCrabMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -213,6 +224,7 @@
 				T001000000000000000000A1 /* BunServiceContainerAutostartTests.swift */,
 				T001000000000000000000A2 /* SidebarTabTests.swift */,
 				T001000000000000000000A3 /* BunServiceISO8601ParsingTests.swift */,
+				T001000000000000000000A4 /* PipelineAuthoringTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -252,9 +264,12 @@
 			children = (
 				AAA180D2A8D18BF2C0BD2CB2 /* EdgeShape.swift */,
 				69FF220B4BFC3F8A29D5644F /* NodeView.swift */,
-				92521E7A43A0E386ED4E5B0F /* PipelineEditorView.swift */,
+				A1A1A1A1A1A1A1A1A1A10003 /* PipelineAuthoringView.swift */,
+				A1A1A1A1A1A1A1A1A1A10004 /* PipelineAutoLayout.swift */,
+				A1A1A1A1A1A1A1A1A1A10001 /* PipelineGraphView.swift */,
 				77913F0D6640FDAFBAC33005 /* PipelineGraphModel.swift */,
 				014AA9CA46D73C784A08EBD7 /* PipelineListView.swift */,
+				A1A1A1A1A1A1A1A1A1A10002 /* PipelineYamlView.swift */,
 				3C8F1FAF56935F1FA8FF8A5D /* YAMLBridge.swift */,
 			);
 			path = Pipelines;
@@ -308,9 +323,12 @@
 				2D7A767A28FF7A7F0EF8A168 /* SettingsView.swift in Sources */,
 				F85189E0342274F66D075679 /* EdgeShape.swift in Sources */,
 				2D53007C3CBD8FA05947F981 /* NodeView.swift in Sources */,
-				3F47BA54D5BB9807509E3438 /* PipelineEditorView.swift in Sources */,
+				B1B1B1B1B1B1B1B1B1B10003 /* PipelineAuthoringView.swift in Sources */,
+				B1B1B1B1B1B1B1B1B1B10004 /* PipelineAutoLayout.swift in Sources */,
+				B1B1B1B1B1B1B1B1B1B10001 /* PipelineGraphView.swift in Sources */,
 				A686CAC3A98562C295D9EF28 /* PipelineGraphModel.swift in Sources */,
 				214D14AD917B12B2815643B5 /* PipelineListView.swift in Sources */,
+				B1B1B1B1B1B1B1B1B1B10002 /* PipelineYamlView.swift in Sources */,
 				3968A27223BA298386D23A70 /* YAMLBridge.swift in Sources */,
 				6C541B7433B25626F7E1AF41 /* CronEditView.swift in Sources */,
 				32CE944E643AEDD878A50312 /* CronListView.swift in Sources */,
@@ -339,9 +357,12 @@
 				58602C0C51859DF7DA1AAC42 /* SettingsView.swift in Sources */,
 				CD2A78E0F922845A2F4C5574 /* EdgeShape.swift in Sources */,
 				E8BD0C3774FF2D6A4CE88ACC /* NodeView.swift in Sources */,
-				98D93A753DBF5C114579C170 /* PipelineEditorView.swift in Sources */,
+				C1C1C1C1C1C1C1C1C1C10003 /* PipelineAuthoringView.swift in Sources */,
+				C1C1C1C1C1C1C1C1C1C10004 /* PipelineAutoLayout.swift in Sources */,
+				C1C1C1C1C1C1C1C1C1C10001 /* PipelineGraphView.swift in Sources */,
 				A5EF8FF9F0845E93D1DAE64C /* PipelineGraphModel.swift in Sources */,
 				D7C63EAEBFC38110ECF74364 /* PipelineListView.swift in Sources */,
+				C1C1C1C1C1C1C1C1C1C10002 /* PipelineYamlView.swift in Sources */,
 				E7988210D8C109545ED3389B /* YAMLBridge.swift in Sources */,
 				BDDC004869A7A6D81D997064 /* CronEditView.swift in Sources */,
 				25F6E2DF372BDBB0D5417892 /* CronListView.swift in Sources */,
@@ -358,6 +379,7 @@
 				T001000000000000000000B1 /* BunServiceContainerAutostartTests.swift in Sources */,
 				T001000000000000000000B2 /* SidebarTabTests.swift in Sources */,
 				T001000000000000000000B3 /* BunServiceISO8601ParsingTests.swift in Sources */,
+				T001000000000000000000B4 /* PipelineAuthoringTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
