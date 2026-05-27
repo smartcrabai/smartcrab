@@ -250,6 +250,21 @@ public struct PipelineValidation: Hashable, Codable, Sendable {
     }
 }
 
+/// Result returned by `pipeline.author` (natural-language pipeline generation).
+public struct PipelineAuthorResult: Hashable, Codable, Sendable {
+    public let yaml: String
+    public let explanation: String
+    /// The seher agent kind that produced the result (claude / copilot / pi /
+    /// registry-fallback) — not a model id.
+    public let kind: String
+
+    public init(yaml: String, explanation: String, kind: String) {
+        self.yaml = yaml
+        self.explanation = explanation
+        self.kind = kind
+    }
+}
+
 public struct CronJob: Identifiable, Hashable, Codable, Sendable {
     public let id: String
     public let pipelineId: String
@@ -487,6 +502,9 @@ public protocol BunServiceProtocol: AnyObject {
     func pipelineSave(_ detail: PipelineDetail) async throws -> PipelineDetail
     func pipelineValidate(yaml: String) async throws -> PipelineValidation
     func pipelineExecute(id: String) async throws
+    /// Natural-language pipeline authoring. `currentYaml` is `nil` for fresh
+    /// creation, or the existing YAML for refinement.
+    func pipelineAuthor(instruction: String, currentYaml: String?) async throws -> PipelineAuthorResult
 
     // Cron
     func cronList() async throws -> [CronJob]
@@ -635,6 +653,29 @@ public final class StubBunService: BunServiceProtocol {
     }
 
     public func pipelineExecute(id _: String) async throws {}
+
+    public func pipelineAuthor(instruction: String, currentYaml: String?) async throws -> PipelineAuthorResult {
+        let yaml = currentYaml ?? """
+        name: generated-from-stub
+        version: "1.0"
+        trigger:
+          type: cron
+          schedule: "0 9 * * *"
+        nodes:
+          - id: start
+            name: Start
+            action:
+              type: llm_call
+              provider: anthropic
+              prompt: "\(instruction.replacingOccurrences(of: "\"", with: "\\\""))"
+              timeout_secs: 30
+        """
+        return PipelineAuthorResult(
+            yaml: yaml,
+            explanation: "(stub) Built a one-node pipeline that runs the instruction through Anthropic.",
+            kind: "stub"
+        )
+    }
 
     public func cronList() async throws -> [CronJob] {
         [

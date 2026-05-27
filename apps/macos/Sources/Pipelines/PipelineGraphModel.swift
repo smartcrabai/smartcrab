@@ -1,10 +1,11 @@
 import CoreGraphics
 import Foundation
 
-// In-memory graph model for the SwiftUI Canvas editor. This is intentionally
-// decoupled from YAML — a `YAMLBridge` round-trips between this and the Bun
-// service. Fields mirror `crates/smartcrab-app/src/types/pipeline.ts` but
-// stripped to what the canvas needs.
+// In-memory graph model for the read-only SwiftUI Canvas visualisation. The
+// graph is derived from YAML by `PipelineGraph(yaml:)` (see YAMLBridge.swift);
+// it is never serialised back. Fields mirror the `NodeAction` union in
+// `apps/bun-service/src/engine/yaml-schema.ts`, stripped to what the canvas
+// needs to render node kind + a short action label.
 
 public enum PipelineNodeKind: String, Codable, CaseIterable, Sendable {
     case input
@@ -16,9 +17,10 @@ public enum PipelineNodeAction: Equatable, Sendable {
     case llm(provider: String)
     case http(method: String)
     case shell
+    case chatSend(adapter: String)
     case none
 
-    /// Default LLM provider kind for newly created `llm_call` nodes.
+    /// Default LLM provider kind for `llm_call` nodes when the YAML omits one.
     /// Must stay in sync with the `ProviderKind` union in
     /// `packages/seher-config-schema/src/smartcrab-config.ts`.
     public static let defaultLLMProvider: String = "anthropic"
@@ -28,6 +30,7 @@ public enum PipelineNodeAction: Equatable, Sendable {
         case let .llm(provider): return "LLM (\(provider))"
         case let .http(method): return "HTTP \(method)"
         case .shell: return "Shell"
+        case let .chatSend(adapter): return adapter.isEmpty ? "Chat send" : "Chat → \(adapter)"
         case .none: return ""
         }
     }

@@ -434,6 +434,23 @@
             let _: WireResp = try await call(method: "pipeline.execute", params: Params(id: id))
         }
 
+        public func pipelineAuthor(instruction: String, currentYaml: String?) async throws -> PipelineAuthorResult {
+            struct Params: Encodable, Sendable {
+                let instruction: String
+                let currentYaml: String?
+            }
+            struct WireResp: Decodable {
+                let yaml: String
+                let explanation: String
+                let kind: String
+            }
+            let resp: WireResp = try await call(
+                method: "pipeline.author",
+                params: Params(instruction: instruction, currentYaml: currentYaml)
+            )
+            return PipelineAuthorResult(yaml: resp.yaml, explanation: resp.explanation, kind: resp.kind)
+        }
+
         // MARK: - Cron
 
         public func cronList() async throws -> [CronJob] {

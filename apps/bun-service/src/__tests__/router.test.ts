@@ -19,9 +19,6 @@ mock.module("@seher-ts/sdk", () => ({
   },
 }));
 
-mock.module("zod-to-json-schema", () => ({
-  zodToJsonSchema: (_schema: unknown) => ({ type: "object", properties: {} }),
-}));
 
 // Bun hoists mock.module() before const declarations, so MOCK_SEHER_CONFIG_PATH can't be referenced here.
 mock.module("../seher/write-settings", () => ({
@@ -56,8 +53,9 @@ class MockAdapter implements LlmAdapter {
 
 /**
  * Build a minimal SeherTool-compatible object without a real ZodObject
- * dependency. `parameters.parse` forwards input as-is; `zod-to-json-schema`
- * is mocked to return a fixed schema, so no real ZodObject is needed.
+ * dependency. `parameters.parse` forwards input as-is; router's
+ * `toInputSchema` falls back to a permissive `{ type: "object" }` when the
+ * parameters aren't a real zod schema, so no real ZodObject is needed.
  */
 function mockTool(
   name: string,
