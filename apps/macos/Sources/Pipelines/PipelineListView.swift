@@ -143,16 +143,15 @@ public struct PipelineListView: View {
     private func editor(for target: PipelineTarget) -> some View {
         switch target {
         case .new:
-            PipelineEditorView(
+            PipelineAuthoringView(
                 pipelineId: nil,
                 initialName: "New pipeline",
                 service: service,
-                graph: .empty,
                 onSaved: handleSaved
             )
         case let .existing(id):
             if let detail = pipelines.first(where: { $0.id == id }) {
-                PipelineEditorView(
+                PipelineAuthoringView(
                     pipelineId: detail.id,
                     initialName: detail.name,
                     service: service,

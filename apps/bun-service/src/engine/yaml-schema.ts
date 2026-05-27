@@ -5,7 +5,13 @@
  * - `NodeAction` / `MatchCondition` use `{ type: "...", ...fields }` (serde tag).
  * - `NextTarget` is untagged (`string | string[]`).
  * - Field names use `snake_case` to match YAML/JSON wire format.
+ *
+ * The Zod schemas at the bottom mirror these types and are used by
+ * `pipeline.author` to coerce LLM tool-emission output into a validated
+ * `PipelineDefinition` before serializing to YAML.
  */
+
+import { z } from "zod";
 
 export type TriggerType = "discord" | "cron";
 
@@ -79,3 +85,74 @@ export interface ResolvedPipeline {
   definition: PipelineDefinition;
   nodeTypes: Map<string, NodeKind>;
 }
+
+// ---------------------------------------------------------------------------
+// Zod schemas — used by `pipeline.author` for LLM tool-emission validation.
+// Kept manually in sync with the TypeScript types above; `pipeline-roundtrip`
+// tests verify a few well-formed pipelines parse identically through both.
+// ---------------------------------------------------------------------------
+
+export const triggerConfigSchema = z.object({
+  type: z.enum(["discord", "cron"]),
+  triggers: z.array(z.string()).optional(),
+  schedule: z.string().optional(),
+});
+
+export const matchConditionSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("regex"), pattern: z.string() }),
+  z.object({ type: z.literal("status_code"), codes: z.array(z.number()) }),
+  z.object({ type: z.literal("json_path"), path: z.string(), expected: z.unknown() }),
+  z.object({ type: z.literal("exit_when"), pattern: z.string() }),
+]);
+
+export const conditionSchema = z.object({
+  match: matchConditionSchema,
+  next: z.string(),
+});
+
+export const nodeActionSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("llm_call"),
+    provider: z.string(),
+    prompt: z.string(),
+    timeout_secs: z.number(),
+  }),
+  z.object({
+    type: z.literal("http_request"),
+    method: z.string(),
+    url_template: z.string(),
+    headers: z.record(z.string(), z.string()).optional(),
+    body_template: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal("shell_command"),
+    command_template: z.string(),
+    working_dir: z.string().optional(),
+    timeout_secs: z.number(),
+  }),
+  z.object({
+    type: z.literal("chat_send"),
+    adapter: z.string(),
+    channel_id: z.string().optional(),
+    content_template: z.string(),
+  }),
+]);
+
+export const nextTargetSchema = z.union([z.string(), z.array(z.string())]);
+
+export const nodeDefinitionSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  action: nodeActionSchema.optional(),
+  next: nextTargetSchema.optional(),
+  conditions: z.array(conditionSchema).optional(),
+});
+
+export const pipelineDefinitionSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().optional(),
+  version: z.string(),
+  trigger: triggerConfigSchema,
+  max_loop_count: z.number().optional(),
+  nodes: z.array(nodeDefinitionSchema).min(1),
+});

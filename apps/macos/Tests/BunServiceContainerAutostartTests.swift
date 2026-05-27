@@ -109,6 +109,10 @@ private final class SpyBunService: BunServiceProtocol {
         try await stub.pipelineExecute(id: id)
     }
 
+    func pipelineAuthor(instruction: String, currentYaml: String?) async throws -> PipelineAuthorResult {
+        try await stub.pipelineAuthor(instruction: instruction, currentYaml: currentYaml)
+    }
+
     func cronList() async throws -> [CronJob] {
         try await stub.cronList()
     }

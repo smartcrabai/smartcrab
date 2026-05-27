@@ -82,6 +82,7 @@ public struct NodeView: View {
             case .llm: return "brain"
             case .http: return "globe"
             case .shell: return "terminal"
+            case .chatSend: return "paperplane"
             case .none: return "circle.grid.2x2"
             }
         case .output: return "checkmark.circle"
