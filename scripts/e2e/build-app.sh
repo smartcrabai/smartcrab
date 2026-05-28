@@ -47,7 +47,35 @@ else
   echo "[e2e] step 2/3 staged binary already matches — skipping copy"
 fi
 
-echo "[e2e] step 3/3 xcodebuild SmartCrabMac (${XC_CONFIG})"
+# Stable dev code signing (Debug only, optional). When a code-signing identity
+# named by APP_IDENTITY (default "SmartCrab Development") exists in the
+# keychain, sign the Debug build with it so the app's designated requirement
+# stays constant across rebuilds — macOS Keychain then stops re-prompting for
+# stored secrets on every launch. Without it the project's default ad-hoc
+# signing is used, so CI and other contributors are unaffected. Create the
+# identity with ./scripts/setup-dev-signing.sh.
+#
+# ENABLE_HARDENED_RUNTIME=NO disables library validation for the local Debug
+# build. With it on, Xcode's separately-signed Swift debug dylib
+# (ENABLE_DEBUG_DYLIB) trips a Team ID mismatch and the app aborts at launch
+# ("Library not loaded … different Team IDs"). Release builds skip this path
+# and keep the project's hardened-runtime setting (required for notarization).
+#
+# `set --` accumulates the extra xcodebuild settings into the positional
+# params (CONFIG was already captured above, so $1 is free to clobber).
+APP_IDENTITY="${APP_IDENTITY:-SmartCrab Development}"
+set --
+if [ "${XC_CONFIG}" != "Debug" ]; then
+  echo "[e2e] step 3/3 xcodebuild SmartCrabMac (${XC_CONFIG})"
+elif security find-identity -p codesigning -v 2>/dev/null | grep -Fq "${APP_IDENTITY}"; then
+  echo "[e2e] step 3/3 xcodebuild SmartCrabMac (${XC_CONFIG}) — signing as '${APP_IDENTITY}'"
+  set -- "CODE_SIGN_IDENTITY=${APP_IDENTITY}" "CODE_SIGN_STYLE=Manual" \
+         "CODE_SIGNING_ALLOWED=YES" "DEVELOPMENT_TEAM=" "ENABLE_HARDENED_RUNTIME=NO"
+else
+  echo "[e2e] step 3/3 xcodebuild SmartCrabMac (${XC_CONFIG}) — ad-hoc signing"
+  echo "[e2e]   run ./scripts/setup-dev-signing.sh to stop Keychain password prompts"
+fi
+
 cd "${REPO_ROOT}"
 xcodebuild build \
   -project apps/macos/SmartCrab.xcodeproj \
@@ -55,6 +83,7 @@ xcodebuild build \
   -configuration "${XC_CONFIG}" \
   -destination 'platform=macOS' \
   -derivedDataPath "${DERIVED}" \
+  "$@" \
   >/dev/null
 
 APP_PATH="${DERIVED}/Build/Products/${XC_CONFIG}/SmartCrab.app"

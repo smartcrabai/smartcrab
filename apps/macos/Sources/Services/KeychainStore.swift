@@ -4,11 +4,15 @@
 // Keychain. Used to store adapter secrets (e.g., the Discord bot token) so
 // they never land in SmartCrab's SQLite database.
 //
-// On macOS the app is sandboxed (`com.apple.security.app-sandbox` true),
-// which means the items live in the app's per-container keychain — other
-// apps cannot read them. On iOS the same SecItem API operates on the
-// device keychain. The Preview/iOS target uses the same helper because
-// `Security` is available on both platforms.
+// On macOS the app is not sandboxed (its entitlements are empty), so items
+// live in the user's login (default) keychain rather than a per-app
+// container. Access is gated by each item's ACL, which is keyed to the app's
+// code-signing identity — under the default ad-hoc signing the identity
+// changes on every rebuild, so macOS re-prompts for access. See
+// scripts/setup-dev-signing.sh for a stable dev signing identity that avoids
+// this. On iOS the same SecItem API operates on the device keychain. The
+// Preview/iOS target uses the same helper because `Security` is available on
+// both platforms.
 
 import Foundation
 import Security
