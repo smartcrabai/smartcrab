@@ -10,7 +10,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@anthropic-ai/claude-agent-sdk": "^0.3.144",
+    "@anthropic-ai/claude-agent-sdk": "^0.3.160",
     "cron-parser": "^5.5.0",
     "discord.js": "^14.26.4",
     "gray-matter": "^4.0.3",
@@ -22,7 +22,7 @@
   },
   "optionalDependencies": {
     "@seher-ts/sdk": "^0.1.19",
-    "@earendil-works/pi-coding-agent": "^0.75.3",
+    "@earendil-works/pi-coding-agent": "^0.78.0",
     "@smartcrab/ipc-protocol": "*",
     "@smartcrab/seher-config-schema": "*"
   }
