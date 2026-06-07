@@ -115,6 +115,85 @@ public struct SeherDefaults: Hashable, Codable {
     }
 }
 
+// MARK: - Provider authentication (seher-bridge device flow / OAuth)
+
+/// Which interaction `auth.start` kicked off. `deviceCode` shows a user code
+/// to enter on the verification page; `browser` just opens the authorize URL
+/// (the bridge listens for the localhost callback).
+public enum AuthFlowKind: String, Codable, Sendable {
+    case deviceCode = "device-code"
+    case browser
+}
+
+/// Result of `auth.start`. The wire shape is snake_case (`session_id`,
+/// `user_code`, ...) and maps onto these camelCase properties via the
+/// client's convertFromSnakeCase decoding.
+public struct AuthStartResult: Codable, Sendable {
+    public var sessionId: String
+    public var flow: AuthFlowKind
+    public var userCode: String?
+    public var verificationUri: String?
+    public var verificationUriComplete: String?
+    public var expiresIn: Int?
+    public var url: String?
+
+    public init(sessionId: String, flow: AuthFlowKind, userCode: String? = nil,
+                verificationUri: String? = nil, verificationUriComplete: String? = nil,
+                expiresIn: Int? = nil, url: String? = nil)
+    {
+        self.sessionId = sessionId
+        self.flow = flow
+        self.userCode = userCode
+        self.verificationUri = verificationUri
+        self.verificationUriComplete = verificationUriComplete
+        self.expiresIn = expiresIn
+        self.url = url
+    }
+}
+
+public enum AuthSessionState: String, Codable, Sendable {
+    case pending, done, error
+}
+
+/// Result of `auth.status` polling.
+public struct AuthSessionStatus: Codable, Sendable {
+    public var state: AuthSessionState
+    public var message: String?
+
+    public init(state: AuthSessionState, message: String? = nil) {
+        self.state = state
+        self.message = message
+    }
+}
+
+/// Credential state for one provider, mirrored from pi's auth.json via
+/// `seher-bridge auth status`. `status` is one of: none | api_key |
+/// oauth_valid | oauth_expired | bearer | aws | service_key (kept as a raw
+/// string so newer bridge values degrade gracefully).
+public struct ProviderCredentialStatus: Hashable, Codable, Sendable {
+    public var status: String
+    public var expiresInMs: Int?
+    public var expiredByMs: Int?
+
+    public init(status: String, expiresInMs: Int? = nil, expiredByMs: Int? = nil) {
+        self.status = status
+        self.expiresInMs = expiresInMs
+        self.expiredByMs = expiredByMs
+    }
+}
+
+/// Result of `auth.credential-status`. Keyed by pi canonical provider id
+/// (github-copilot / openai-codex / anthropic / openai).
+public struct CredentialStatusResult: Codable, Sendable {
+    public var bridgeAvailable: Bool
+    public var providers: [String: ProviderCredentialStatus]
+
+    public init(bridgeAvailable: Bool, providers: [String: ProviderCredentialStatus] = [:]) {
+        self.bridgeAvailable = bridgeAvailable
+        self.providers = providers
+    }
+}
+
 public enum DiscordDmPolicy: String, CaseIterable, Hashable, Codable, Sendable {
     /// Issue a pairing code to unknown DM senders. Default.
     case pairing
@@ -476,6 +555,12 @@ public protocol BunServiceProtocol: AnyObject {
     func settingsLoad() async throws -> SeherConfig
     func settingsSave(_ config: SeherConfig) async throws
 
+    // Provider authentication (seher-bridge device flow / OAuth)
+    func authStart(kind: String) async throws -> AuthStartResult
+    func authStatus(sessionId: String) async throws -> AuthSessionStatus
+    func authCancel(sessionId: String) async throws
+    func authCredentialStatus() async throws -> CredentialStatusResult
+
     // Adapters (Discord, etc.)
     func adapterLoad(adapterId: String) async throws -> DiscordAdapterConfig
     func adapterSave(adapterId: String, config: DiscordAdapterConfig) async throws
@@ -551,6 +636,46 @@ public final class StubBunService: BunServiceProtocol {
 
     public func settingsSave(_ config: SeherConfig) async throws {
         seherConfig = config
+    }
+
+    /// Per-session poll counter so the auth sheet renders one "pending" pass
+    /// before flipping to done in previews / the iOS Simulator.
+    private var authPollCounts: [String: Int] = [:]
+
+    public func authStart(kind: String) async throws -> AuthStartResult {
+        let sessionId = "stub-\(UUID().uuidString.prefix(8))"
+        if kind == "openai-codex" {
+            return AuthStartResult(
+                sessionId: sessionId, flow: .browser,
+                url: "https://auth.openai.com/oauth/authorize?stub=1"
+            )
+        }
+        return AuthStartResult(
+            sessionId: sessionId, flow: .deviceCode,
+            userCode: "WDJB-MJHT",
+            verificationUri: "https://github.com/login/device",
+            verificationUriComplete: "https://github.com/login/device?user_code=WDJB-MJHT",
+            expiresIn: 899
+        )
+    }
+
+    public func authStatus(sessionId: String) async throws -> AuthSessionStatus {
+        let polls = (authPollCounts[sessionId] ?? 0) + 1
+        authPollCounts[sessionId] = polls
+        return polls < 2 ? AuthSessionStatus(state: .pending) : AuthSessionStatus(state: .done)
+    }
+
+    public func authCancel(sessionId: String) async throws {
+        authPollCounts.removeValue(forKey: sessionId)
+    }
+
+    public func authCredentialStatus() async throws -> CredentialStatusResult {
+        CredentialStatusResult(bridgeAvailable: true, providers: [
+            "github-copilot": ProviderCredentialStatus(status: "oauth_valid", expiresInMs: 3_500_000),
+            "openai-codex": ProviderCredentialStatus(status: "none"),
+            "anthropic": ProviderCredentialStatus(status: "api_key"),
+            "openai": ProviderCredentialStatus(status: "none"),
+        ])
     }
 
     public func adapterLoad(adapterId _: String) async throws -> DiscordAdapterConfig {

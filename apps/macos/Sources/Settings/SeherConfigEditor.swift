@@ -1,10 +1,14 @@
 // SeherConfigEditor.swift
 //
 // GUI editor for the smartcrab seher configuration. Users edit providers
-// (kind, model, env overrides), priority rules (weight, weekday/hour windows,
+// (kind, model, credentials), priority rules (weight, weekday/hour windows,
 // condition predicate) and defaults (fallback provider, rate-limit backoff).
-// Edits are auto-saved (debounced) via `BunServiceProtocol.settingsSave`;
-// the toolbar shows a live save-status indicator.
+// Credentials are kind-specific: API-key kinds (anthropic / openai) show
+// secure fields; OAuth kinds (copilot / openai-codex) show a credential badge
+// plus a Sign-in button that runs the seher-bridge device-flow / OAuth via
+// `AuthFlowSheet`. Edits are auto-saved (debounced) via
+// `BunServiceProtocol.settingsSave`; the toolbar shows a live save-status
+// indicator.
 
 import SwiftUI
 
@@ -16,6 +20,9 @@ public struct SeherConfigEditor: View {
     @State private var saveStatus: SaveStatus = .idle
     @State private var lastSavedConfig: SeherConfig?
     @State private var saveTask: Task<Void, Never>?
+    /// Keyed by pi canonical provider id (github-copilot / openai-codex / ...).
+    @State private var credentialStatuses: [String: ProviderCredentialStatus] = [:]
+    @State private var bridgeAvailable: Bool = true
 
     private static let autoSaveDebounce: Duration = .milliseconds(500)
 
@@ -46,6 +53,7 @@ public struct SeherConfigEditor: View {
             .background(.bar)
         }
         .task { await load() }
+        .task { await refreshCredentialStatuses() }
         .onChange(of: config) { _, newValue in
             scheduleAutoSave(for: newValue)
         }
@@ -57,7 +65,14 @@ public struct SeherConfigEditor: View {
     private var providersSection: some View {
         Section {
             ForEach($config.providers, id: \.rowKey) { $provider in
-                ProviderRow(provider: $provider)
+                ProviderRow(
+                    provider: $provider,
+                    service: service,
+                    credentialStatuses: credentialStatuses,
+                    bridgeAvailable: bridgeAvailable
+                ) {
+                    Task { await refreshCredentialStatuses() }
+                }
             }
             .onDelete { indices in
                 config.providers.remove(atOffsets: indices)
@@ -163,6 +178,20 @@ public struct SeherConfigEditor: View {
             saveStatus = .failed("Failed to save: \(error.localizedDescription)")
         }
     }
+
+    /// Refresh the per-provider credential badges from pi's auth.json (via
+    /// `auth.credential-status`). Badge data is advisory: a failure just hides
+    /// the badges rather than blocking the editor.
+    private func refreshCredentialStatuses() async {
+        do {
+            let result = try await service.authCredentialStatus()
+            bridgeAvailable = result.bridgeAvailable
+            credentialStatuses = result.providers
+        } catch {
+            bridgeAvailable = false
+            credentialStatuses = [:]
+        }
+    }
 }
 
 // MARK: - Save status (shared with AdapterSettings) -----------------------------
@@ -211,14 +240,34 @@ struct SaveStatusIndicator: View {
 
 private struct ProviderRow: View {
     @Binding var provider: SeherProvider
+    let service: BunServiceProtocol
+    /// Keyed by pi canonical provider id; loaded once by the editor.
+    let credentialStatuses: [String: ProviderCredentialStatus]
+    let bridgeAvailable: Bool
+    /// Invoked after a successful sign-in so the editor refreshes the badges.
+    let onCredentialsChanged: () -> Void
+
     @State private var newEnvKey: String = ""
     @State private var newEnvValue: String = ""
+    @State private var showAuthSheet: Bool = false
 
+    /// All kinds run on the Rust pi engine; the kind picks the pi provider
+    /// (model id prefix) and the credential UI below.
     private static let kinds: [(id: String, label: String)] = [
-        ("anthropic", "Anthropic API compatible"),
+        ("anthropic", "Anthropic API"),
+        ("openai", "OpenAI API compatible"),
         ("copilot", "GitHub Copilot"),
-        ("openai", "OpenAI API compatible (pi.dev)"),
+        ("openai-codex", "OpenAI Codex (ChatGPT)"),
     ]
+
+    /// pi canonical provider id for the current kind (badge lookup).
+    private var piProviderId: String {
+        provider.kind == "copilot" ? "github-copilot" : provider.kind
+    }
+
+    private var usesOAuth: Bool {
+        provider.kind == "copilot" || provider.kind == "openai-codex"
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -234,42 +283,124 @@ private struct ProviderRow: View {
             TextField("model", text: $provider.model)
                 .textFieldStyle(.roundedBorder)
 
-            DisclosureGroup("Env overrides (\(provider.envOverrides.count))") {
-                ForEach(provider.envOverrides.keys.sorted(), id: \.self) { key in
-                    HStack {
-                        Text(key).font(.caption.monospaced())
-                        Spacer()
-                        Text(provider.envOverrides[key] ?? "")
-                            .font(.caption.monospaced())
-                            .foregroundStyle(.secondary)
-                        Button(role: .destructive) {
-                            provider.envOverrides.removeValue(forKey: key)
-                        } label: {
-                            Image(systemName: "minus.circle")
-                        }
-                        .buttonStyle(.borderless)
-                    }
-                }
-                HStack {
-                    TextField("KEY", text: $newEnvKey)
-                        .textFieldStyle(.roundedBorder)
-                    TextField("value", text: $newEnvValue)
-                        .textFieldStyle(.roundedBorder)
-                    Button {
-                        let key = newEnvKey.trimmingCharacters(in: .whitespaces)
-                        guard !key.isEmpty else { return }
-                        provider.envOverrides[key] = newEnvValue
-                        newEnvKey = ""
-                        newEnvValue = ""
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                    }
-                    .buttonStyle(.borderless)
-                    .disabled(newEnvKey.trimmingCharacters(in: .whitespaces).isEmpty)
-                }
+            credentialBody
+
+            DisclosureGroup("Advanced") {
+                envOverridesEditor
             }
         }
         .padding(.vertical, 4)
+        .sheet(isPresented: $showAuthSheet) {
+            AuthFlowSheet(kind: provider.kind, service: service) {
+                onCredentialsChanged()
+            }
+        }
+    }
+
+    // MARK: Credentials (kind-specific) -----------------------------------------
+
+    @ViewBuilder
+    private var credentialBody: some View {
+        switch provider.kind {
+        case "anthropic":
+            SecureField("API key (ANTHROPIC_API_KEY)", text: envBinding("ANTHROPIC_API_KEY"))
+                .textFieldStyle(.roundedBorder)
+        case "openai":
+            SecureField("API key (OPENAI_API_KEY)", text: envBinding("OPENAI_API_KEY"))
+                .textFieldStyle(.roundedBorder)
+            TextField("Endpoint (OPENAI_BASE_URL, optional)", text: envBinding("OPENAI_BASE_URL"))
+                .textFieldStyle(.roundedBorder)
+        case "copilot", "openai-codex":
+            HStack(spacing: 12) {
+                credentialBadge
+                Spacer()
+                Button("Sign in…") { showAuthSheet = true }
+                    .disabled(!bridgeAvailable)
+                    .help(bridgeAvailable
+                        ? "Sign in via \(provider.kind == "copilot" ? "GitHub device flow" : "ChatGPT in the browser")"
+                        : "seher-bridge binary is not available")
+            }
+        default:
+            EmptyView()
+        }
+    }
+
+    /// Badge mapping pi's credential status for this kind's provider. OAuth
+    /// credentials live in pi's auth.json — never in the YAML config.
+    @ViewBuilder
+    private var credentialBadge: some View {
+        let status = credentialStatuses[piProviderId]?.status
+        switch status {
+        case "oauth_valid":
+            Label("Signed in", systemImage: "checkmark.seal.fill")
+                .font(.caption)
+                .foregroundStyle(.green)
+        case "oauth_expired":
+            Label("Expired — sign in again", systemImage: "exclamationmark.triangle.fill")
+                .font(.caption)
+                .foregroundStyle(.orange)
+        case "api_key", "bearer", "aws", "service_key":
+            Label("Credential set", systemImage: "key.fill")
+                .font(.caption)
+                .foregroundStyle(.blue)
+        default:
+            Label("Not signed in", systemImage: "person.crop.circle.badge.questionmark")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    /// Two-way binding into `envOverrides[key]`; setting an empty string
+    /// removes the key so cleared fields don't linger in the saved config.
+    private func envBinding(_ key: String) -> Binding<String> {
+        Binding(
+            get: { provider.envOverrides[key] ?? "" },
+            set: { newValue in
+                if newValue.isEmpty {
+                    provider.envOverrides.removeValue(forKey: key)
+                } else {
+                    provider.envOverrides[key] = newValue
+                }
+            }
+        )
+    }
+
+    // MARK: Advanced env overrides ----------------------------------------------
+
+    @ViewBuilder
+    private var envOverridesEditor: some View {
+        ForEach(provider.envOverrides.keys.sorted(), id: \.self) { key in
+            HStack {
+                Text(key).font(.caption.monospaced())
+                Spacer()
+                Text(provider.envOverrides[key] ?? "")
+                    .font(.caption.monospaced())
+                    .foregroundStyle(.secondary)
+                Button(role: .destructive) {
+                    provider.envOverrides.removeValue(forKey: key)
+                } label: {
+                    Image(systemName: "minus.circle")
+                }
+                .buttonStyle(.borderless)
+            }
+        }
+        HStack {
+            TextField("KEY", text: $newEnvKey)
+                .textFieldStyle(.roundedBorder)
+            TextField("value", text: $newEnvValue)
+                .textFieldStyle(.roundedBorder)
+            Button {
+                let key = newEnvKey.trimmingCharacters(in: .whitespaces)
+                guard !key.isEmpty else { return }
+                provider.envOverrides[key] = newEnvValue
+                newEnvKey = ""
+                newEnvValue = ""
+            } label: {
+                Image(systemName: "plus.circle.fill")
+            }
+            .buttonStyle(.borderless)
+            .disabled(newEnvKey.trimmingCharacters(in: .whitespaces).isEmpty)
+        }
     }
 }
 
