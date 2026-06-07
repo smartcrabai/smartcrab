@@ -42,6 +42,7 @@
 		0D56FC0661BF25DC69D6C32B /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAB26D8BAA01FBE6FC91E4FC /* ChatView.swift */; };
 		E7242A9E2F6E280399402514 /* AdapterSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9232435CD366F4DEED049AB /* AdapterSettings.swift */; };
 		76AF64080A5CA55D05C3211D /* SeherConfigEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 628A33F36716E3360006808C /* SeherConfigEditor.swift */; };
+		AF10AF10AF10AF10AF100002 /* AuthFlowSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF10AF10AF10AF10AF100001 /* AuthFlowSheet.swift */; };
 		2D7A767A28FF7A7F0EF8A168 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CA7130C2605DFC6A7EF260D /* SettingsView.swift */; };
 		F85189E0342274F66D075679 /* EdgeShape.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA180D2A8D18BF2C0BD2CB2 /* EdgeShape.swift */; };
 		2D53007C3CBD8FA05947F981 /* NodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69FF220B4BFC3F8A29D5644F /* NodeView.swift */; };
@@ -62,6 +63,7 @@
 		C85DAB5003C707B552B3B3EF /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAB26D8BAA01FBE6FC91E4FC /* ChatView.swift */; };
 		819EBEB32596E9D4A26C1839 /* AdapterSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9232435CD366F4DEED049AB /* AdapterSettings.swift */; };
 		2462B30858F18D79F2C34386 /* SeherConfigEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 628A33F36716E3360006808C /* SeherConfigEditor.swift */; };
+		AF10AF10AF10AF10AF100003 /* AuthFlowSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF10AF10AF10AF10AF100001 /* AuthFlowSheet.swift */; };
 		58602C0C51859DF7DA1AAC42 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CA7130C2605DFC6A7EF260D /* SettingsView.swift */; };
 		CD2A78E0F922845A2F4C5574 /* EdgeShape.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA180D2A8D18BF2C0BD2CB2 /* EdgeShape.swift */; };
 		E8BD0C3774FF2D6A4CE88ACC /* NodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69FF220B4BFC3F8A29D5644F /* NodeView.swift */; };
@@ -105,6 +107,7 @@
 		EAB26D8BAA01FBE6FC91E4FC /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
 		A9232435CD366F4DEED049AB /* AdapterSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdapterSettings.swift; sourceTree = "<group>"; };
 		628A33F36716E3360006808C /* SeherConfigEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeherConfigEditor.swift; sourceTree = "<group>"; };
+		AF10AF10AF10AF10AF100001 /* AuthFlowSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthFlowSheet.swift; sourceTree = "<group>"; };
 		4CA7130C2605DFC6A7EF260D /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		AAA180D2A8D18BF2C0BD2CB2 /* EdgeShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeShape.swift; sourceTree = "<group>"; };
 		69FF220B4BFC3F8A29D5644F /* NodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NodeView.swift; sourceTree = "<group>"; };
@@ -256,6 +259,7 @@
 			isa = PBXGroup;
 			children = (
 				A9232435CD366F4DEED049AB /* AdapterSettings.swift */,
+				AF10AF10AF10AF10AF100001 /* AuthFlowSheet.swift */,
 				628A33F36716E3360006808C /* SeherConfigEditor.swift */,
 				4CA7130C2605DFC6A7EF260D /* SettingsView.swift */,
 			);
@@ -322,6 +326,7 @@
 				4518F522269DA11BB9ACEBD6 /* ChatComposer.swift in Sources */,
 				0D56FC0661BF25DC69D6C32B /* ChatView.swift in Sources */,
 				E7242A9E2F6E280399402514 /* AdapterSettings.swift in Sources */,
+				AF10AF10AF10AF10AF100002 /* AuthFlowSheet.swift in Sources */,
 				76AF64080A5CA55D05C3211D /* SeherConfigEditor.swift in Sources */,
 				2D7A767A28FF7A7F0EF8A168 /* SettingsView.swift in Sources */,
 				F85189E0342274F66D075679 /* EdgeShape.swift in Sources */,
@@ -356,6 +361,7 @@
 				F4EA1587A3E1E12617264A24 /* ChatComposer.swift in Sources */,
 				C85DAB5003C707B552B3B3EF /* ChatView.swift in Sources */,
 				819EBEB32596E9D4A26C1839 /* AdapterSettings.swift in Sources */,
+				AF10AF10AF10AF10AF100003 /* AuthFlowSheet.swift in Sources */,
 				2462B30858F18D79F2C34386 /* SeherConfigEditor.swift in Sources */,
 				58602C0C51859DF7DA1AAC42 /* SettingsView.swift in Sources */,
 				CD2A78E0F922845A2F4C5574 /* EdgeShape.swift in Sources */,

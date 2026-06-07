@@ -194,6 +194,28 @@
             let _: Result = try await call(method: "settings.app-save", params: Params(config: config))
         }
 
+        // MARK: - Provider authentication
+
+        public func authStart(kind: String) async throws -> AuthStartResult {
+            struct Params: Encodable, Sendable { let kind: String }
+            return try await call(method: "auth.start", params: Params(kind: kind))
+        }
+
+        public func authStatus(sessionId: String) async throws -> AuthSessionStatus {
+            struct Params: Encodable, Sendable { let sessionId: String }
+            return try await call(method: "auth.status", params: Params(sessionId: sessionId))
+        }
+
+        public func authCancel(sessionId: String) async throws {
+            struct Params: Encodable, Sendable { let sessionId: String }
+            struct Result: Decodable, Sendable { let cancelled: Bool }
+            let _: Result = try await call(method: "auth.cancel", params: Params(sessionId: sessionId))
+        }
+
+        public func authCredentialStatus() async throws -> CredentialStatusResult {
+            try await call(method: "auth.credential-status", params: EmptyParams())
+        }
+
         // MARK: - Adapters
 
         public func adapterLoad(adapterId: String) async throws -> DiscordAdapterConfig {
