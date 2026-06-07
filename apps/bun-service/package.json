@@ -21,7 +21,6 @@
     "bun-types": "latest"
   },
   "optionalDependencies": {
-    "@seher-ts/sdk": "^0.1.19",
     "@earendil-works/pi-coding-agent": "^0.78.0",
     "@smartcrab/ipc-protocol": "*",
     "@smartcrab/seher-config-schema": "*"
