@@ -38,9 +38,11 @@ function toSdkKind(_kind: string): string {
  *
  * The api section is optional: when omitted, the Rust bridge falls back to the
  * process environment for credentials.
- * - openai:    OPENAI_API_KEY -> api.key, OPENAI_BASE_URL -> api.endpoint
- * - anthropic: ANTHROPIC_API_KEY -> api.key
- * - copilot:   GITHUB_COPILOT_API_KEY (preferred) or GITHUB_TOKEN -> api.key
+ * - openai:       OPENAI_API_KEY -> api.key, OPENAI_BASE_URL -> api.endpoint
+ * - anthropic:    ANTHROPIC_API_KEY -> api.key
+ * - copilot:      GITHUB_COPILOT_API_KEY (preferred) or GITHUB_TOKEN -> api.key
+ * - openai-codex: no env mapping -- pi_agent_rust has no env keys for this
+ *   provider; credentials come from pi's auth.json (OAuth login) only.
  */
 function buildApi(
   kind: string,
@@ -71,18 +73,20 @@ function buildApi(
  * Format model id with the pi_agent_rust provider prefix matching the kind.
  * A model id that already contains a `/` is treated as fully-qualified and
  * passed through unchanged.
- * - anthropic -> anthropic/<model>
- * - copilot   -> github-copilot/<model>
- * - openai    -> openai/<model>
+ * - anthropic    -> anthropic/<model>
+ * - copilot      -> github-copilot/<model>
+ * - openai       -> openai/<model>
+ * - openai-codex -> openai-codex/<model>
  */
 function buildModelId(kind: string, model?: string): string | undefined {
   if (model === undefined) return undefined;
   if (model.includes("/")) return model;
   switch (kind) {
-    case "anthropic": return `anthropic/${model}`;
-    case "copilot":   return `github-copilot/${model}`;
-    case "openai":    return `openai/${model}`;
-    default:          return model;
+    case "anthropic":    return `anthropic/${model}`;
+    case "copilot":      return `github-copilot/${model}`;
+    case "openai":       return `openai/${model}`;
+    case "openai-codex": return `openai-codex/${model}`;
+    default:             return model;
   }
 }
 
