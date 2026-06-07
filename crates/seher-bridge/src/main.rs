@@ -1,11 +1,16 @@
 //! `seher-bridge`: a Rust sidecar that runs one LLM prompt through the seher SDK
 //! and speaks the NDJSON stdio protocol with the bun-service.
 //!
-//! Lifecycle: spawned once per request. Reads a single `run` frame from stdin,
-//! resolves a provider via seher, runs the prompt on pi, and emits exactly one
-//! terminal frame (`done` / `limit` / `error`) before exiting (0 on `done`,
-//! non-zero otherwise). stdout carries protocol frames only; logs go to stderr.
+//! Run mode (no argv): spawned once per request. Reads a single `run` frame
+//! from stdin, resolves a provider via seher, runs the prompt on pi, and emits
+//! exactly one terminal frame (`done` / `limit` / `error`) before exiting (0 on
+//! `done`, non-zero otherwise). stdout carries protocol frames only; logs go to
+//! stderr.
+//!
+//! Auth mode (`seher-bridge auth ...`): provider login (device flow / OAuth)
+//! and credential status — see `auth.rs`.
 
+mod auth;
 mod io;
 mod protocol;
 
@@ -28,6 +33,13 @@ use crate::io::{
 use crate::protocol::{Incoming, Outgoing, RunRequest};
 
 fn main() {
+    // `auth` subcommand; anything else (including no args) is run mode, so the
+    // bun router's plain `spawn([bridgePath])` keeps working unchanged.
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.first().map(String::as_str) == Some("auth") {
+        std::process::exit(auth::run_auth(&args[1..]));
+    }
+
     let writer = Arc::new(FrameWriter::new(stdout()));
     let exit_code = run(&writer);
     std::process::exit(exit_code);

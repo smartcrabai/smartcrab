@@ -100,6 +100,48 @@ impl Outgoing {
     }
 }
 
+/// Frames emitted by the `auth` subcommand (bridge -> bun over stdout).
+///
+/// `auth login` emits exactly one progress frame (`device_code` or `oauth_url`)
+/// followed by exactly one terminal frame (`auth_done` => exit 0, `auth_error`
+/// => non-zero). `auth status` emits one `auth_status` per requested provider
+/// and exits 0.
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum AuthEvent {
+    /// Device-flow start (RFC 8628): show `userCode`, open the URI, then the
+    /// bridge polls until the user authorizes.
+    #[serde(rename_all = "camelCase")]
+    DeviceCode {
+        user_code: String,
+        verification_uri: String,
+        /// URI with the code pre-filled; falls back to `verification_uri`.
+        verification_uri_complete: String,
+        expires_in: u64,
+        interval: u64,
+    },
+    /// Browser OAuth start (PKCE): open `url`; the bridge listens for the
+    /// localhost callback on `port`.
+    #[serde(rename_all = "camelCase")]
+    OauthUrl { url: String, port: u16 },
+    /// Terminal: credential persisted to pi's auth.json.
+    AuthDone { provider: String },
+    /// Terminal: the login flow failed.
+    AuthError { message: String },
+    /// One per provider requested via `auth status`. `status` mirrors pi's
+    /// `CredentialStatus`: none | api_key | oauth_valid | oauth_expired |
+    /// bearer | aws | service_key.
+    #[serde(rename_all = "camelCase")]
+    AuthStatus {
+        provider: String,
+        status: &'static str,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        expires_in_ms: Option<i64>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        expired_by_ms: Option<i64>,
+    },
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -181,6 +223,76 @@ mod tests {
             r#"{"type":"done","text":"hello","kind":"pi","sessionId":"sess-1"}"#
         );
         assert!(frame.is_success());
+    }
+
+    #[test]
+    fn serializes_device_code_frame_with_camel_case_fields() {
+        let frame = AuthEvent::DeviceCode {
+            user_code: "WDJB-MJHT".to_string(),
+            verification_uri: "https://github.com/login/device".to_string(),
+            verification_uri_complete: "https://github.com/login/device?user_code=WDJB-MJHT"
+                .to_string(),
+            expires_in: 899,
+            interval: 5,
+        };
+        assert_eq!(
+            serde_json::to_string(&frame).expect("serialize"),
+            r#"{"type":"device_code","userCode":"WDJB-MJHT","verificationUri":"https://github.com/login/device","verificationUriComplete":"https://github.com/login/device?user_code=WDJB-MJHT","expiresIn":899,"interval":5}"#
+        );
+    }
+
+    #[test]
+    fn serializes_oauth_url_frame() {
+        let frame = AuthEvent::OauthUrl {
+            url: "https://auth.openai.com/oauth/authorize?x=1".to_string(),
+            port: 1455,
+        };
+        assert_eq!(
+            serde_json::to_string(&frame).expect("serialize"),
+            r#"{"type":"oauth_url","url":"https://auth.openai.com/oauth/authorize?x=1","port":1455}"#
+        );
+    }
+
+    #[test]
+    fn serializes_auth_terminal_frames() {
+        let done = AuthEvent::AuthDone {
+            provider: "github-copilot".to_string(),
+        };
+        assert_eq!(
+            serde_json::to_string(&done).expect("serialize"),
+            r#"{"type":"auth_done","provider":"github-copilot"}"#
+        );
+        let err = AuthEvent::AuthError {
+            message: "denied".to_string(),
+        };
+        assert_eq!(
+            serde_json::to_string(&err).expect("serialize"),
+            r#"{"type":"auth_error","message":"denied"}"#
+        );
+    }
+
+    #[test]
+    fn serializes_auth_status_frames_omitting_absent_expiries() {
+        let valid = AuthEvent::AuthStatus {
+            provider: "github-copilot".to_string(),
+            status: "oauth_valid",
+            expires_in_ms: Some(3_500_000),
+            expired_by_ms: None,
+        };
+        assert_eq!(
+            serde_json::to_string(&valid).expect("serialize"),
+            r#"{"type":"auth_status","provider":"github-copilot","status":"oauth_valid","expiresInMs":3500000}"#
+        );
+        let none = AuthEvent::AuthStatus {
+            provider: "openai-codex".to_string(),
+            status: "none",
+            expires_in_ms: None,
+            expired_by_ms: None,
+        };
+        assert_eq!(
+            serde_json::to_string(&none).expect("serialize"),
+            r#"{"type":"auth_status","provider":"openai-codex","status":"none"}"#
+        );
     }
 
     #[test]
