@@ -68,7 +68,7 @@ Adapters live under `src/adapters/<kind>/<name>/index.ts` and **self-register** 
 
 Currently shipped:
 
-- **LLM adapters**: `claude`, `copilot` (each wraps its respective agent SDK). openai is handled through `@seher-ts/sdk`'s `sdk: "pi"` path backed by `@earendil-works/pi-coding-agent` — no standalone adapter module.
+- **LLM adapters**: `claude`, `copilot` (each wraps its respective agent SDK) back the **registry fallback** path only. The primary path no longer uses these adapters: all providers — Anthropic, Copilot, and OpenAI — are resolved and executed by the `seher-bridge` Rust binary on the Rust `pi` engine (`sdk: pi` for every provider). There is no standalone openai adapter module.
 - **Chat adapters**: `discord` (uses `discord.js` and reads its config out of the `chat_adapter_config` SQLite row that the Settings tab writes).
 
 ## Startup sequence
@@ -77,10 +77,10 @@ When the user launches `SmartCrab.app`:
 
 1. **SwiftUI side** — `SmartCrabApp` instantiates `BunServiceContainer`, which calls `service.start()` from a `.task` modifier on the root window. macOS spawns the bundled `smartcrab-service` binary with the inherited login-shell `PATH`.
 2. **Bun side — DB**: `openDb()` opens the SQLite file at `$XDG_DATA_HOME/smartcrab/smartcrab.db` (defaults to `~/.local/share/smartcrab/smartcrab.db`; sandboxed under `~/Library/Containers/<bundle-id>/Data/.local/share/smartcrab/smartcrab.db` for the GUI app), sets `journal_mode=WAL` and `foreign_keys=ON`, then runs every pending migration in `db/migrations/000-init.sql` … `005-memory-realign.sql` inside one transaction each. Migrations are embedded into the binary via `import "..." with { type: "text" }`, so no filesystem is required.
-3. **Bun side — Pipeline + settings**: `configurePipelineCommands` injects the `SqlitePipelineDatabase` and an `ExecutorDeps` whose `llmRegistry` maps every provider id (`seher`, `default`, `claude`, `copilot`, `codex`) to a single bridge that routes through `router.ts`. The actual provider is chosen by seher-ts at run time. `configureSettingsCommands` is wired similarly.
+3. **Bun side — Pipeline + settings**: `configurePipelineCommands` injects the `SqlitePipelineDatabase` and an `ExecutorDeps` whose `llmRegistry` maps every provider id (`seher`, `default`, `claude`, `copilot`, `codex`) to a single bridge that routes through `router.ts`. The actual provider is chosen by the `seher-bridge` Rust binary at run time (each `route()` call spawns the bridge and talks to it over NDJSON on stdio). `configureSettingsCommands` is wired similarly.
 4. **Bun side — Cron**: `setCronStore(SqliteCronStore)` is wired, the per-job callback factory is set to "mark run, then call `pipeline.execute`", and `bootstrapCronRunner` reads every `is_active=true` row from `cron_jobs` and re-arms it on the in-memory `CronScheduler`. Scheduling on startup is what makes cron **survive process restarts**.
 5. **Bun side — Skills + chat-bubble + Discord**: `SkillsRegistry` is hydrated from the `skills` table. `chat-bubble.commands` and the `discord` adapter loader are imported dynamically (top-level static imports would cause circular initialization through the `llmRegistry` proxy).
-6. **Bun side — Memory + learn loop**: `rebindSharedToDb(db)` switches the singleton `MemoryStore` from its in-memory default onto the on-disk schema. `configureMemorySummarizer` is wired with a seher-backed completion function. A `setInterval` fires `runLearnLoop` every 30 minutes — see [memory-and-skills](/design/memory-and-skills/).
+6. **Bun side — Memory + learn loop**: `rebindSharedToDb(db)` switches the singleton `MemoryStore` from its in-memory default onto the on-disk schema. `configureMemorySummarizer` is wired with a completion function backed by the same `seher-bridge` router. A `setInterval` fires `runLearnLoop` every 30 minutes — see [memory-and-skills](/design/memory-and-skills/).
 7. **Bun side — Adapter side-effects**: `await ensureAdaptersLoaded()` triggers the LLM and chat adapter modules to self-register.
 8. **Bun side — IO loop**: the server enters its `for await (const chunk of stdin)` loop and is ready to serve requests.
 

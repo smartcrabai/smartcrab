@@ -248,7 +248,7 @@ result: { ok: true }
 
 ## chat (bubble UI)
 
-The bubble methods power the SwiftUI Chat tab. They route through `router.ts` (seher-ts) and persist to the `chat_bubbles` table.
+The bubble methods power the SwiftUI Chat tab. They route through `router.ts` (which spawns the `seher-bridge` Rust binary) and persist to the `chat_bubbles` table.
 
 ### chat.bubble-history
 

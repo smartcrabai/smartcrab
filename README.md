@@ -6,17 +6,17 @@ SmartCrab is a framework implementing the Tool-to-AI paradigm — a macOS deskto
 
 - **YAML pipeline engine** — Directed graph of nodes with conditional branches, parallel siblings, and fan-in. Authored visually in the SwiftUI editor or by hand.
 - **Tool-to-AI execution model** — Non-AI work (HTTP, shell, chat events) runs first; `MatchCondition` branches decide whether to escalate to an `llm_call`.
-- **Multi-agent LLM routing** — `llm_call` nodes and chat replies are dispatched through [`@seher-ts/sdk`](https://www.npmjs.com/package/@seher-ts/sdk), which picks the highest-priority available agent at runtime based on user-defined priorities, time windows (weekday × hour), and rate-limit state. SmartCrab supports four provider kinds:
+- **Multi-agent LLM routing** — `llm_call` nodes and chat replies are dispatched through the **`seher-bridge`** binary, a Rust process built from the [`seher`](https://github.com/smartcrabai/seher) crate and bundled in the `.app`. It picks the highest-priority available agent at runtime based on user-defined priorities, time windows (weekday × hour), and rate-limit state, then runs the prompt in-process on the Rust `pi` engine. SmartCrab supports three provider kinds, all driven by the pi engine:
 
-  | SmartCrab `kind` | UI label | Underlying SDK | Notes |
+  | SmartCrab `kind` | UI label | Model prefix | API key env override |
   |---|---|---|---|
-  | `anthropic` | Anthropic API-compatible | [`@anthropic-ai/claude-agent-sdk`](https://www.npmjs.com/package/@anthropic-ai/claude-agent-sdk) | Set `ANTHROPIC_BASE_URL` to redirect to compatible endpoints such as Bedrock / Vertex / OpenRouter |
-  | `copilot`   | GitHub Copilot     | [`@github/copilot-sdk`](https://www.npmjs.com/package/@github/copilot-sdk) | |
-  | `openai`    | OpenAI API-compatible | [`@earendil-works/pi-coding-agent`](https://www.npmjs.com/package/@earendil-works/pi-coding-agent) | Connects to OpenAI / OpenRouter / vLLM / LM Studio etc. Override with `OPENAI_API_KEY` / `OPENAI_BASE_URL` |
+  | `anthropic` | Anthropic API-compatible | `anthropic/<model>` | `ANTHROPIC_API_KEY` |
+  | `copilot`   | GitHub Copilot     | `github-copilot/<model>` | `GITHUB_COPILOT_API_KEY` / `GITHUB_TOKEN` |
+  | `openai`    | OpenAI API-compatible | `openai/<model>` | `OPENAI_API_KEY` |
 
   The same router backs the chat tab, pipeline `llm_call` nodes, skill invocation, and the memory summarizer — so routing rules apply uniformly across every code path that reaches an LLM.
 
-- **In-process tool use** — Custom tools (e.g. "what's my current Smartcrab config?") are forwarded to the chosen agent in-process via Seher's `SeherTool` (Zod-shaped). Tools work for `anthropic` / `copilot`; Seher's auto-resolution skips agents whose underlying SDK cannot carry tools.
+- **In-process tool use** — Custom tools (e.g. "what's my current Smartcrab config?") are forwarded to the chosen agent through the bridge as JSON Schema definitions, executed via a `tool_call` ⇄ `tool_result` NDJSON round-trip back to the TypeScript handler. The Rust pi engine supports tools for **every** provider.
 - **Triggers** — Cron schedules and Discord chat events kick off pipelines. New triggers and chat backends plug in via a self-registering adapter registry.
 - **Node actions** — `shell_command`, `http_request`, `llm_call`, and `chat_send`, composable in a single pipeline.
 - **Self-learning loop** — FTS5-backed memory of chat turns and execution traces, summarized every 30 minutes; recurring patterns are distilled into reusable Markdown skills automatically.
@@ -28,11 +28,12 @@ SmartCrab is a framework implementing the Tool-to-AI paradigm — a macOS deskto
 
 - **Frontend**: SwiftUI macOS app (`apps/macos/`). The same Xcode project also produces an iOS Simulator preview target where the service layer is mocked, used purely for UI verification.
 - **Service**: Bun TypeScript service (`apps/bun-service/`) compiled to a single binary via `bun build --compile` and bundled inside the `.app` as `Resources/smartcrab-service`.
+- **LLM bridge**: Rust crate (`crates/seher-bridge/`, git-depends on `seher-sdk`) built with `cargo build --release` into a `seher-bridge` binary, bundled in the `.app`'s `Contents/Resources/` next to `smartcrab-service`.
 - **IPC**: Line-delimited JSON-RPC 2.0 over stdin/stdout between the SwiftUI host process and the Bun service child process.
 - **Shared packages** (`packages/`):
   - `ipc-protocol` — JSON-RPC method types + adapter interfaces.
-  - `seher-config-schema` — SmartCrab provider configuration shape and translator to [`seher-ts`](https://github.com/smartcrabai/seher-ts) router settings.
-- **LLM routing**: All `llm_call` nodes and chat sends go through [`seher-ts`](https://github.com/smartcrabai/seher-ts), which resolves the highest-priority available coding agent (Claude Code / GitHub Copilot / pi.dev) based on the user's settings.
+  - `seher-config-schema` — SmartCrab provider configuration shape and translator to the [`seher`](https://github.com/smartcrabai/seher) router config (`seher-config.yaml`).
+- **LLM routing**: All `llm_call` nodes and chat sends go through the `seher-bridge` Rust binary (built from [`seher`](https://github.com/smartcrabai/seher) and bundled in the `.app` alongside `smartcrab-service`), which resolves the highest-priority available coding agent (Anthropic / GitHub Copilot / OpenAI) based on the user's settings and runs it on the Rust `pi` engine. The Bun service talks to the bridge over NDJSON on stdio. See [docs/content/design/llm-routing.md](docs/content/design/llm-routing.md).
 - **Chat adapters**: Discord, registered via a self-registering adapter registry.
 - **Self-learning**: FTS5-backed memory + 30-minute summarization loop and skill auto-generation, inspired by `hermes-agent`.
 

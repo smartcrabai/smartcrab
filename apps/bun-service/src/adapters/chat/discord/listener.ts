@@ -35,7 +35,7 @@ export type DiscordMessageHandler = (
 ) => Promise<string | void | null> | string | void | null;
 
 export interface AttachListenerOptions {
-  /** Custom handler. Defaults to LLM-routing via the seher-ts `route()`. */
+  /** Custom handler. Defaults to LLM-routing via the seher-bridge `route()`. */
   handler?: DiscordMessageHandler;
   /**
    * If true, messages authored by bots (including the adapter itself) are
@@ -55,12 +55,12 @@ export interface AttachListenerOptions {
 }
 
 /**
- * Default routing: send the DM body through the same seher-ts router the
+ * Default routing: send the DM body through the same seher-bridge router the
  * in-app chat bubble uses. Going through `route()` (vs. talking to
  * `llmRegistry.default()` directly) means Discord inherits the user's
- * configured agent resolution -- Claude Agent SDK / Copilot / pi-coding-agent
- * -- instead of unconditionally spawning the Claude Code CLI which fails
- * silently when run inside the macOS app sandbox.
+ * configured agent resolution -- Anthropic / Copilot / OpenAI on the Rust pi
+ * engine -- instead of unconditionally spawning the Claude Code CLI which
+ * fails silently when run inside the macOS app sandbox.
  */
 export const defaultLlmHandler: DiscordMessageHandler = async (message) => {
   const result = await route({ prompt: message.content });
