@@ -15,7 +15,7 @@ import {
 function makeConfig(
   providers: Array<{
     id: string;
-    kind: "anthropic" | "copilot" | "openai";
+    kind: "anthropic" | "copilot" | "openai" | "openai-codex";
     model?: string;
     envOverrides?: Record<string, string>;
   }>,
@@ -68,6 +68,26 @@ describe("translateToSeherConfig", () => {
       provider: "openai",
       sdk: "pi",
       models: { build: { model: "openai/gpt-4o" } },
+    });
+  });
+
+  test("openai-codex provider → sdk: pi, openai-codex/ prefix, no api", () => {
+    const result = translateToSeherConfig(
+      makeConfig([
+        {
+          id: "my-codex",
+          kind: "openai-codex",
+          model: "gpt-5-codex",
+          // openai-codex has no env keys in pi_agent_rust: credentials come
+          // from pi's auth.json (OAuth login) only, so this must be ignored.
+          envOverrides: { OPENAI_API_KEY: "sk-ignored" },
+        },
+      ]),
+    );
+    expect(result.providers["my-codex"]).toEqual({
+      provider: "openai-codex",
+      sdk: "pi",
+      models: { build: { model: "openai-codex/gpt-5-codex" } },
     });
   });
 
