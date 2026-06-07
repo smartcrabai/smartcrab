@@ -19,7 +19,7 @@ memory.summarize  ──┘        │                                    NotLim
                       or the bridge process fails)
 ```
 
-The Rust bridge replaces the old npm dependency `@seher-ts/sdk`. The TypeScript router no longer imports any Seher SDK; it talks to the bridge over **NDJSON on stdio** instead.
+The TypeScript router does not import any Seher SDK; it talks to the bridge over **NDJSON on stdio** instead.
 
 ## Why one router, not many
 
@@ -110,7 +110,7 @@ Each provider becomes one key in seher's `providers` map with:
 
 Every provider — Anthropic, GitHub Copilot, and OpenAI — is driven by the Rust `pi` engine (`pi_agent_rust`). There is no separate per-provider SDK wrapper and no Kimi CLI path.
 
-**Tools work for every provider.** The old `@seher-ts/sdk` pi (OpenAI) path could not carry in-process tools, so `SeherTool` definitions were silently stripped when OpenAI was the active provider. The Rust pi engine supports tools across **all** providers, so tool round-trips work uniformly regardless of which agent `resolve_agent` selects.
+**Tools work for every provider.** The Rust pi engine supports tools across **all** providers, so tool round-trips work uniformly regardless of which agent `resolve_agent` selects.
 
 ### API key handling
 

@@ -16,7 +16,7 @@ SmartCrab is a framework implementing the Tool-to-AI paradigm — a macOS deskto
 
   The same router backs the chat tab, pipeline `llm_call` nodes, skill invocation, and the memory summarizer — so routing rules apply uniformly across every code path that reaches an LLM.
 
-- **In-process tool use** — Custom tools (e.g. "what's my current Smartcrab config?") are forwarded to the chosen agent through the bridge as JSON Schema definitions, executed via a `tool_call` ⇄ `tool_result` NDJSON round-trip back to the TypeScript handler. The Rust pi engine supports tools for **every** provider (the old `@seher-ts/sdk` pi path could not carry tools for OpenAI; that limitation is gone).
+- **In-process tool use** — Custom tools (e.g. "what's my current Smartcrab config?") are forwarded to the chosen agent through the bridge as JSON Schema definitions, executed via a `tool_call` ⇄ `tool_result` NDJSON round-trip back to the TypeScript handler. The Rust pi engine supports tools for **every** provider.
 - **Triggers** — Cron schedules and Discord chat events kick off pipelines. New triggers and chat backends plug in via a self-registering adapter registry.
 - **Node actions** — `shell_command`, `http_request`, `llm_call`, and `chat_send`, composable in a single pipeline.
 - **Self-learning loop** — FTS5-backed memory of chat turns and execution traces, summarized every 30 minutes; recurring patterns are distilled into reusable Markdown skills automatically.

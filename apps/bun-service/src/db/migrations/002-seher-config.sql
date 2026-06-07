@@ -1,4 +1,4 @@
--- Singleton config row for seher-ts router settings (id is fixed to 1).
+-- Singleton config row for seher router settings (id is fixed to 1).
 
 CREATE TABLE IF NOT EXISTS seher_config (
     id INTEGER PRIMARY KEY CHECK (id = 1),

@@ -67,8 +67,8 @@ const handlers = {
     db.query(
       "INSERT INTO seher_config (id, config_json, updated_at) VALUES (1, ?1, ?2) ON CONFLICT(id) DO UPDATE SET config_json = excluded.config_json, updated_at = excluded.updated_at",
     ).run(json, now);
-    // Mirror the saved config out to a seher-ts-compatible config.yaml so
-    // `router.ts`'s SeherSDK reads it on the next chat.bubble-send.
+    // Mirror the saved config out to a seher-compatible config.yaml so
+    // the seher-bridge reads it on the next chat.bubble-send.
     try {
       writeSeherConfig(config, seherConfigPath);
     } catch (err) {
