@@ -1,0 +1,17 @@
+[package]
+name = "seher-bridge"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+publish = false
+
+[dependencies]
+# The seher repo publishes the SDK as package `seher-sdk` (lib name `seher`);
+# rename it back to `seher` so `use seher::sdk::...` works.
+seher = { package = "seher-sdk", git = "https://github.com/smartcrabai/seher", tag = "v0.0.39" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1", features = ["rt", "macros"] }
+
+[dev-dependencies]
+tempfile = "3"

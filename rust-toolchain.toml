@@ -1,0 +1,5 @@
+[toolchain]
+# Edition 2024 requires Rust >= 1.85; pin a recent stable so all contributors
+# and CI resolve the same compiler.
+channel = "1.90.0"
+components = ["rustfmt", "clippy"]
