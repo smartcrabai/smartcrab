@@ -95,7 +95,8 @@ describe("writeSeherConfig via settings handler (with isolated path)", () => {
     const cfg = makeConfig([{ id: "claude", kind: "anthropic", model: "claude-3" }]);
     writeSeherConfig(cfg, configPath);
     const raw = readFileSync(configPath, "utf8");
-    expect(raw).toContain("sdk: claude");
+    expect(raw).toContain("sdk: pi");
+    expect(raw).toContain("anthropic/claude-3");
   });
 
   test("does not write KIMI_SHARE_DIR into YAML", () => {

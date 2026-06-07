@@ -38,25 +38,25 @@ function makeConfig(
 }
 
 describe("translateToSeherConfig", () => {
-  test("anthropic provider → sdk: claude, provider: anthropic", () => {
+  test("anthropic provider → sdk: pi, provider: anthropic", () => {
     const result = translateToSeherConfig(
       makeConfig([{ id: "my-claude", kind: "anthropic", model: "claude-sonnet" }]),
     );
     expect(result.providers["my-claude"]).toEqual({
       provider: "anthropic",
-      sdk: "claude",
-      models: { build: { model: "claude-sonnet" } },
+      sdk: "pi",
+      models: { build: { model: "anthropic/claude-sonnet" } },
     });
   });
 
-  test("copilot provider → sdk: copilot, provider: copilot", () => {
+  test("copilot provider → sdk: pi, provider: copilot", () => {
     const result = translateToSeherConfig(
       makeConfig([{ id: "my-copilot", kind: "copilot", model: "gpt-4o" }]),
     );
     expect(result.providers["my-copilot"]).toEqual({
       provider: "copilot",
-      sdk: "copilot",
-      models: { build: { model: "gpt-4o" } },
+      sdk: "pi",
+      models: { build: { model: "github-copilot/gpt-4o" } },
     });
   });
 
@@ -124,7 +124,7 @@ describe("translateToSeherConfig", () => {
     });
   });
 
-  test("anthropic env overrides do NOT produce api section (only openai)", () => {
+  test("anthropic ANTHROPIC_API_KEY env override maps to api.key", () => {
     const result = translateToSeherConfig(
       makeConfig([{
         id: "my-claude",
@@ -132,7 +132,29 @@ describe("translateToSeherConfig", () => {
         envOverrides: { ANTHROPIC_API_KEY: "sk-ant" },
       }]),
     );
-    expect(result.providers["my-claude"]!.api).toBeUndefined();
+    expect(result.providers["my-claude"]!.api).toEqual({ key: "sk-ant" });
+  });
+
+  test("copilot GITHUB_COPILOT_API_KEY env override maps to api.key", () => {
+    const result = translateToSeherConfig(
+      makeConfig([{
+        id: "my-copilot",
+        kind: "copilot",
+        envOverrides: { GITHUB_COPILOT_API_KEY: "ghp-copilot" },
+      }]),
+    );
+    expect(result.providers["my-copilot"]!.api).toEqual({ key: "ghp-copilot" });
+  });
+
+  test("copilot falls back to GITHUB_TOKEN for api.key", () => {
+    const result = translateToSeherConfig(
+      makeConfig([{
+        id: "my-copilot",
+        kind: "copilot",
+        envOverrides: { GITHUB_TOKEN: "ghp-token" },
+      }]),
+    );
+    expect(result.providers["my-copilot"]!.api).toEqual({ key: "ghp-token" });
   });
 
   test("priority weight maps to per-provider priority", () => {
@@ -171,9 +193,11 @@ describe("translateToSeherConfig", () => {
       { id: "c2", kind: "openai", model: "gpt-4o" },
       { id: "c3", kind: "copilot" },
     ]));
-    expect(result.providers["c1"]!.sdk).toBe("claude");
+    expect(result.providers["c1"]!.sdk).toBe("pi");
     expect(result.providers["c2"]!.sdk).toBe("pi");
-    expect(result.providers["c3"]!.sdk).toBe("copilot");
+    expect(result.providers["c3"]!.sdk).toBe("pi");
+    expect(result.providers["c1"]!.models.build!.model).toBe("anthropic/claude-3");
+    expect(result.providers["c2"]!.models.build!.model).toBe("openai/gpt-4o");
     expect(Object.keys(result.providers)).toHaveLength(3);
   });
 });
@@ -205,8 +229,8 @@ describe("writeSeherConfig", () => {
     writeSeherConfig(cfg);
     expect(existsSync(configPath)).toBe(true);
     const parsed = readParsed();
-    expect(parsed.providers.main.sdk).toBe("claude");
-    expect(parsed.providers.main.models.build.model).toBe("claude-3");
+    expect(parsed.providers.main.sdk).toBe("pi");
+    expect(parsed.providers.main.models.build.model).toBe("anthropic/claude-3");
   });
 
   test("output file extension is .yaml", () => {
@@ -274,7 +298,8 @@ describe("writeSeherConfig", () => {
     writeSeherConfig(cfg);
     const parsed = readParsed();
     expect(Object.keys(parsed.providers)).toHaveLength(2);
-    expect(parsed.providers["claude-prod"].sdk).toBe("claude");
+    expect(parsed.providers["claude-prod"].sdk).toBe("pi");
+    expect(parsed.providers["claude-prod"].models.build.model).toBe("anthropic/claude-sonnet");
     expect(parsed.providers["openai-prod"].sdk).toBe("pi");
     expect(parsed.providers["openai-prod"].api.key).toBe("sk-test");
   });

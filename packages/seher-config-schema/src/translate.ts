@@ -1,6 +1,11 @@
 /**
  * Pure translation from the smartcrab-specific configuration into the
- * seher-ts `config.yaml` shape (providers map, seher-ts 0.1.13+).
+ * seher `config.yaml` shape (providers map).
+ *
+ * All providers are driven by the `pi` SDK (pi_agent_rust in-process
+ * execution); the Rust seher loader only supports `pi`. The provider kind is
+ * therefore encoded into the model id prefix (e.g. `anthropic/<model>`,
+ * `github-copilot/<model>`, `openai/<model>`) rather than the SDK kind.
  *
  * Performs no network calls, file I/O, or global-state access, so unit tests
  * reduce to golden comparisons.
@@ -17,44 +22,81 @@ import type {
   SeherProviderEntry,
 } from "./seher-shape.ts";
 
-/** Maps a SmartCrab ProviderKind to the seher-ts SDK kind. */
-function toSdkKind(kind: string): string {
-  switch (kind) {
-    case "anthropic": return "claude";
-    case "copilot":   return "copilot";
-    case "openai":    return "pi";
-    default:          return kind;
-  }
-}
-
-/** Build api section from env overrides (OPENAI_API_KEY / OPENAI_BASE_URL). */
-function buildApi(envOverrides?: Readonly<Record<string, string>>): SeherApi | undefined {
-  if (!envOverrides) return undefined;
-  const api: SeherApi = {};
-  if (envOverrides.OPENAI_API_KEY) api.key = envOverrides.OPENAI_API_KEY;
-  if (envOverrides.OPENAI_BASE_URL) api.endpoint = envOverrides.OPENAI_BASE_URL;
-  return Object.keys(api).length > 0 ? api : undefined;
-}
-
-/** Format model id: pi-based providers need "openai/<model>" prefix. */
-function buildModelId(kind: string, model?: string): string | undefined {
-  if (model === undefined) return undefined;
-  if (kind === "openai" && !model.includes("/")) {
-    return `openai/${model}`;
-  }
-  return model;
+/**
+ * Maps a SmartCrab ProviderKind to the seher SDK kind.
+ *
+ * Every kind resolves to `pi`: the Rust seher loader only supports the `pi`
+ * SDK (pi_agent_rust in-process execution), which natively handles the
+ * anthropic / github-copilot / openai providers via the model id prefix.
+ */
+function toSdkKind(_kind: string): string {
+  return "pi";
 }
 
 /**
- * Pure translation from a smartcrab configuration into the seher-ts
+ * Build api section from env overrides, keyed by provider kind.
+ *
+ * The api section is optional: when omitted, the Rust bridge falls back to the
+ * process environment for credentials.
+ * - openai:    OPENAI_API_KEY -> api.key, OPENAI_BASE_URL -> api.endpoint
+ * - anthropic: ANTHROPIC_API_KEY -> api.key
+ * - copilot:   GITHUB_COPILOT_API_KEY (preferred) or GITHUB_TOKEN -> api.key
+ */
+function buildApi(
+  kind: string,
+  envOverrides?: Readonly<Record<string, string>>,
+): SeherApi | undefined {
+  if (!envOverrides) return undefined;
+  const api: SeherApi = {};
+  switch (kind) {
+    case "openai":
+      if (envOverrides.OPENAI_API_KEY) api.key = envOverrides.OPENAI_API_KEY;
+      if (envOverrides.OPENAI_BASE_URL) api.endpoint = envOverrides.OPENAI_BASE_URL;
+      break;
+    case "anthropic":
+      if (envOverrides.ANTHROPIC_API_KEY) api.key = envOverrides.ANTHROPIC_API_KEY;
+      break;
+    case "copilot": {
+      const key = envOverrides.GITHUB_COPILOT_API_KEY ?? envOverrides.GITHUB_TOKEN;
+      if (key) api.key = key;
+      break;
+    }
+    default:
+      break;
+  }
+  return Object.keys(api).length > 0 ? api : undefined;
+}
+
+/**
+ * Format model id with the pi_agent_rust provider prefix matching the kind.
+ * A model id that already contains a `/` is treated as fully-qualified and
+ * passed through unchanged.
+ * - anthropic -> anthropic/<model>
+ * - copilot   -> github-copilot/<model>
+ * - openai    -> openai/<model>
+ */
+function buildModelId(kind: string, model?: string): string | undefined {
+  if (model === undefined) return undefined;
+  if (model.includes("/")) return model;
+  switch (kind) {
+    case "anthropic": return `anthropic/${model}`;
+    case "copilot":   return `github-copilot/${model}`;
+    case "openai":    return `openai/${model}`;
+    default:          return model;
+  }
+}
+
+/**
+ * Pure translation from a smartcrab configuration into the seher
  * `config.yaml` shape.
  *
  * Design notes:
  * - Each provider becomes a map entry with its id as the key.
- * - `model` is placed under `models.build`.
- * - `envOverrides` for openai providers map to `api.key` / `api.endpoint`.
- * - All other env vars are ignored (seher-ts 0.1.13 does not support generic
- *   env passthrough for pi, codex, copilot, cursor, or opencode SDKs).
+ * - Every provider uses `sdk: pi` (pi_agent_rust in-process execution).
+ * - `model` is placed under `models.build` with a kind-specific provider
+ *   prefix (anthropic/, github-copilot/, openai/).
+ * - `envOverrides` map to `api.key` / `api.endpoint` per provider kind; the
+ *   api section is optional and the Rust bridge falls back to process env.
  * - Priority rules map to per-provider `priority`.
  */
 export function translate(cfg: SmartCrabConfig): SeherConfig {
@@ -69,7 +111,7 @@ export function translate(cfg: SmartCrabConfig): SeherConfig {
   for (const provider of cfg.providers) {
     const sdk = toSdkKind(provider.kind);
     const modelId = buildModelId(provider.kind, provider.model);
-    const api = buildApi(provider.envOverrides);
+    const api = buildApi(provider.kind, provider.envOverrides);
     const maxWeight = maxWeights.get(provider.id);
 
     const models: Record<string, SeherModelEntry> = {};
