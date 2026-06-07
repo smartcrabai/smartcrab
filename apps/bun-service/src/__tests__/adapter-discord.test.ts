@@ -636,7 +636,7 @@ describe("defaultLlmHandler", () => {
   it("propagates route() failures so the listener's catch logs them", async () => {
     const router = await import("../router.ts");
     const spy = spyOn(router, "route").mockImplementation(async () => {
-      throw new Error("router: seher-ts unavailable and no LLM adapter registered");
+      throw new Error("router: seher-bridge unavailable and no LLM adapter registered");
     });
     try {
       await expect(

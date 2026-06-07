@@ -1,22 +1,25 @@
 +++
 title = "LLM routing"
-description = "seher-ts router and how Settings drives `seher-config.yaml`"
+description = "seher-bridge router and how Settings drives `seher-config.yaml`"
 weight = 3
 +++
 
-SmartCrab does not bind to a single LLM provider. Instead, every LLM call funnels through `router.ts`, which delegates to [`@seher-ts/sdk`](https://www.npmjs.com/package/@seher-ts/sdk) (≥ 0.1.13) — an external router SDK that resolves the highest-priority **available** coding agent at run time, given the user's settings file.
+SmartCrab does not bind to a single LLM provider. Instead, every LLM call funnels through `router.ts`, which spawns the **`seher-bridge`** binary — a Rust process built from the [`seher`](https://github.com/smartcrabai/seher) crate (`seher-sdk`) and bundled inside the `.app`. The bridge resolves the highest-priority **available** coding agent at run time, given the user's YAML config, and executes the prompt in-process via the Rust `pi` engine (`pi_agent_rust` / `PiRunner`).
 
 ```
 chat.bubble-send  ──┐
-pipeline llm_call ──┤── router.route() ── SeherSDK ──▶  Claude Agent SDK        (anthropic)
-skill.invoke      ──┤                       │       │  Copilot SDK              (copilot)
-memory.summarize  ──┘                       │       │  pi-coding-agent          (openai)
-                                            │
-                                    fallback to
-                                    llmRegistry.default()
-                                    (ClaudeLlmAdapter, used only when
-                                     @seher-ts/sdk import fails)
+pipeline llm_call ──┤── router.route() ── spawn seher-bridge ──▶  resolve_agent ──▶ PiRunner
+skill.invoke      ──┤        │ (NDJSON over stdio)               (codexbar limit check;     │
+memory.summarize  ──┘        │                                    NotLimited if absent)      │
+                             │                                                    anthropic/<model>
+                     fallback to                                                  github-copilot/<model>
+                     llmRegistry.default()                                        openai/<model>
+                     (ClaudeLlmAdapter, used only when the
+                      seher-bridge binary cannot be found
+                      or the bridge process fails)
 ```
+
+The TypeScript router does not import any Seher SDK; it talks to the bridge over **NDJSON on stdio** instead.
 
 ## Why one router, not many
 
@@ -35,21 +38,43 @@ for (const id of ["seher", "default", "anthropic", "copilot", "openai"]) {
 }
 ```
 
-So a pipeline node that says `provider: anthropic` does **not** force the Claude Agent SDK. Seher picks the actual agent at run time using priorities, time windows, and rate-limit state. The provider id in the YAML acts more like a hint or a documentation breadcrumb than a binding.
+So a pipeline node that says `provider: anthropic` does **not** force the Claude Agent SDK. The bridge picks the actual agent at run time using priorities, time windows, and rate-limit state. The provider id in the YAML acts more like a hint or a documentation breadcrumb than a binding.
 
 The same bridge backs the chat tab, skill invocation, and the memory summarizer. Routing rules are therefore consistent across every code path that reaches an LLM.
+
+## Locating the `seher-bridge` binary
+
+`router.ts` resolves the bridge executable in this order, using the first hit:
+
+1. **`SMARTCRAB_SEHER_BRIDGE` env var** — an explicit path (used by tests and custom installs).
+2. **Adjacent to the service binary** — i.e. the `.app`'s `Contents/Resources/`, where `cargo build --release` output is copied next to `smartcrab-service` at build time.
+3. **`PATH`** — for standalone CLI / dev environments where `seher-bridge` is on the shell path.
+4. **Not found** → skip the bridge entirely and use the `llmRegistry` fallback (see below).
 
 ## `route()` behaviour
 
 `router.ts:route(request)`:
 
-1. **Try @seher-ts/sdk.** Lazy `await import("@seher-ts/sdk")` (cached). If the import succeeds, instantiate `SeherSDK` with:
-    - `configPath: defaultSeherConfigPath()` — `$XDG_CONFIG_HOME/smartcrab/seher-config.yaml` (default `~/.config/smartcrab/seher-config.yaml`), overridable with `SMARTCRAB_SEHER_CONFIG`.
-    - `noWait: true` — fail fast if every configured agent is rate-limited, instead of sleeping the chat thread until a quota reset. The chat tab surfaces the failure as an assistant bubble (`"LLM error: ..."`) rather than hanging.
-2. **Fall back to the registry.** If `@seher-ts/sdk` is unavailable (not installed, import failure) or its `run()` throws, pick `llmRegistry.default()` — the first adapter registered, which today is `ClaudeLlmAdapter`. Use it directly with a single `user` message containing the prompt. Tag the response `kind: "registry-fallback"`.
-3. **Hard error.** If neither path is available (no `@seher-ts/sdk` and no registered LLM adapter), throw an explanatory error pointing the user at the in-app Settings tab.
+1. **Try `seher-bridge`.** If the binary is found, spawn it and exchange NDJSON messages over stdio:
+    - Bun sends a `run` message:
 
-The fallback is what keeps the chat tab usable in dev environments that don't have a seher settings file yet.
+      ```json
+      {"type":"run","prompt":"…","systemPrompt":"…","model":"<mode key>",
+       "configPath":"$XDG_CONFIG_HOME/smartcrab/seher-config.yaml",
+       "tools":[ /* JSON Schema tool defs */ ]}
+      ```
+
+      `configPath` defaults to `$XDG_CONFIG_HOME/smartcrab/seher-config.yaml` (default `~/.config/smartcrab/seher-config.yaml`), overridable with `SMARTCRAB_SEHER_CONFIG`. `model` carries the SmartCrab **mode key**, not a raw model id.
+    - The bridge calls `resolve_agent` (the rate-limit check goes through `codexbar`; if `codexbar` data is absent the agent is treated as `NotLimited`) to pick the highest-priority provider, then runs the prompt in-process with `PiRunner`.
+    - **Tool round-trips**: when the agent calls a tool, the bridge emits `{"type":"tool_call","id":…,"name":…,"input":…}`. Bun runs the matching TypeScript handler and replies with `{"type":"tool_result","id":…,"output":…}` (or `{…,"error":…}`). This loops until the agent stops calling tools.
+    - **Termination** is one of:
+      - `{"type":"done","text":…,"kind":"pi","sessionId":…}` — success.
+      - `{"type":"limit",…}` — every configured agent is rate-limited.
+      - `{"type":"error",…}` — anything else went wrong.
+2. **Fall back to the registry.** If the bridge binary cannot be found, fails to spawn, or returns an `error`/`limit`, pick `llmRegistry.default()` — the first adapter registered, which today is `ClaudeLlmAdapter`. Use it directly with a single `user` message containing the prompt. Tag the response `kind: "registry-fallback"`.
+3. **Hard error.** If neither path is available (no bridge binary and no registered LLM adapter), throw an explanatory error pointing the user at the in-app Settings tab.
+
+The fallback is what keeps the chat tab usable in dev environments that don't have a `seher-bridge` build or a config file yet.
 
 ## Settings → `seher-config.yaml`
 
@@ -57,37 +82,39 @@ The Settings tab edits an in-app `SeherConfig` (providers, priorities, defaults)
 
 1. SwiftUI calls `settings.app-save` (RPC).
 2. The Bun handler upserts the JSON blob into the `seher_config` SQLite table (single row, `id = 1`).
-3. **Side effect**: `writeSeherConfig(cfg)` translates the in-app shape into seher-ts 0.1.13's `Config` shape (YAML `providers` map) and writes it to `$XDG_CONFIG_HOME/smartcrab/seher-config.yaml`.
+3. **Side effect**: `writeSeherConfig(cfg)` translates the in-app shape into the seher `Config` shape (YAML `providers` map) and writes it to `$XDG_CONFIG_HOME/smartcrab/seher-config.yaml`.
 
-The next call to `route()` instantiates a fresh `SeherSDK` that reads the new file. There is no manual reload step.
+The next call to `route()` spawns a fresh `seher-bridge` that reads the new file. There is no manual reload step.
 
 ### Translation rules
 
-`write-settings.ts:translateToSeherConfig` maps SmartCrab's three supported provider kinds to the seher-ts provider entries:
+`packages/seher-config-schema`'s `translate` maps SmartCrab's three supported provider kinds to seher provider entries. The Rust `pi` engine handles **every** provider, so all entries use `sdk: pi` and differ only by the model prefix:
 
-| SmartCrab `kind` | UI label                  | Seher `sdk` | Seher `provider` | Underlying SDK |
-|------------------|---------------------------|-------------|-------------------|----------------|
-| `anthropic`      | Anthropic API-compatible  | `claude`    | `anthropic`       | Claude Agent SDK |
-| `copilot`        | GitHub Copilot            | `copilot`   | `copilot`         | Copilot SDK |
-| `openai`         | OpenAI API-compatible     | `pi`        | `openai`          | pi-coding-agent (via `@seher-ts/sdk`) |
+| SmartCrab `kind` | UI label                  | Seher `sdk` | Model prefix          | API key env override                     |
+|------------------|---------------------------|-------------|-----------------------|------------------------------------------|
+| `anthropic`      | Anthropic API-compatible  | `pi`        | `anthropic/<model>`        | `ANTHROPIC_API_KEY`                      |
+| `copilot`        | GitHub Copilot            | `pi`        | `github-copilot/<model>`   | `GITHUB_COPILOT_API_KEY` / `GITHUB_TOKEN` |
+| `openai`         | OpenAI API-compatible     | `pi`        | `openai/<model>`           | `OPENAI_API_KEY`                         |
 
 Each provider becomes one key in seher's `providers` map with:
 
-- `sdk`: the matching SDK identifier so Seher picks the right SDK wrapper
-- `provider`: the resolved provider name
-- `models.build.model`: the qualified model name (for openai, bare names like `gpt-4o` are prefixed to `openai/gpt-4o`)
-- `models.build.priority`: the maximum weight across all priority rules for that provider
-- `api.key` / `api.endpoint`: for openai providers, `OPENAI_API_KEY` / `OPENAI_BASE_URL` env overrides are transcribed here
+- `sdk: pi` — every provider runs through the Rust pi engine.
+- `provider`: the resolved provider name.
+- `models.build.model`: the qualified model name. Bare names are given the provider prefix above (e.g. `claude-sonnet-4-5` → `anthropic/claude-sonnet-4-5`, `gpt-4o` → `openai/gpt-4o`).
+- `models.build.priority`: the maximum weight across all priority rules for that provider.
+- `api.key`: taken from the matching `envOverrides` entry (see the table). When no override is present, the value is omitted from the YAML and the **bridge falls back to its own process environment** at run time.
 
-### openai → pi-coding-agent
+`maxTokens` is not represented: the Rust pi engine does not take it and no caller sets it, so it is dropped from the wire shape.
 
-The `openai` kind is driven by [`@earendil-works/pi-coding-agent`](https://www.npmjs.com/package/@earendil-works/pi-coding-agent) through seher-ts's `sdk: "pi"` path. The old Kimi CLI-based approach (`openai_legacy` provider) has been removed.
+### All providers run on the Rust pi engine
 
-**Important**: pi-coding-agent does not support in-process tools. When openai is selected as the active provider, `SeherTool` definitions are silently stripped and the agent responds without tool calls. Tools continue to work for `anthropic` and `copilot`.
+Every provider — Anthropic, GitHub Copilot, and OpenAI — is driven by the Rust `pi` engine (`pi_agent_rust`). There is no separate per-provider SDK wrapper and no Kimi CLI path.
+
+**Tools work for every provider.** The Rust pi engine supports tools across **all** providers, so tool round-trips work uniformly regardless of which agent `resolve_agent` selects.
 
 ### API key handling
 
-OpenAI API keys are bridged from environment variables (`OPENAI_API_KEY`, `OPENAI_BASE_URL`) into the YAML config's `api.key` / `api.endpoint` fields at write time. Users who inject secrets via the environment do not need to type them into the GUI. The confidentiality level is equivalent to the old approach.
+API keys are bridged from environment variables into the YAML config's `api.key` field at write time: `ANTHROPIC_API_KEY` for `anthropic`, `GITHUB_COPILOT_API_KEY` (or `GITHUB_TOKEN`) for `copilot`, and `OPENAI_API_KEY` for `openai`. Users who inject secrets via the environment do not need to type them into the GUI. If no override is written, `seher-bridge` reads the same variables from its own process environment as a fallback.
 
 The output file starts with a banner:
 
@@ -116,10 +143,10 @@ Static imports at the top of `server.ts` would trigger circular initialization t
 
 ## PATH propagation
 
-GUI-launched apps on macOS inherit a minimal `PATH` that does not contain Homebrew, mise, or `~/.local/bin`. Without intervention, the embedded Bun service cannot find `claude`, which the Claude Agent SDK spawns as a subprocess.
+GUI-launched apps on macOS inherit a minimal `PATH` that does not contain Homebrew, mise, or `~/.local/bin`. The embedded Bun service forwards an enriched environment to the `seher-bridge` child so that, in dev environments where the bridge is found on `PATH`, it resolves correctly.
 
-`BunServiceMacOS` works around this by spawning the user's login shell once at startup (`$SHELL -lc 'printf %s "$PATH"'`), capturing the output, and forwarding it to the child process's environment. The result is memoised because shell startup is non-trivial. This is what lets the SDK wrappers succeed when they call `Bun.which("claude")` from a Finder-launched app.
+`BunServiceMacOS` works around the minimal-`PATH` problem by spawning the user's login shell once at startup (`$SHELL -lc 'printf %s "$PATH"'`), capturing the output, and forwarding it to the child process's environment. The result is memoised because shell startup is non-trivial.
 
 ## Testing
 
-Unit tests don't need a real `@seher-ts/sdk` install; they import `router.ts` and test the **fallback path** by registering a stub adapter into `llmRegistry`. End-to-end testing of routing requires either a real `@seher-ts/sdk` config file or a mock `SeherSDK`. The `optionalDependencies` block in `apps/bun-service/package.json` keeps `@seher-ts/sdk` optional so CI without credentials still builds.
+Unit tests don't need a real `seher-bridge` build; they import `router.ts` and test the **fallback path** by registering a stub adapter into `llmRegistry` (point `SMARTCRAB_SEHER_BRIDGE` at a nonexistent path, or rely on the binary being absent in CI). Exercising the bridge end to end requires a built `seher-bridge` binary plus a `seher-config.yaml`; the NDJSON protocol can also be driven directly by piping `run` messages into the binary on stdin. CI without a Rust toolchain or credentials still builds because the bridge is optional and the router degrades to the registry fallback.

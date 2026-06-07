@@ -9,8 +9,9 @@
  * via `configureChatBubbleCommands({ db })`. Without a database (tests) the
  * handlers fall back to an in-memory array so the API stays usable.
  *
- * The send handler routes through `router.ts` (seher-ts SDK) and surfaces
- * any LLM error as an assistant bubble so the chat stays responsive.
+ * The send handler routes through `router.ts` (which spawns the seher-bridge
+ * Rust binary) and surfaces any LLM error as an assistant bubble so the chat
+ * stays responsive.
  */
 
 import type { Database } from "bun:sqlite";

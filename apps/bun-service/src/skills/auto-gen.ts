@@ -6,7 +6,7 @@
  * the same Markdown format the rest of the system consumes.
  *
  * The LLM is injected (DI) so tests can mock it and so production wiring can
- * pick the cheapest available provider via seher-ts.
+ * pick the cheapest available provider via the seher-bridge router.
  */
 
 import type {

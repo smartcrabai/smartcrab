@@ -82,11 +82,11 @@ async function main(): Promise<void> {
 
   const db = openDb();
   runMigrations(db);
-  // Pipeline llm_call nodes route through the seher SDK so the same
-  // multi-provider auto-resolution that powers chat-bubble drives
+  // Pipeline llm_call nodes route through the seher-bridge Rust binary so
+  // the same multi-provider auto-resolution that powers chat-bubble drives
   // pipeline execution. Register the bridge under every provider id we
-  // care about — the actual agent is picked by seher at run time based
-  // on the user's settings.
+  // care about — the actual agent is picked by seher-bridge at run time
+  // based on the user's settings.
   const { route: routePrompt } = await import("./router");
   const seherLlmAdapter = {
     async executePrompt(req: { prompt: string; timeoutSecs?: number }) {
@@ -120,7 +120,7 @@ async function main(): Promise<void> {
   const cronStore = new SqliteCronStore(db);
   setCronStore(cronStore);
   // Cron firing → pipeline.execute. Runs in the same process so the executor's
-  // ExecutorDeps (with the seher LLM bridge) is available.
+  // ExecutorDeps (with the seher-bridge LLM router) is available.
   const cronCallback = (job: { id: string; pipeline_id: string }) => async () => {
     cronStore.markRun(job.id, new Date().toISOString());
     try {
@@ -172,7 +172,7 @@ async function main(): Promise<void> {
   // content), so we can now bind the shared store to the main app DB.
   rebindSharedToDb(db);
 
-  // Wire seher-ts as the summarizer LLM and run the hermes-style learn
+  // Wire the seher-bridge router as the summarizer LLM and run the hermes-style learn
   // loop every 30 minutes. Dynamic-import for the same circular-init
   // reason chat-bubble / discord / pipeline.execute use it.
   void import("./commands/memory.commands").then(({ configureMemorySummarizer }) => {
