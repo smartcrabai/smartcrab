@@ -30,8 +30,9 @@ impl<W: Write + Send> FrameWriter<W> {
     }
 
     /// Serialize `frame` as one NDJSON line and flush. Returns an error string
-    /// on serialization, lock, or I/O failure.
-    pub fn write(&self, frame: &Outgoing) -> Result<(), String> {
+    /// on serialization, lock, or I/O failure. Generic so both run-mode
+    /// (`Outgoing`) and auth-mode (`AuthEvent`) frames share the same writer.
+    pub fn write<F: serde::Serialize>(&self, frame: &F) -> Result<(), String> {
         let line = serde_json::to_string(frame).map_err(|e| e.to_string())?;
         let mut guard = self.inner.lock().map_err(|_| "frame writer poisoned")?;
         guard
