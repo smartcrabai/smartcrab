@@ -25,6 +25,22 @@
             try await stub.settingsSave(config)
         }
 
+        public func authStart(kind: String) async throws -> AuthStartResult {
+            try await stub.authStart(kind: kind)
+        }
+
+        public func authStatus(sessionId: String) async throws -> AuthSessionStatus {
+            try await stub.authStatus(sessionId: sessionId)
+        }
+
+        public func authCancel(sessionId: String) async throws {
+            try await stub.authCancel(sessionId: sessionId)
+        }
+
+        public func authCredentialStatus() async throws -> CredentialStatusResult {
+            try await stub.authCredentialStatus()
+        }
+
         public func adapterLoad(adapterId: String) async throws -> DiscordAdapterConfig {
             try await stub.adapterLoad(adapterId: adapterId)
         }
