@@ -9,11 +9,13 @@
  * Which LLM provider to use. All kinds run through the `pi` SDK
  * (pi_agent_rust in-process execution); the kind selects the pi_agent_rust
  * provider via the model id prefix.
- * - `anthropic` ... Anthropic API compatible (pi provider `anthropic`)
- * - `copilot`   ... GitHub Copilot (pi provider `github-copilot`)
- * - `openai`    ... OpenAI API compatible (pi provider `openai`)
+ * - `anthropic`    ... Anthropic API compatible (pi provider `anthropic`)
+ * - `copilot`      ... GitHub Copilot (pi provider `github-copilot`, OAuth device flow)
+ * - `openai`       ... OpenAI API compatible (pi provider `openai`)
+ * - `openai-codex` ... OpenAI Codex / ChatGPT (pi provider `openai-codex`, OAuth;
+ *                      credentials live in pi's auth.json, never in env/YAML)
  */
-export type ProviderKind = "anthropic" | "copilot" | "openai";
+export type ProviderKind = "anthropic" | "copilot" | "openai" | "openai-codex";
 
 /** Weekday (0 = Sunday ... 6 = Saturday). Aligned with Date#getDay(). */
 export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
@@ -37,7 +39,7 @@ export interface ProviderConfig {
 }
 
 /**
- * Provider priority rule. The seher-ts router picks providers by priority.
+ * Provider priority rule. The seher router picks providers by priority.
  *
  * Higher `weight` wins. When both `weekdays` and `hours` are specified they
  * are evaluated as an AND condition.

@@ -321,6 +321,65 @@ const cases: readonly Case[] = [
     },
   },
   {
+    name: "openai-codex provider maps to sdk:pi with openai-codex/ model prefix",
+    input: {
+      providers: [{ id: "codex", kind: "openai-codex", model: "gpt-5-codex" }],
+      priority: [{ providerId: "codex", weight: 20 }],
+      defaults: { fallbackProviderId: "codex", rateLimitBackoffSec: 30 },
+    },
+    expected: {
+      providers: {
+        codex: {
+          provider: "openai-codex",
+          sdk: "pi",
+          priority: 20,
+          models: { build: { model: "openai-codex/gpt-5-codex" } },
+        },
+      },
+    },
+  },
+  {
+    name: "openai-codex env overrides never produce api (auth.json only)",
+    input: {
+      providers: [
+        {
+          id: "codex",
+          kind: "openai-codex",
+          envOverrides: { OPENAI_API_KEY: "sk-should-be-ignored" },
+        },
+      ],
+      priority: [{ providerId: "codex", weight: 1 }],
+      defaults: { fallbackProviderId: "codex", rateLimitBackoffSec: 30 },
+    },
+    expected: {
+      providers: {
+        codex: {
+          provider: "openai-codex",
+          sdk: "pi",
+          priority: 1,
+          models: {},
+        },
+      },
+    },
+  },
+  {
+    name: "openai-codex model with slash is passed through unchanged",
+    input: {
+      providers: [{ id: "codex", kind: "openai-codex", model: "openai-codex/gpt-5-codex" }],
+      priority: [],
+      defaults: { fallbackProviderId: "codex", rateLimitBackoffSec: 30 },
+    },
+    expected: {
+      providers: {
+        codex: {
+          provider: "openai-codex",
+          sdk: "pi",
+          models: { build: { model: "openai-codex/gpt-5-codex" } },
+        },
+      },
+    },
+  },
+  {
     name: "multiple rules per provider collapse to max weight",
     input: {
       providers: [{ id: "shift-bot", kind: "anthropic" }],
