@@ -18,6 +18,7 @@ import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 import { llmRegistry } from "./adapters/llm/registry";
+import { readLines } from "./seher/ndjson.ts";
 import { defaultSeherConfigPath } from "./seher/write-settings";
 import { z } from "zod";
 import type { LlmMessage } from "./adapters/llm/types.ts";
@@ -145,31 +146,6 @@ export function resolveBridgePath(): string | null {
   if (onPath) return onPath;
 
   return null;
-}
-
-/** Stream NDJSON lines out of a byte stream, yielding one decoded line at a time. */
-async function* readLines(stream: ReadableStream<Uint8Array>): AsyncGenerator<string> {
-  const reader = stream.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  try {
-    for (;;) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      let newlineIdx: number;
-      while ((newlineIdx = buffer.indexOf("\n")) !== -1) {
-        const line = buffer.slice(0, newlineIdx).trim();
-        buffer = buffer.slice(newlineIdx + 1);
-        if (line) yield line;
-      }
-    }
-    buffer += decoder.decode();
-    const tail = buffer.trim();
-    if (tail) yield tail;
-  } finally {
-    reader.releaseLock();
-  }
 }
 
 /** Forward the bridge's stderr lines to our own logs for diagnostics. */
