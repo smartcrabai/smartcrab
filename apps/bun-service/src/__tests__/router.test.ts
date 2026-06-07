@@ -4,33 +4,15 @@ import { silenceConsoleError } from "./test-helpers.ts";
 // ── Module mocks ──────────────────────────────────────────────────────────────
 // Bun hoists mock.module() above static imports, so these always run first.
 
-let seherConstructorLastOpts: Record<string, unknown> | undefined;
-let seherRunBehavior: "succeed" | "throw" = "throw";
-
-mock.module("@seher-ts/sdk", () => ({
-  SeherSDK: class MockSeherSDK {
-    constructor(opts: Record<string, unknown>) {
-      seherConstructorLastOpts = opts;
-    }
-    async run(_opts: unknown): Promise<{ text: string; kind: string }> {
-      if (seherRunBehavior === "throw") throw new Error("seher: rate limited");
-      return { text: "seher-response", kind: "claude" };
-    }
-  },
-}));
-
-
-// Bun hoists mock.module() before const declarations, so MOCK_SEHER_CONFIG_PATH can't be referenced here.
 mock.module("../seher/write-settings", () => ({
   defaultSeherConfigPath: () => "/mock/seher/config.jsonc",
 }));
 
 // ── Imports ───────────────────────────────────────────────────────────────────
 
-import { route } from "../router.ts";
+import { __setBridgeSpawn, route, type SeherTool } from "../router.ts";
 import { clearLlmAdapters, llmRegistry } from "../adapters/llm/registry.ts";
 import type { LlmAdapter, LlmRequest, LlmResponse } from "../adapters/llm/types.ts";
-import type { SeherTool } from "@seher-ts/sdk";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -67,7 +49,102 @@ function mockTool(
     // Minimal ZodObject-like: parse returns input unchanged.
     parameters: { parse: (input: unknown) => input as Record<string, unknown> },
     handler,
-  } as unknown as SeherTool;
+  };
+}
+
+interface ParsedFrame {
+  type?: string;
+  [k: string]: unknown;
+}
+
+/**
+ * In-process fake of the seher-bridge sidecar. `script` receives each frame the
+ * router writes to stdin and may push stdout/stderr frames in response. This
+ * lets us drive the NDJSON protocol without spawning a real binary.
+ */
+function fakeBridge(
+  script: (
+    frame: ParsedFrame,
+    emit: { stdout: (obj: unknown) => void; stderr: (line: string) => void; close: () => void },
+  ) => void,
+) {
+  const stdinFrames: ParsedFrame[] = [];
+
+  let pushStdout!: (obj: unknown) => void;
+  let pushStderr!: (line: string) => void;
+  let closeStdout!: () => void;
+  let closeStderr!: () => void;
+
+  const encoder = new TextEncoder();
+
+  const stdout = new ReadableStream<Uint8Array>({
+    start(controller) {
+      pushStdout = (obj) => controller.enqueue(encoder.encode(`${JSON.stringify(obj)}\n`));
+      closeStdout = () => {
+        try {
+          controller.close();
+        } catch {
+          // already closed
+        }
+      };
+    },
+  });
+
+  const stderr = new ReadableStream<Uint8Array>({
+    start(controller) {
+      pushStderr = (line) => controller.enqueue(encoder.encode(`${line}\n`));
+      closeStderr = () => {
+        try {
+          controller.close();
+        } catch {
+          // already closed
+        }
+      };
+    },
+  });
+
+  const emit = {
+    stdout: (obj: unknown) => pushStdout(obj),
+    stderr: (line: string) => pushStderr(line),
+    close: () => {
+      closeStdout();
+      closeStderr();
+    },
+  };
+
+  const stdin = {
+    write(data: string) {
+      for (const line of data.split("\n")) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        const frame = JSON.parse(trimmed) as ParsedFrame;
+        stdinFrames.push(frame);
+        script(frame, emit);
+      }
+      return data.length;
+    },
+    flush() {},
+    end() {
+      closeStderr();
+    },
+  };
+
+  let killed = false;
+  const kill = () => {
+    killed = true;
+    emit.close();
+  };
+
+  return {
+    stdinFrames,
+    stdout,
+    stderr,
+    stdin,
+    kill,
+    get killed() {
+      return killed;
+    },
+  };
 }
 
 // ── Test setup ────────────────────────────────────────────────────────────────
@@ -77,15 +154,27 @@ const consoleSpy = silenceConsoleError();
 const MOCK_SEHER_CONFIG_PATH = "/mock/seher/config.jsonc";
 
 beforeEach(() => {
-  seherRunBehavior = "throw"; // default: force fallback path so most tests stay isolated
-  seherConstructorLastOpts = undefined;
   clearLlmAdapters();
   consoleSpy.setup();
+  // Default: no bridge resolved → exercise the registry fallback. Individual
+  // bridge tests install a fake via setBridge().
+  process.env.SMARTCRAB_SEHER_BRIDGE = "/nonexistent/seher-bridge";
 });
 
 afterEach(() => {
   consoleSpy.restore();
+  __setBridgeSpawn(null);
+  delete process.env.SMARTCRAB_SEHER_BRIDGE;
 });
+
+/**
+ * Point resolveBridgePath() at an existing file (this test file) and install
+ * `fake` as the spawn so runViaBridge() takes the bridge path.
+ */
+function setBridge(fake: ReturnType<typeof fakeBridge>) {
+  process.env.SMARTCRAB_SEHER_BRIDGE = import.meta.path;
+  __setBridgeSpawn(() => fake as never);
+}
 
 // ── RouteRequest interface ────────────────────────────────────────────────────
 
@@ -112,48 +201,204 @@ describe("RouteRequest — tools field", () => {
   });
 });
 
-// ── SeherSDK path ─────────────────────────────────────────────────────────────
+// ── seher-bridge path ─────────────────────────────────────────────────────────
 
-describe("route() — SeherSDK path", () => {
-  beforeEach(() => {
-    seherRunBehavior = "succeed";
-  });
+describe("route() — seher-bridge path", () => {
+  it("returns text with kind 'pi' on a done frame", async () => {
+    const fake = fakeBridge((frame, emit) => {
+      if (frame.type === "run") {
+        emit.stdout({ type: "done", text: "bridge-response", kind: "pi", sessionId: "s1" });
+        emit.close();
+      }
+    });
+    setBridge(fake);
 
-  it("returns text and kind from SeherSDK when it succeeds", async () => {
     const result = await route({ prompt: "hello" });
 
-    expect(result.text).toBe("seher-response");
-    expect(result.kind).toBe("claude");
+    expect(result.text).toBe("bridge-response");
+    expect(result.kind).toBe("pi");
+    // A clean `done` must not kill the child.
+    expect(fake.killed).toBe(false);
   });
 
-  it("passes tools to the SeherSDK constructor", async () => {
-    const tools = [mockTool("search", () => "results")];
+  it("sends a run frame with prompt, systemPrompt and configPath", async () => {
+    const fake = fakeBridge((frame, emit) => {
+      if (frame.type === "run") {
+        emit.stdout({ type: "done", text: "ok", kind: "pi", sessionId: "s1" });
+        emit.close();
+      }
+    });
+    setBridge(fake);
 
-    await route({ prompt: "hello", tools });
+    await route({ prompt: "hello", systemPrompt: "be brief" });
 
-    expect(seherConstructorLastOpts?.tools).toBe(tools);
+    const runFrame = fake.stdinFrames.find((f) => f.type === "run")!;
+    expect(runFrame.prompt).toBe("hello");
+    expect(runFrame.systemPrompt).toBe("be brief");
+    expect(runFrame.configPath).toBe(MOCK_SEHER_CONFIG_PATH);
+    expect(runFrame.model).toBeNull();
   });
 
-  it("passes configPath to the SeherSDK constructor", async () => {
-    await route({ prompt: "hello" });
+  it("converts tool parameters to JSON Schema in the run frame", async () => {
+    const fake = fakeBridge((frame, emit) => {
+      if (frame.type === "run") {
+        emit.stdout({ type: "done", text: "ok", kind: "pi", sessionId: "s1" });
+        emit.close();
+      }
+    });
+    setBridge(fake);
 
-    expect(seherConstructorLastOpts?.configPath).toBe(MOCK_SEHER_CONFIG_PATH);
+    await route({ prompt: "hello", tools: [mockTool("search", () => "results")] });
+
+    const runFrame = fake.stdinFrames.find((f) => f.type === "run")!;
+    const tools = runFrame.tools as { name: string; description: string; parameters: unknown }[];
+    expect(tools.length).toBe(1);
+    expect(tools[0]?.name).toBe("search");
+    expect(tools[0]?.description).toBe("search tool");
+    // mock parameters aren't a real zod schema → permissive fallback schema.
+    expect(tools[0]?.parameters).toEqual({ type: "object", properties: {} });
   });
 
-  it("sets noWait: true on the SeherSDK constructor", async () => {
-    await route({ prompt: "hello" });
+  it("dispatches a tool_call to the handler and replies with tool_result output", async () => {
+    let handlerCalledWith: unknown;
+    const tool = mockTool("echo", (args) => {
+      handlerCalledWith = args;
+      return "echoed: hello";
+    });
 
-    expect(seherConstructorLastOpts?.noWait).toBe(true);
+    const fake = fakeBridge((frame, emit) => {
+      if (frame.type === "run") {
+        emit.stdout({ type: "tool_call", id: "tc_1", name: "echo", input: { message: "hello" } });
+      } else if (frame.type === "tool_result") {
+        emit.stdout({ type: "done", text: "final answer", kind: "pi", sessionId: "s1" });
+        emit.close();
+      }
+    });
+    setBridge(fake);
+
+    const result = await route({ prompt: "test", tools: [tool] });
+
+    expect(handlerCalledWith).toEqual({ message: "hello" });
+    expect(result.text).toBe("final answer");
+
+    const toolResult = fake.stdinFrames.find((f) => f.type === "tool_result")!;
+    expect(toolResult.id).toBe("tc_1");
+    expect(toolResult.output).toBe("echoed: hello");
+    expect(toolResult.error).toBeUndefined();
   });
 
-  it("falls through to fallback when SeherSDK.run() throws", async () => {
-    seherRunBehavior = "throw";
-    const adapter = new MockAdapter([{ content: "fallback-response" }]);
+  it("JSON-stringifies non-string handler return values", async () => {
+    const tool = mockTool("obj", () => ({ ok: true }) as unknown as string);
+
+    const fake = fakeBridge((frame, emit) => {
+      if (frame.type === "run") {
+        emit.stdout({ type: "tool_call", id: "tc_1", name: "obj", input: {} });
+      } else if (frame.type === "tool_result") {
+        emit.stdout({ type: "done", text: "done", kind: "pi", sessionId: "s1" });
+        emit.close();
+      }
+    });
+    setBridge(fake);
+
+    await route({ prompt: "test", tools: [tool] });
+
+    const toolResult = fake.stdinFrames.find((f) => f.type === "tool_result")!;
+    expect(toolResult.output).toBe(JSON.stringify({ ok: true }));
+  });
+
+  it("replies with an error tool_result when the handler throws", async () => {
+    const tool = mockTool("boom", () => {
+      throw new Error("handler failed");
+    });
+
+    const fake = fakeBridge((frame, emit) => {
+      if (frame.type === "run") {
+        emit.stdout({ type: "tool_call", id: "tc_1", name: "boom", input: {} });
+      } else if (frame.type === "tool_result") {
+        emit.stdout({ type: "done", text: "recovered", kind: "pi", sessionId: "s1" });
+        emit.close();
+      }
+    });
+    setBridge(fake);
+
+    const result = await route({ prompt: "test", tools: [tool] });
+
+    expect(result.text).toBe("recovered");
+    const toolResult = fake.stdinFrames.find((f) => f.type === "tool_result")!;
+    expect(toolResult.error).toBe("handler failed");
+    expect(toolResult.output).toBeUndefined();
+  });
+
+  it("replies with 'unknown tool' error for an unregistered tool_call", async () => {
+    const fake = fakeBridge((frame, emit) => {
+      if (frame.type === "run") {
+        emit.stdout({ type: "tool_call", id: "tc_1", name: "ghost", input: {} });
+      } else if (frame.type === "tool_result") {
+        emit.stdout({ type: "done", text: "done", kind: "pi", sessionId: "s1" });
+        emit.close();
+      }
+    });
+    setBridge(fake);
+
+    await route({ prompt: "test", tools: [mockTool("echo", () => "ok")] });
+
+    const toolResult = fake.stdinFrames.find((f) => f.type === "tool_result")!;
+    expect(toolResult.error).toBe("unknown tool: ghost");
+  });
+
+  it("falls back to the registry on a limit frame", async () => {
+    const adapter = new MockAdapter([{ content: "fallback after limit" }]);
     llmRegistry.register(adapter);
 
+    const fake = fakeBridge((frame, emit) => {
+      if (frame.type === "run") {
+        emit.stdout({ type: "limit", message: "rate limited", partial: null });
+        emit.close();
+      }
+    });
+    setBridge(fake);
+
     const result = await route({ prompt: "hello" });
 
-    expect(result.text).toBe("fallback-response");
+    expect(result.text).toBe("fallback after limit");
+    expect(result.kind).toBe("registry-fallback");
+    // A non-clean exit must kill the bridge child.
+    expect(fake.killed).toBe(true);
+  });
+
+  it("falls back to the registry on an error frame", async () => {
+    const adapter = new MockAdapter([{ content: "fallback after error" }]);
+    llmRegistry.register(adapter);
+
+    const fake = fakeBridge((frame, emit) => {
+      if (frame.type === "run") {
+        emit.stdout({ type: "error", message: "boom", partial: null });
+        emit.close();
+      }
+    });
+    setBridge(fake);
+
+    const result = await route({ prompt: "hello" });
+
+    expect(result.text).toBe("fallback after error");
+    expect(result.kind).toBe("registry-fallback");
+  });
+
+  it("falls back to the registry when the stream ends without a terminal frame", async () => {
+    const adapter = new MockAdapter([{ content: "fallback no terminal" }]);
+    llmRegistry.register(adapter);
+
+    const fake = fakeBridge((frame, emit) => {
+      if (frame.type === "run") {
+        // Close stdout without emitting a terminal frame.
+        emit.close();
+      }
+    });
+    setBridge(fake);
+
+    const result = await route({ prompt: "hello" });
+
+    expect(result.text).toBe("fallback no terminal");
     expect(result.kind).toBe("registry-fallback");
   });
 });
@@ -163,7 +408,7 @@ describe("route() — SeherSDK path", () => {
 describe("route() — fallback path (no tools)", () => {
   it("throws when no adapter is registered", async () => {
     await expect(route({ prompt: "hello" })).rejects.toThrow(
-      /seher-ts unavailable and no LLM adapter registered/,
+      /seher-bridge unavailable and no LLM adapter registered/,
     );
   });
 
@@ -213,7 +458,7 @@ describe("route() — fallback path handler loop", () => {
     expect(adapter.requests[0]?.tools?.length).toBe(1);
     expect(adapter.requests[0]?.tools?.[0]?.name).toBe("search");
     expect(adapter.requests[0]?.tools?.[0]?.description).toBe("search tool");
-    // input_schema comes from the mocked zodToJsonSchema
+    // input_schema comes from the permissive toInputSchema fallback.
     expect(adapter.requests[0]?.tools?.[0]?.input_schema).toEqual({
       type: "object",
       properties: {},
