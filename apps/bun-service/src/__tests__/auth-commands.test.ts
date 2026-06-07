@@ -66,7 +66,7 @@ function fakeAuthBridge() {
 async function waitForTerminal(sessionId: string): Promise<{ state: string; message?: string }> {
   for (let i = 0; i < 50; i++) {
     await new Promise((r) => setTimeout(r, 5));
-    const status = authHandlers["auth.status"]({ sessionId });
+    const status = authHandlers["auth.status"]({ session_id: sessionId });
     if (status.state !== "pending") return status;
   }
   throw new Error("session never reached a terminal state");
@@ -105,13 +105,13 @@ describe("auth.start", () => {
 
     expect(bridge.spawnedArgs).toEqual([["auth", "login", "github-copilot"]]);
     expect(result.flow).toBe("device-code");
-    expect(result.userCode).toBe("WDJB-MJHT");
-    expect(result.verificationUri).toBe("https://github.com/login/device");
-    expect(result.verificationUriComplete).toBe(
+    expect(result.user_code).toBe("WDJB-MJHT");
+    expect(result.verification_uri).toBe("https://github.com/login/device");
+    expect(result.verification_uri_complete).toBe(
       "https://github.com/login/device?user_code=WDJB-MJHT",
     );
-    expect(result.expiresIn).toBe(899);
-    expect(result.sessionId).toMatch(/[0-9a-f-]{36}/);
+    expect(result.expires_in).toBe(899);
+    expect(result.session_id).toMatch(/[0-9a-f-]{36}/);
   });
 
   it("browser flow: returns the authorize url for openai-codex", async () => {
@@ -164,8 +164,8 @@ describe("auth.status", () => {
     __setBridgeAuthSpawn(bridge.spawn);
     bridge.emit({ type: "device_code", userCode: "X", verificationUri: "u", expiresIn: 60, interval: 1 });
 
-    const { sessionId } = await authHandlers["auth.start"]({ kind: "copilot" });
-    expect(authHandlers["auth.status"]({ sessionId }).state).toBe("pending");
+    const { session_id: sessionId } = await authHandlers["auth.start"]({ kind: "copilot" });
+    expect(authHandlers["auth.status"]({ session_id: sessionId }).state).toBe("pending");
 
     bridge.emit({ type: "auth_done", provider: "github-copilot" });
     const terminal = await waitForTerminal(sessionId);
@@ -177,7 +177,7 @@ describe("auth.status", () => {
     __setBridgeAuthSpawn(bridge.spawn);
     bridge.emit({ type: "device_code", userCode: "X", verificationUri: "u", expiresIn: 60, interval: 1 });
 
-    const { sessionId } = await authHandlers["auth.start"]({ kind: "copilot" });
+    const { session_id: sessionId } = await authHandlers["auth.start"]({ kind: "copilot" });
     bridge.emit({ type: "auth_error", message: "access denied by the user" });
 
     const terminal = await waitForTerminal(sessionId);
@@ -190,7 +190,7 @@ describe("auth.status", () => {
     __setBridgeAuthSpawn(bridge.spawn);
     bridge.emit({ type: "device_code", userCode: "X", verificationUri: "u", expiresIn: 60, interval: 1 });
 
-    const { sessionId } = await authHandlers["auth.start"]({ kind: "copilot" });
+    const { session_id: sessionId } = await authHandlers["auth.start"]({ kind: "copilot" });
     bridge.close();
 
     const terminal = await waitForTerminal(sessionId);
@@ -203,15 +203,15 @@ describe("auth.status", () => {
     __setBridgeAuthSpawn(bridge.spawn);
     bridge.emit({ type: "device_code", userCode: "X", verificationUri: "u", expiresIn: 60, interval: 1 });
 
-    const { sessionId } = await authHandlers["auth.start"]({ kind: "copilot" });
+    const { session_id: sessionId } = await authHandlers["auth.start"]({ kind: "copilot" });
     bridge.emit({ type: "auth_done", provider: "github-copilot" });
     await waitForTerminal(sessionId);
 
-    expect(() => authHandlers["auth.status"]({ sessionId })).toThrow(/unknown session/);
+    expect(() => authHandlers["auth.status"]({ session_id: sessionId })).toThrow(/unknown session/);
   });
 
   it("throws for unknown session ids", () => {
-    expect(() => authHandlers["auth.status"]({ sessionId: "nope" })).toThrow(/unknown session/);
+    expect(() => authHandlers["auth.status"]({ session_id: "nope" })).toThrow(/unknown session/);
   });
 });
 
@@ -223,16 +223,16 @@ describe("auth.cancel", () => {
     __setBridgeAuthSpawn(bridge.spawn);
     bridge.emit({ type: "device_code", userCode: "X", verificationUri: "u", expiresIn: 60, interval: 1 });
 
-    const { sessionId } = await authHandlers["auth.start"]({ kind: "copilot" });
-    const result = authHandlers["auth.cancel"]({ sessionId });
+    const { session_id: sessionId } = await authHandlers["auth.start"]({ kind: "copilot" });
+    const result = authHandlers["auth.cancel"]({ session_id: sessionId });
 
     expect(result.cancelled).toBe(true);
     expect(bridge.killed).toBe(true);
-    expect(() => authHandlers["auth.status"]({ sessionId })).toThrow(/unknown session/);
+    expect(() => authHandlers["auth.status"]({ session_id: sessionId })).toThrow(/unknown session/);
   });
 
   it("is a no-op for unknown sessions", () => {
-    expect(authHandlers["auth.cancel"]({ sessionId: "nope" }).cancelled).toBe(true);
+    expect(authHandlers["auth.cancel"]({ session_id: "nope" }).cancelled).toBe(true);
   });
 });
 
@@ -253,14 +253,14 @@ describe("auth.credential-status", () => {
     expect(bridge.spawnedArgs).toEqual([
       ["auth", "status", "github-copilot", "openai-codex", "anthropic", "openai"],
     ]);
-    expect(result.bridgeAvailable).toBe(true);
+    expect(result.bridge_available).toBe(true);
     expect(result.providers["github-copilot"]).toEqual({
       status: "oauth_valid",
-      expiresInMs: 3_500_000,
+      expires_in_ms: 3_500_000,
     });
     expect(result.providers["openai-codex"]).toEqual({
       status: "oauth_expired",
-      expiredByMs: 1_000,
+      expired_by_ms: 1_000,
     });
     expect(result.providers["anthropic"]).toEqual({ status: "api_key" });
     expect(result.providers["openai"]).toEqual({ status: "none" });
@@ -273,7 +273,7 @@ describe("auth.credential-status", () => {
 
     const result = await authHandlers["auth.credential-status"]();
 
-    expect(result).toEqual({ bridgeAvailable: false, providers: {} });
+    expect(result).toEqual({ bridge_available: false, providers: {} });
     expect(bridge.spawnedArgs).toHaveLength(0);
   });
 

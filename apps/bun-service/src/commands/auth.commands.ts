@@ -1,12 +1,13 @@
 /**
  * RPC handlers for GUI-driven LLM provider authentication.
  *
- * Methods:
- *   - `auth.start (kind)` -> { sessionId, flow, userCode?, verificationUri?,
- *     verificationUriComplete?, expiresIn?, url? }
- *   - `auth.status (sessionId)` -> { state: "pending"|"done"|"error", message? }
- *   - `auth.cancel (sessionId)` -> { cancelled: true }
- *   - `auth.credential-status ()` -> { bridgeAvailable, providers }
+ * Methods (RPC params/results use snake_case keys — the Swift client encodes
+ * with convertToSnakeCase and decodes with convertFromSnakeCase):
+ *   - `auth.start (kind)` -> { session_id, flow, user_code?, verification_uri?,
+ *     verification_uri_complete?, expires_in?, url? }
+ *   - `auth.status (session_id)` -> { state: "pending"|"done"|"error", message? }
+ *   - `auth.cancel (session_id)` -> { cancelled: true }
+ *   - `auth.credential-status ()` -> { bridge_available, providers }
  *
  * Each login spawns `seher-bridge auth login <provider>` (see crates/seher-bridge)
  * and relays its NDJSON events: the first frame (`device_code` / `oauth_url`)
@@ -139,12 +140,12 @@ function timeout<T>(promise: Promise<T>, ms: number, what: string): Promise<T> {
 // ── auth.start ───────────────────────────────────────────────────────────────
 
 interface AuthStartResult {
-  sessionId: string;
+  session_id: string;
   flow: "device-code" | "browser";
-  userCode?: string;
-  verificationUri?: string;
-  verificationUriComplete?: string;
-  expiresIn?: number;
+  user_code?: string;
+  verification_uri?: string;
+  verification_uri_complete?: string;
+  expires_in?: number;
   url?: string;
 }
 
@@ -186,14 +187,14 @@ async function authStart(params: { kind?: string }): Promise<AuthStartResult> {
     throw new Error(str(first, "message") ?? "auth.start: login failed");
   }
 
-  let result: Omit<AuthStartResult, "sessionId">;
+  let result: Omit<AuthStartResult, "session_id">;
   if (first.type === "device_code") {
     result = {
       flow: "device-code",
-      userCode: str(first, "userCode"),
-      verificationUri: str(first, "verificationUri"),
-      verificationUriComplete: str(first, "verificationUriComplete"),
-      expiresIn: num(first, "expiresIn"),
+      user_code: str(first, "userCode"),
+      verification_uri: str(first, "verificationUri"),
+      verification_uri_complete: str(first, "verificationUriComplete"),
+      expires_in: num(first, "expiresIn"),
     };
   } else if (first.type === "oauth_url") {
     result = { flow: "browser", url: str(first, "url") };
@@ -235,16 +236,16 @@ async function authStart(params: { kind?: string }): Promise<AuthStartResult> {
     }
   })();
 
-  return { sessionId, ...result };
+  return { session_id: sessionId, ...result };
 }
 
 // ── auth.status / auth.cancel ────────────────────────────────────────────────
 
-function authStatus(params: { sessionId?: string }): {
+function authStatus(params: { session_id?: string }): {
   state: AuthSessionState;
   message?: string;
 } {
-  const sessionId = params?.sessionId;
+  const sessionId = params?.session_id;
   const session = sessionId ? sessions.get(sessionId) : undefined;
   if (!session) {
     throw new Error(`auth.status: unknown session '${sessionId}'`);
@@ -258,8 +259,8 @@ function authStatus(params: { sessionId?: string }): {
   return result;
 }
 
-function authCancel(params: { sessionId?: string }): { cancelled: boolean } {
-  const sessionId = params?.sessionId;
+function authCancel(params: { session_id?: string }): { cancelled: boolean } {
+  const sessionId = params?.session_id;
   const session = sessionId ? sessions.get(sessionId) : undefined;
   if (session) {
     session.proc.kill?.();
@@ -272,19 +273,19 @@ function authCancel(params: { sessionId?: string }): { cancelled: boolean } {
 
 interface ProviderCredentialStatus {
   status: string;
-  expiresInMs?: number;
-  expiredByMs?: number;
+  expires_in_ms?: number;
+  expired_by_ms?: number;
 }
 
 interface CredentialStatusResult {
-  bridgeAvailable: boolean;
+  bridge_available: boolean;
   providers: Record<string, ProviderCredentialStatus>;
 }
 
 async function credentialStatus(): Promise<CredentialStatusResult> {
   const bridgePath = resolveBridgePath();
   if (!bridgePath) {
-    return { bridgeAvailable: false, providers: {} };
+    return { bridge_available: false, providers: {} };
   }
 
   const child = authBridgeSpawn(bridgePath, ["auth", "status", ...STATUS_PROVIDERS]);
@@ -300,8 +301,9 @@ async function credentialStatus(): Promise<CredentialStatusResult> {
       if (!provider || !status) continue;
       providers[provider] = {
         status,
-        ...(num(frame, "expiresInMs") !== undefined && { expiresInMs: num(frame, "expiresInMs") }),
-        ...(num(frame, "expiredByMs") !== undefined && { expiredByMs: num(frame, "expiredByMs") }),
+        // Bridge frames are camelCase; the RPC result is snake_case.
+        ...(num(frame, "expiresInMs") !== undefined && { expires_in_ms: num(frame, "expiresInMs") }),
+        ...(num(frame, "expiredByMs") !== undefined && { expired_by_ms: num(frame, "expiredByMs") }),
       };
     }
   })();
@@ -313,7 +315,7 @@ async function credentialStatus(): Promise<CredentialStatusResult> {
     throw err;
   }
 
-  return { bridgeAvailable: true, providers };
+  return { bridge_available: true, providers };
 }
 
 // ── handlers ─────────────────────────────────────────────────────────────────
