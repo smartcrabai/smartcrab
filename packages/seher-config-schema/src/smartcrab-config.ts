@@ -2,14 +2,16 @@
  * smartcrab-specific provider configuration schema.
  *
  * The human-facing shape edited by the SwiftUI GUI. At runtime it is
- * converted through `translate()` into the seher-ts `settings.jsonc` form.
+ * converted through `translate()` into the seher `config.yaml` form.
  */
 
 /**
- * Which LLM implementation to use.
- * - `anthropic` ... Anthropic API compatible (driven by the Claude Agent SDK)
- * - `copilot`   ... GitHub Copilot (driven by the Copilot SDK)
- * - `openai`    ... OpenAI API compatible (driven by seher-ts SDK + @earendil-works/pi-coding-agent)
+ * Which LLM provider to use. All kinds run through the `pi` SDK
+ * (pi_agent_rust in-process execution); the kind selects the pi_agent_rust
+ * provider via the model id prefix.
+ * - `anthropic` ... Anthropic API compatible (pi provider `anthropic`)
+ * - `copilot`   ... GitHub Copilot (pi provider `github-copilot`)
+ * - `openai`    ... OpenAI API compatible (pi provider `openai`)
  */
 export type ProviderKind = "anthropic" | "copilot" | "openai";
 
