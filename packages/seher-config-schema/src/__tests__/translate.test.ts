@@ -23,7 +23,7 @@ const cases: readonly Case[] = [
     },
   },
   {
-    name: "single provider without rules: anthropic → sdk:claude",
+    name: "single provider without rules: anthropic → sdk:pi",
     input: {
       providers: [{ id: "main", kind: "anthropic" }],
       priority: [],
@@ -33,7 +33,7 @@ const cases: readonly Case[] = [
       providers: {
         main: {
           provider: "anthropic",
-          sdk: "claude",
+          sdk: "pi",
           models: {},
         },
       },
@@ -56,9 +56,9 @@ const cases: readonly Case[] = [
       providers: {
         primary: {
           provider: "anthropic",
-          sdk: "claude",
+          sdk: "pi",
           priority: 100,
-          models: { build: { model: "claude-sonnet-4.7" } },
+          models: { build: { model: "anthropic/claude-sonnet-4.7" } },
         },
         secondary: {
           provider: "openai",
@@ -185,7 +185,7 @@ const cases: readonly Case[] = [
     },
   },
   {
-    name: "non-openai env overrides do NOT produce api section",
+    name: "anthropic ANTHROPIC_API_KEY env override maps to api.key (other vars ignored)",
     input: {
       providers: [
         {
@@ -201,15 +201,16 @@ const cases: readonly Case[] = [
       providers: {
         "claude-eu": {
           provider: "anthropic",
-          sdk: "claude",
+          sdk: "pi",
           priority: 1,
+          api: { key: "sk-ant-xyz" },
           models: {},
         },
       },
     },
   },
   {
-    name: "copilot provider maps to sdk:copilot",
+    name: "copilot provider maps to sdk:pi",
     input: {
       providers: [{ id: "gh", kind: "copilot" }],
       priority: [{ providerId: "gh", weight: 10 }],
@@ -219,8 +220,101 @@ const cases: readonly Case[] = [
       providers: {
         gh: {
           provider: "copilot",
-          sdk: "copilot",
+          sdk: "pi",
           priority: 10,
+          models: {},
+        },
+      },
+    },
+  },
+  {
+    name: "copilot model gets github-copilot/ prefix when no slash present",
+    input: {
+      providers: [{ id: "gh", kind: "copilot", model: "gpt-4o" }],
+      priority: [{ providerId: "gh", weight: 10 }],
+      defaults: { fallbackProviderId: "gh", rateLimitBackoffSec: 30 },
+    },
+    expected: {
+      providers: {
+        gh: {
+          provider: "copilot",
+          sdk: "pi",
+          priority: 10,
+          models: { build: { model: "github-copilot/gpt-4o" } },
+        },
+      },
+    },
+  },
+  {
+    name: "copilot GITHUB_COPILOT_API_KEY env override maps to api.key",
+    input: {
+      providers: [
+        {
+          id: "gh",
+          kind: "copilot",
+          envOverrides: { GITHUB_COPILOT_API_KEY: "ghp-copilot" },
+        },
+      ],
+      priority: [{ providerId: "gh", weight: 1 }],
+      defaults: { fallbackProviderId: "gh", rateLimitBackoffSec: 30 },
+    },
+    expected: {
+      providers: {
+        gh: {
+          provider: "copilot",
+          sdk: "pi",
+          priority: 1,
+          api: { key: "ghp-copilot" },
+          models: {},
+        },
+      },
+    },
+  },
+  {
+    name: "copilot falls back to GITHUB_TOKEN when GITHUB_COPILOT_API_KEY absent",
+    input: {
+      providers: [
+        {
+          id: "gh",
+          kind: "copilot",
+          envOverrides: { GITHUB_TOKEN: "ghp-token" },
+        },
+      ],
+      priority: [{ providerId: "gh", weight: 1 }],
+      defaults: { fallbackProviderId: "gh", rateLimitBackoffSec: 30 },
+    },
+    expected: {
+      providers: {
+        gh: {
+          provider: "copilot",
+          sdk: "pi",
+          priority: 1,
+          api: { key: "ghp-token" },
+          models: {},
+        },
+      },
+    },
+  },
+  {
+    name: "copilot prefers GITHUB_COPILOT_API_KEY over GITHUB_TOKEN",
+    input: {
+      providers: [
+        {
+          id: "gh",
+          kind: "copilot",
+          envOverrides: { GITHUB_COPILOT_API_KEY: "ghp-copilot", GITHUB_TOKEN: "ghp-token" },
+        },
+      ],
+      priority: [{ providerId: "gh", weight: 1 }],
+      defaults: { fallbackProviderId: "gh", rateLimitBackoffSec: 30 },
+    },
+    expected: {
+      providers: {
+        gh: {
+          provider: "copilot",
+          sdk: "pi",
+          priority: 1,
+          api: { key: "ghp-copilot" },
           models: {},
         },
       },
@@ -240,7 +334,7 @@ const cases: readonly Case[] = [
       providers: {
         "shift-bot": {
           provider: "anthropic",
-          sdk: "claude",
+          sdk: "pi",
           priority: 7,
           models: {},
         },
@@ -261,7 +355,7 @@ const cases: readonly Case[] = [
       providers: {
         real: {
           provider: "anthropic",
-          sdk: "claude",
+          sdk: "pi",
           priority: 3,
           models: {},
         },

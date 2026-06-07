@@ -1,16 +1,21 @@
 /**
- * TypeScript interfaces representing the seher-ts 0.1.13+ `config.yaml` shape
+ * TypeScript interfaces representing the seher `config.yaml` shape
  * inside smartcrab.
  *
- * This file has no runtime dependency on the seher-ts library, so tests and
+ * This file has no runtime dependency on the seher library, so tests and
  * translators stay self-contained without external fetches.
- * The shape mirrors the `Config` / `ProviderEntry` from
- * `@seher-ts/sdk/types.ts`, covering only the surface that smartcrab uses.
+ * The shape mirrors the `Config` / `ProviderEntry` consumed by the seher
+ * config loader, covering only the surface that smartcrab uses.
+ *
+ * SmartCrab now only ever emits `sdk: pi` (pi_agent_rust in-process
+ * execution); the wider union below is retained because the Rust seher loader
+ * also accepts other (and even unknown) sdk strings, so there is no need to
+ * narrow it.
  */
 
-/** Canonical list of SDK kinds usable in seher-ts config.
- *  "kimi" is retained for seher-ts backward compatibility even though
- *  SmartCrab itself no longer ships a kimi adapter. */
+/** SDK kinds accepted by the seher config loader.
+ *  SmartCrab itself only emits "pi"; the other members are kept for
+ *  compatibility with configs produced elsewhere. */
 export type SdkKind = "claude" | "codex" | "copilot" | "kimi" | "opencode" | "cursor" | "pi";
 
 /** Per-mode model entry inside a provider entry. */

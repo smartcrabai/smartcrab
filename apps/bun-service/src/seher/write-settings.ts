@@ -1,7 +1,8 @@
 /**
  * Translate the in-app SeherConfig (saved via `settings.app-save` from the
- * SwiftUI Settings tab) into seher-ts 0.1.13+ `config.yaml` format and write
- * it to a fixed path so the SeherSDK in `router.ts` picks it up.
+ * SwiftUI Settings tab) into the seher `config.yaml` format and write it to a
+ * fixed path so the router in `router.ts` picks it up. All providers are
+ * emitted as `sdk: pi` (pi_agent_rust in-process execution).
  *
  * Output path defaults to
  *   `$XDG_CONFIG_HOME/smartcrab/seher-config.yaml`
