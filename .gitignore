@@ -12,3 +12,4 @@ apps/macos/Resources/smartcrab-service
 # Rust seher-bridge sidecar binary (built by CI, staged into the .app bundle)
 apps/macos/Resources/seher-bridge
 
+apps/macos/build/
