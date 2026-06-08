@@ -1,14 +1,16 @@
 // SeherConfigEditor.swift
 //
 // GUI editor for the smartcrab seher configuration. Users edit providers
-// (kind, model, credentials), priority rules (weight, weekday/hour windows,
-// condition predicate) and defaults (fallback provider, rate-limit backoff).
-// Credentials are kind-specific: API-key kinds (anthropic / openai) show
-// secure fields; OAuth kinds (copilot / openai-codex) show a credential badge
-// plus a Sign-in button that runs the seher-bridge device-flow / OAuth via
-// `AuthFlowSheet`. Edits are auto-saved (debounced) via
-// `BunServiceProtocol.settingsSave`; the toolbar shows a live save-status
-// indicator.
+// (kind, model, credentials) and defaults (fallback provider, rate-limit
+// backoff). The provider *order* is the single source of truth for routing
+// priority: the topmost provider wins (highest weight). Reordering or
+// deleting a provider re-derives the seher `priorities` automatically, so
+// there is no separate priority-rules UI. Credentials are kind-specific:
+// API-key kinds (anthropic / openai) show secure fields; OAuth kinds
+// (copilot / openai-codex) show a credential badge plus a Sign-in button that
+// runs the seher-bridge device-flow / OAuth via `AuthFlowSheet`. Edits are
+// auto-saved (debounced) via `BunServiceProtocol.settingsSave`; the toolbar
+// shows a live save-status indicator.
 
 import SwiftUI
 
@@ -31,16 +33,18 @@ public struct SeherConfigEditor: View {
     }
 
     public var body: some View {
-        Form {
+        // A `List` (not `Form`) so the providers `ForEach` can use `.onMove`,
+        // which gives native macOS drag-to-reorder — system insertion indicator,
+        // cursor, and drag-end cleanup all handled for us.
+        List {
             if isLoading {
                 ProgressView("Loading configuration…")
             } else {
                 providersSection
-                prioritiesSection
                 defaultsSection
             }
         }
-        .formStyle(.grouped)
+        .listStyle(.inset)
         .safeAreaInset(edge: .bottom, spacing: 0) {
             HStack {
                 Spacer()
@@ -54,6 +58,9 @@ public struct SeherConfigEditor: View {
         }
         .task { await load() }
         .task { await refreshCredentialStatuses() }
+        .onChange(of: config.providers) { _, providers in
+            syncPriorities(with: providers)
+        }
         .onChange(of: config) { _, newValue in
             scheduleAutoSave(for: newValue)
         }
@@ -69,18 +76,18 @@ public struct SeherConfigEditor: View {
                     provider: $provider,
                     service: service,
                     credentialStatuses: credentialStatuses,
-                    bridgeAvailable: bridgeAvailable
-                ) {
-                    Task { await refreshCredentialStatuses() }
-                }
+                    bridgeAvailable: bridgeAvailable,
+                    onDelete: { config.providers.removeAll { $0.rowKey == provider.rowKey } },
+                    onCredentialsChanged: { Task { await refreshCredentialStatuses() } }
+                )
             }
-            .onDelete { indices in
-                config.providers.remove(atOffsets: indices)
+            .onMove { source, destination in
+                config.providers.move(fromOffsets: source, toOffset: destination)
             }
 
             Button {
                 config.providers.append(
-                    SeherProvider(id: "provider-\(config.providers.count + 1)", kind: "anthropic", model: "")
+                    SeherProvider(id: uniqueProviderId(), kind: "anthropic", model: "")
                 )
             } label: {
                 Label("Add provider", systemImage: "plus")
@@ -88,30 +95,7 @@ public struct SeherConfigEditor: View {
         } header: {
             Text("Providers")
         } footer: {
-            Text("Each provider id must be unique and is referenced by priority rules and the fallback default.")
-        }
-    }
-
-    private var prioritiesSection: some View {
-        Section {
-            ForEach($config.priorities) { $rule in
-                PriorityRow(rule: $rule, providers: config.providers)
-            }
-            .onDelete { indices in
-                config.priorities.remove(atOffsets: indices)
-            }
-
-            Button {
-                let firstProvider = config.providers.first?.id ?? ""
-                config.priorities.append(SeherPriorityRule(providerId: firstProvider))
-            } label: {
-                Label("Add priority rule", systemImage: "plus")
-            }
-            .disabled(config.providers.isEmpty)
-        } header: {
-            Text("Priority rules")
-        } footer: {
-            Text("Higher weight wins. Rules are scoped by weekday and hour window; an empty weekday filter matches every day.")
+            Text("Drag a row to reorder — the topmost provider has the highest routing priority. Each provider id must be unique and is referenced by the fallback default.")
         }
     }
 
@@ -135,6 +119,64 @@ public struct SeherConfigEditor: View {
         }
     }
 
+    // MARK: Priority derivation -------------------------------------------------
+
+    /// The provider order *is* the priority: the topmost provider gets the
+    /// highest weight, decreasing by one per row. Used both on load (to migrate
+    /// older configs / sort by existing weight) and whenever the provider list
+    /// changes.
+    private func derivedPriorities(for providers: [SeherProvider]) -> [SeherPriorityRule] {
+        let count = providers.count
+        return providers.enumerated().map { index, provider in
+            SeherPriorityRule(providerId: provider.id, weight: count - index)
+        }
+    }
+
+    /// Re-derive `priorities` from the (possibly reordered) provider list.
+    /// Guarded on the ordered (providerId, weight) sequence so editing an
+    /// unrelated field (kind / model / credentials) doesn't churn the priorities
+    /// array. Order-sensitive (not a dictionary) so duplicate or empty provider
+    /// ids can't collapse into one another and skip a real update.
+    private func syncPriorities(with providers: [SeherProvider]) {
+        let derived = derivedPriorities(for: providers)
+        let unchanged = config.priorities.count == derived.count
+            && zip(config.priorities, derived).allSatisfy {
+                $0.providerId == $1.providerId && $0.weight == $1.weight
+            }
+        if !unchanged {
+            config.priorities = derived
+        }
+    }
+
+    /// A `provider-N` id not already in use, so the Add button never produces a
+    /// duplicate (which would otherwise let two providers share a priority slot).
+    private func uniqueProviderId() -> String {
+        let existing = Set(config.providers.map(\.id))
+        var n = config.providers.count + 1
+        while existing.contains("provider-\(n)") {
+            n += 1
+        }
+        return "provider-\(n)"
+    }
+
+    /// Open the editor in priority order: sort providers by their existing rule
+    /// weight (highest first), then re-derive priorities so the persisted
+    /// weights match the displayed order exactly.
+    private func normalize(_ loaded: SeherConfig) -> SeherConfig {
+        var result = loaded
+        let weightFor: (String) -> Int = { id in
+            loaded.priorities.filter { $0.providerId == id }.map(\.weight).max() ?? 0
+        }
+        result.providers = loaded.providers.enumerated()
+            .sorted { lhs, rhs in
+                let lw = weightFor(lhs.element.id), rw = weightFor(rhs.element.id)
+                return lw != rw ? lw > rw : lhs.offset < rhs.offset // stable
+            }
+            .map(\.element)
+        result.priorities = derivedPriorities(for: result.providers)
+        return result
+    }
+
     // MARK: Persistence --------------------------------------------------------
 
     private func load() async {
@@ -142,8 +184,13 @@ public struct SeherConfigEditor: View {
         defer { isLoading = false }
         do {
             let loaded = try await service.settingsLoad()
-            config = loaded
-            lastSavedConfig = loaded
+            // Open in priority order, but treat the normalized config as the save
+            // baseline so merely opening the editor never rewrites the on-disk
+            // config (nor silently drops any legacy priority-rule fields). The
+            // new order is persisted only once the user actually edits something.
+            let normalized = normalize(loaded)
+            config = normalized
+            lastSavedConfig = normalized
             saveStatus = .idle
         } catch {
             saveStatus = .failed("Failed to load: \(error.localizedDescription)")
@@ -244,6 +291,7 @@ private struct ProviderRow: View {
     /// Keyed by pi canonical provider id; loaded once by the editor.
     let credentialStatuses: [String: ProviderCredentialStatus]
     let bridgeAvailable: Bool
+    let onDelete: () -> Void
     /// Invoked after a successful sign-in so the editor refreshes the badges.
     let onCredentialsChanged: () -> Void
 
@@ -272,6 +320,12 @@ private struct ProviderRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
+                // ☰ affordance: the whole row is draggable via the List's
+                // `.onMove`, so this just signals "grab here to reorder".
+                Image(systemName: "line.3.horizontal")
+                    .foregroundStyle(.secondary)
+                    .help("Drag to reorder priority (top = highest)")
+
                 TextField("id", text: $provider.id)
                     .textFieldStyle(.roundedBorder)
                 Picker("kind", selection: $provider.kind) {
@@ -279,6 +333,14 @@ private struct ProviderRow: View {
                 }
                 .labelsHidden()
                 .frame(width: 200)
+
+                Spacer(minLength: 8)
+
+                Button(role: .destructive, action: onDelete) {
+                    Image(systemName: "trash")
+                }
+                .buttonStyle(.borderless)
+                .help("Remove this provider")
             }
             TextField("model", text: $provider.model)
                 .textFieldStyle(.roundedBorder)
@@ -401,69 +463,6 @@ private struct ProviderRow: View {
             .buttonStyle(.borderless)
             .disabled(newEnvKey.trimmingCharacters(in: .whitespaces).isEmpty)
         }
-    }
-}
-
-// MARK: - Priority row ----------------------------------------------------------
-
-private struct PriorityRow: View {
-    @Binding var rule: SeherPriorityRule
-    let providers: [SeherProvider]
-
-    private static let weekdayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Picker("Provider", selection: $rule.providerId) {
-                    ForEach(providers) { provider in
-                        Text(provider.id).tag(provider.id)
-                    }
-                }
-                Stepper(value: $rule.weight, in: 0 ... 100) {
-                    LabeledContent("Weight") { Text("\(rule.weight)") }
-                }
-                .frame(maxWidth: 180)
-            }
-
-            HStack(spacing: 4) {
-                Text("Weekdays").font(.caption).foregroundStyle(.secondary)
-                ForEach(0 ..< 7) { day in
-                    Toggle(Self.weekdayLabels[day], isOn: weekdayBinding(day))
-                        .toggleStyle(.button)
-                        .controlSize(.small)
-                }
-            }
-
-            HStack {
-                Stepper(value: $rule.hourStart, in: 0 ... 23) {
-                    LabeledContent("From") { Text(String(format: "%02d:00", rule.hourStart)) }
-                }
-                Stepper(value: $rule.hourEnd, in: 0 ... 23) {
-                    LabeledContent("To") { Text(String(format: "%02d:59", rule.hourEnd)) }
-                }
-            }
-
-            TextField("condition (e.g. task.kind == \"code\")", text: $rule.condition)
-                .textFieldStyle(.roundedBorder)
-        }
-        .padding(.vertical, 4)
-    }
-
-    private func weekdayBinding(_ day: Int) -> Binding<Bool> {
-        Binding(
-            get: { rule.weekdayFilter.contains(day) },
-            set: { isOn in
-                if isOn {
-                    if !rule.weekdayFilter.contains(day) {
-                        rule.weekdayFilter.append(day)
-                        rule.weekdayFilter.sort()
-                    }
-                } else {
-                    rule.weekdayFilter.removeAll { $0 == day }
-                }
-            }
-        )
     }
 }
 
