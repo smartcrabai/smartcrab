@@ -85,6 +85,74 @@ public struct SeherProvider: Identifiable, Hashable, Codable {
     }
 }
 
+/// Model-id suggestions shown in the provider editor's model dropdown.
+///
+/// `fallback(for:)` is a hardcoded baseline shown immediately and used when a
+/// live fetch is unavailable (not signed in, no API key, offline). For kinds
+/// that `supportsFetch`, the editor augments these with `models.list` — pi does
+/// a live API fetch (GitHub Copilot token exchange, OpenAI-compatible
+/// `/v1/models`). `openai-codex` has no listing endpoint, so its curated set is
+/// authoritative and never fetched.
+public enum SeherModelCatalog {
+    public static func fallback(for kind: String) -> [String] {
+        switch kind {
+        case "anthropic":
+            // Anthropic API model ids (see the claude-api reference).
+            return [
+                "claude-opus-4-8",
+                "claude-opus-4-7",
+                "claude-opus-4-6",
+                "claude-sonnet-4-6",
+                "claude-haiku-4-5",
+            ]
+        case "openai":
+            return [
+                "gpt-5",
+                "gpt-5-mini",
+                "gpt-4.1",
+                "gpt-4o",
+                "gpt-4o-mini",
+                "o3",
+                "o4-mini",
+            ]
+        case "copilot":
+            // GitHub Copilot model ids (vary by account plan; the live fetch
+            // reflects the account's actual set). This is only the placeholder
+            // shown before that fetch resolves. These dotted ids are Copilot's
+            // own, not the Anthropic API's.
+            return [
+                "gpt-5.1",
+                "gpt-5",
+                "gpt-4.1",
+                "claude-opus-4.5",
+                "claude-sonnet-4.5",
+                "gemini-3-pro-preview",
+            ]
+        case "openai-codex":
+            // OpenAI Codex (ChatGPT sign-in) curated set — no listing endpoint.
+            return [
+                "gpt-5.5",
+                "gpt-5.4",
+                "gpt-5.4-mini",
+                "gpt-5.3-codex-spark",
+            ]
+        default:
+            return []
+        }
+    }
+
+    /// Whether the kind supports a live `models.list` fetch. `openai-codex` is
+    /// a fixed curated set with no listing endpoint, so it is excluded.
+    public static func supportsFetch(_ kind: String) -> Bool {
+        switch kind {
+        case "anthropic", "openai", "copilot":
+            return true
+        default:
+            return false
+        }
+    }
+}
+
 public struct SeherPriorityRule: Identifiable, Hashable, Codable {
     public var id: UUID
     public var providerId: String
@@ -561,6 +629,13 @@ public protocol BunServiceProtocol: AnyObject {
     func authCancel(sessionId: String) async throws
     func authCredentialStatus() async throws -> CredentialStatusResult
 
+    /// Available model ids for a provider `kind`. `apiKey` / `baseUrl` carry the
+    /// editor-entered credential for key-based kinds (anthropic / openai) since
+    /// it may not be persisted to auth.json yet; OAuth kinds (copilot) ignore
+    /// them and read auth.json. `refresh` bypasses pi's model cache (the manual
+    /// "Refresh" action). Not supported for `openai-codex`.
+    func modelsList(kind: String, apiKey: String?, baseUrl: String?, refresh: Bool) async throws -> [String]
+
     // Adapters (Discord, etc.)
     func adapterLoad(adapterId: String) async throws -> DiscordAdapterConfig
     func adapterSave(adapterId: String, config: DiscordAdapterConfig) async throws
@@ -676,6 +751,11 @@ public final class StubBunService: BunServiceProtocol {
             "anthropic": ProviderCredentialStatus(status: "api_key"),
             "openai": ProviderCredentialStatus(status: "none"),
         ])
+    }
+
+    public func modelsList(kind: String, apiKey _: String?, baseUrl _: String?, refresh _: Bool) async throws -> [String] {
+        // In-memory previews / Simulator: no bridge, so return the hardcoded baseline.
+        SeherModelCatalog.fallback(for: kind)
     }
 
     public func adapterLoad(adapterId _: String) async throws -> DiscordAdapterConfig {

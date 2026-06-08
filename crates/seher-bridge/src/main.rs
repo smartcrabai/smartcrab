@@ -12,6 +12,7 @@
 
 mod auth;
 mod io;
+mod models;
 mod protocol;
 
 use std::io::{BufRead, BufReader, Stdout, Write, stdin, stdout};
@@ -33,11 +34,13 @@ use crate::io::{
 use crate::protocol::{Incoming, Outgoing, RunRequest};
 
 fn main() {
-    // `auth` subcommand; anything else (including no args) is run mode, so the
-    // bun router's plain `spawn([bridgePath])` keeps working unchanged.
+    // `auth` / `models` subcommands; anything else (including no args) is run
+    // mode, so the bun router's plain `spawn([bridgePath])` keeps working unchanged.
     let args: Vec<String> = std::env::args().skip(1).collect();
-    if args.first().map(String::as_str) == Some("auth") {
-        std::process::exit(auth::run_auth(&args[1..]));
+    match args.first().map(String::as_str) {
+        Some("auth") => std::process::exit(auth::run_auth(&args[1..])),
+        Some("models") => std::process::exit(models::run_models(&args[1..])),
+        _ => {}
     }
 
     let writer = Arc::new(FrameWriter::new(stdout()));
@@ -54,7 +57,15 @@ fn run(writer: &Arc<FrameWriter<Stdout>>) -> i32 {
     // Step 1: read & parse the first line as a `run` request.
     let request = match read_run_request(&mut reader) {
         Ok(req) => req,
-        Err(message) => return emit_terminal(writer, Outgoing::Error { message, partial: None }),
+        Err(message) => {
+            return emit_terminal(
+                writer,
+                Outgoing::Error {
+                    message,
+                    partial: None,
+                },
+            );
+        }
     };
 
     // The stdin reader thread owns the rest of stdin (tool_result frames).

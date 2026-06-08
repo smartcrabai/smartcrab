@@ -142,9 +142,46 @@ pub enum AuthEvent {
     },
 }
 
+/// Frames emitted by the `models` subcommand (bridge -> bun over stdout).
+///
+/// `models <provider>` emits exactly one terminal frame: `models` on success
+/// (exit 0) or `models_error` on failure (non-zero). The model list is whatever
+/// pi resolves for the provider — a live fetch when a credential is available,
+/// otherwise pi's static registry fallback.
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum ModelsEvent {
+    /// Terminal success: the available model ids for `provider`.
+    Models {
+        provider: String,
+        models: Vec<String>,
+    },
+    /// Terminal failure (unknown provider, network error with no fallback, ...).
+    ModelsError { message: String },
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn serializes_models_frames() {
+        let ok = ModelsEvent::Models {
+            provider: "openai".to_string(),
+            models: vec!["gpt-4o".to_string(), "o3".to_string()],
+        };
+        assert_eq!(
+            serde_json::to_string(&ok).expect("serialize"),
+            r#"{"type":"models","provider":"openai","models":["gpt-4o","o3"]}"#
+        );
+        let err = ModelsEvent::ModelsError {
+            message: "unknown provider".to_string(),
+        };
+        assert_eq!(
+            serde_json::to_string(&err).expect("serialize"),
+            r#"{"type":"models_error","message":"unknown provider"}"#
+        );
+    }
 
     #[test]
     fn deserializes_run_with_camel_case_fields() {
@@ -163,7 +200,8 @@ mod tests {
 
     #[test]
     fn deserializes_run_with_nulls_and_missing_tools() {
-        let line = r#"{"type":"run","prompt":"hi","systemPrompt":null,"model":null,"configPath":null}"#;
+        let line =
+            r#"{"type":"run","prompt":"hi","systemPrompt":null,"model":null,"configPath":null}"#;
         let incoming: Incoming = serde_json::from_str(line).expect("parse run");
         let Incoming::Run(req) = incoming else {
             panic!("expected run");
