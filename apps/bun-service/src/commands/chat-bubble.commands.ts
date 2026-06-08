@@ -97,10 +97,13 @@ export function configureChatBubbleCommands(opts: { db?: Database } = {}): void 
 }
 
 /**
- * Tool wiring so the LLM can author a pipeline mid-conversation. Reuses the
- * shared `submit_pipeline` factory but persists via `pipeline.save` (which
- * itself validates YAML) so the new pipeline shows up in the Pipelines tab
- * after the user refreshes. A fresh tool per turn avoids stale closures.
+ * Tool wiring so the LLM can manage pipelines mid-conversation: create
+ * (`submit_pipeline`), enumerate (`list_pipelines`), overwrite
+ * (`edit_pipeline`), and remove (`delete_pipeline`). All persist via the
+ * `pipeline.*` handlers (`pipeline.save` validates YAML) so changes show up in
+ * the Pipelines tab after the user refreshes. Fresh tools per turn avoid stale
+ * closures, and the router supports multiple tool rounds so the LLM can chain
+ * `list_pipelines` → `edit_pipeline`/`delete_pipeline` in a single turn.
  *
  * The pipeline modules are dynamically imported: a static `import` from this
  * command module into `pipeline-author`/`pipeline.commands` (which reach
@@ -108,14 +111,21 @@ export function configureChatBubbleCommands(opts: { db?: Database } = {}): void 
  * `llmRegistry` undefined when adapters self-register. Lazy import keeps those
  * edges off the module-load graph (same pattern server.ts uses).
  */
-async function submitPipelineTool() {
-  const { makePipelineSubmitTool } = await import("./pipeline-author.commands.ts");
-  return makePipelineSubmitTool({
+async function pipelineTools() {
+  const {
+    makePipelineSubmitTool,
+    makePipelineListTool,
+    makePipelineGetTool,
+    makePipelineEditTool,
+    makePipelineDeleteTool,
+  } = await import("./pipeline-author.commands.ts");
+  const { default: pipelineHandlers } = await import("./pipeline.commands.ts");
+
+  const submit = makePipelineSubmitTool({
     description:
-      "Create a new SmartCrab pipeline. Call this when the user asks you to make a pipeline. Provide the complete pipeline definition; do not output YAML inline. Note: this always creates a new pipeline (it cannot edit an existing one).",
+      "Create a NEW SmartCrab pipeline. Call this when the user asks you to make a pipeline. Provide the complete pipeline definition; do not output YAML inline. This always creates a new pipeline — to change an existing one, use edit_pipeline.",
     onSubmit: async (pipeline): Promise<string> => {
       try {
-        const { default: pipelineHandlers } = await import("./pipeline.commands.ts");
         const saved = await pipelineHandlers["pipeline.save"]({
           name: pipeline.name,
           description: pipeline.description,
@@ -127,6 +137,80 @@ async function submitPipelineTool() {
       }
     },
   });
+
+  const list = makePipelineListTool({
+    description:
+      "List existing SmartCrab pipelines (id, name, description). Call this first to find the id of the pipeline you want to read, edit, or delete. Use get_pipeline to see a pipeline's full YAML.",
+    onList: async (): Promise<string> => {
+      try {
+        const rows = await pipelineHandlers["pipeline.list"]();
+        if (rows.length === 0) return "No pipelines exist yet.";
+        const summary = rows.map((r) => ({
+          id: r.id,
+          name: r.name,
+          description: r.description,
+        }));
+        return JSON.stringify(summary);
+      } catch (err) {
+        return `list_pipelines failed: ${(err as Error).message}`;
+      }
+    },
+  });
+
+  const get = makePipelineGetTool({
+    description:
+      "Read one existing pipeline's full definition (including its current YAML) by id. Call this before edit_pipeline so you can base the updated definition on the current state.",
+    onGet: async (id): Promise<string> => {
+      try {
+        const row = await pipelineHandlers["pipeline.get"]({ id });
+        return JSON.stringify({
+          id: row.id,
+          name: row.name,
+          description: row.description,
+          yaml_content: row.yaml_content,
+        });
+      } catch (err) {
+        return `get_pipeline failed: ${(err as Error).message}`;
+      }
+    },
+  });
+
+  const edit = makePipelineEditTool({
+    description:
+      "Overwrite an EXISTING pipeline. Call list_pipelines (and usually get_pipeline) first to get the id and current state, then provide that id plus the COMPLETE updated pipeline definition (the full new state, not a diff). Do not output YAML inline.",
+    onEdit: async (id, pipeline): Promise<string> => {
+      try {
+        // Confirm the pipeline exists before saving: pipeline.save upserts by
+        // id, so without this guard a hallucinated id would silently create a
+        // NEW pipeline instead of editing. pipeline.get throws when unknown.
+        await pipelineHandlers["pipeline.get"]({ id });
+        const saved = await pipelineHandlers["pipeline.save"]({
+          id,
+          name: pipeline.name,
+          description: pipeline.description,
+          yaml_content: YAML.stringify(pipeline),
+        });
+        return `Updated pipeline "${saved.name}" (id=${saved.id}).`;
+      } catch (err) {
+        return `edit_pipeline failed: ${(err as Error).message}`;
+      }
+    },
+  });
+
+  const remove = makePipelineDeleteTool({
+    description:
+      "Delete an existing pipeline by id. Call list_pipelines first to confirm the correct id. This is irreversible.",
+    onDelete: async (id): Promise<string> => {
+      try {
+        await pipelineHandlers["pipeline.delete"]({ id });
+        return `Deleted pipeline (id=${id}).`;
+      } catch (err) {
+        return `delete_pipeline failed: ${(err as Error).message}`;
+      }
+    },
+  });
+
+  return [submit, list, get, edit, remove];
 }
 
 const handlers = {
@@ -149,7 +233,7 @@ const handlers = {
       const result = await route({
         prompt: content,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        tools: [(await submitPipelineTool()) as any],
+        tools: (await pipelineTools()) as any,
       });
       assistantText = result.text;
     } catch (err) {

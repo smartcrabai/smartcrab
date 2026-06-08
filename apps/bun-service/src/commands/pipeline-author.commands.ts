@@ -224,6 +224,112 @@ export function makePipelineSubmitTool(opts: {
   };
 }
 
+/** Tool name the LLM calls to enumerate existing pipelines. */
+export const PIPELINE_LIST_TOOL_NAME = "list_pipelines";
+/** Tool name the LLM calls to read one pipeline's full definition. */
+export const PIPELINE_GET_TOOL_NAME = "get_pipeline";
+/** Tool name the LLM calls to overwrite an existing pipeline. */
+export const PIPELINE_EDIT_TOOL_NAME = "edit_pipeline";
+/** Tool name the LLM calls to delete an existing pipeline. */
+export const PIPELINE_DELETE_TOOL_NAME = "delete_pipeline";
+
+/** Schema for `get_pipeline`. */
+export const pipelineGetSchema = z.object({
+  id: z
+    .string()
+    .min(1)
+    .describe("Id of the pipeline to read (from list_pipelines)."),
+});
+
+/**
+ * Schema for `edit_pipeline`: a full pipeline definition (same shape as
+ * `submit_pipeline`) plus the `id` of the row to overwrite. Editing replaces
+ * the whole pipeline, so the LLM must supply the complete definition, not a
+ * diff — mirroring how `pipeline.author` refinement works.
+ */
+export const pipelineEditSchema = pipelineDefinitionSchema.extend({
+  id: z
+    .string()
+    .min(1)
+    .describe("Id of the existing pipeline to overwrite (from list_pipelines)."),
+});
+
+/** Schema for `delete_pipeline`. */
+export const pipelineDeleteSchema = z.object({
+  id: z
+    .string()
+    .min(1)
+    .describe("Id of the pipeline to delete (from list_pipelines)."),
+});
+
+/**
+ * Build the `list_pipelines` SeherTool. Takes no parameters; `onList` returns
+ * the listing string the LLM reads (typically a JSON array of summaries) so it
+ * can pick the right `id` before calling `get_pipeline` / `edit_pipeline` /
+ * `delete_pipeline`.
+ */
+export function makePipelineListTool(opts: {
+  description: string;
+  onList: () => string | Promise<string>;
+}) {
+  return {
+    name: PIPELINE_LIST_TOOL_NAME,
+    description: opts.description,
+    parameters: z.object({}),
+    handler: () => opts.onList(),
+  };
+}
+
+/**
+ * Build the `get_pipeline` SeherTool. `onGet` returns one pipeline's full
+ * definition (typically JSON including its YAML) so the LLM can read the
+ * current state before producing a complete replacement for `edit_pipeline`.
+ */
+export function makePipelineGetTool(opts: {
+  description: string;
+  onGet: (id: string) => string | Promise<string>;
+}) {
+  return {
+    name: PIPELINE_GET_TOOL_NAME,
+    description: opts.description,
+    parameters: pipelineGetSchema,
+    handler: (input: z.infer<typeof pipelineGetSchema>) => opts.onGet(input.id),
+  };
+}
+
+/**
+ * Build the `edit_pipeline` SeherTool. Like `submit_pipeline` but carries the
+ * target `id`; `onEdit` receives the id and the full replacement definition
+ * (with `id` stripped back out so the callback sees a clean `PipelineDefinition`).
+ */
+export function makePipelineEditTool(opts: {
+  description: string;
+  onEdit: (id: string, pipeline: PipelineDefinition) => string | Promise<string>;
+}) {
+  return {
+    name: PIPELINE_EDIT_TOOL_NAME,
+    description: opts.description,
+    parameters: pipelineEditSchema,
+    handler: (input: z.infer<typeof pipelineEditSchema>) => {
+      const { id, ...pipeline } = input;
+      return opts.onEdit(id, pipeline as PipelineDefinition);
+    },
+  };
+}
+
+/** Build the `delete_pipeline` SeherTool. */
+export function makePipelineDeleteTool(opts: {
+  description: string;
+  onDelete: (id: string) => string | Promise<string>;
+}) {
+  return {
+    name: PIPELINE_DELETE_TOOL_NAME,
+    description: opts.description,
+    parameters: pipelineDeleteSchema,
+    handler: (input: z.infer<typeof pipelineDeleteSchema>) => opts.onDelete(input.id),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Handler
 // ---------------------------------------------------------------------------
