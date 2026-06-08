@@ -216,6 +216,21 @@
             try await call(method: "auth.credential-status", params: EmptyParams())
         }
 
+        public func modelsList(kind: String, apiKey: String?, baseUrl: String?, refresh: Bool) async throws -> [String] {
+            struct Params: Encodable, Sendable {
+                let kind: String
+                let apiKey: String?
+                let baseUrl: String?
+                let refresh: Bool
+            }
+            struct Result: Decodable, Sendable { let models: [String] }
+            let result: Result = try await call(
+                method: "models.list",
+                params: Params(kind: kind, apiKey: apiKey, baseUrl: baseUrl, refresh: refresh)
+            )
+            return result.models
+        }
+
         // MARK: - Adapters
 
         public func adapterLoad(adapterId: String) async throws -> DiscordAdapterConfig {

@@ -298,6 +298,11 @@ private struct ProviderRow: View {
     @State private var newEnvKey: String = ""
     @State private var newEnvValue: String = ""
     @State private var showAuthSheet: Bool = false
+    /// Models fetched live via `models.list` for the current kind (augments the
+    /// hardcoded catalog). Cleared when the kind changes.
+    @State private var fetchedModels: [String] = []
+    @State private var isFetchingModels: Bool = false
+    @State private var fetchModelsError: String?
 
     /// All kinds run on the Rust pi engine; the kind picks the pi provider
     /// (model id prefix) and the credential UI below.
@@ -342,8 +347,7 @@ private struct ProviderRow: View {
                 .buttonStyle(.borderless)
                 .help("Remove this provider")
             }
-            TextField("model", text: $provider.model)
-                .textFieldStyle(.roundedBorder)
+            modelField
 
             credentialBody
 
@@ -355,6 +359,128 @@ private struct ProviderRow: View {
         .sheet(isPresented: $showAuthSheet) {
             AuthFlowSheet(kind: provider.kind, service: service) {
                 onCredentialsChanged()
+            }
+        }
+        .task(id: provider.kind) {
+            // Reset then (auto-)fetch in one ordered step — keeping the clear in
+            // the same closure as the fetch avoids racing a separate onChange,
+            // which SwiftUI does not order against task startup. Pull the live
+            // list so the dropdown shows current models without a manual click;
+            // pi caches, so re-opening is cheap and failures silently leave the
+            // hardcoded catalog in place.
+            fetchedModels = []
+            fetchModelsError = nil
+            if SeherModelCatalog.supportsFetch(provider.kind) {
+                await fetchModelsAsync(silentOnError: true, refresh: false)
+            }
+        }
+    }
+
+    // MARK: Model (free text + suggestions + live fetch) ------------------------
+
+    /// Hardcoded catalog plus any live-fetched ids (fetched first), de-duplicated
+    /// in order. Free-form entry stays available — the menu only fills the field,
+    /// so a model newer than the list can always be typed directly.
+    private var modelSuggestions: [String] {
+        var seen = Set<String>()
+        return (fetchedModels + SeherModelCatalog.fallback(for: provider.kind))
+            .filter { seen.insert($0).inserted }
+    }
+
+    /// Model id entry: a free-form `TextField` plus a dropdown of known models
+    /// for the current kind, with an optional live "Fetch" for kinds that pi can
+    /// list (anthropic / openai via API key, copilot via auth.json).
+    @ViewBuilder
+    private var modelField: some View {
+        let suggestions = modelSuggestions
+        let canFetch = SeherModelCatalog.supportsFetch(provider.kind)
+        HStack(spacing: 4) {
+            TextField("model", text: $provider.model)
+                .textFieldStyle(.roundedBorder)
+            if !suggestions.isEmpty || canFetch {
+                Menu {
+                    ForEach(suggestions, id: \.self) { model in
+                        Button {
+                            provider.model = model
+                        } label: {
+                            if provider.model == model {
+                                Label(model, systemImage: "checkmark")
+                            } else {
+                                Text(model)
+                            }
+                        }
+                    }
+                    if canFetch {
+                        Divider()
+                        Button {
+                            fetchModels()
+                        } label: {
+                            Label(
+                                fetchedModels.isEmpty ? "Fetch available models" : "Refresh models",
+                                systemImage: "arrow.clockwise"
+                            )
+                        }
+                        .disabled(isFetchingModels)
+                    }
+                    if let fetchModelsError {
+                        Divider()
+                        Text(fetchModelsError).foregroundStyle(.red)
+                    }
+                } label: {
+                    if isFetchingModels {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        Image(systemName: "chevron.down")
+                    }
+                }
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
+                .fixedSize()
+                .help("Choose a known model, or fetch the latest from the provider")
+            }
+        }
+    }
+
+    /// API key env var the editor stores for a key-based kind (nil for OAuth).
+    private var apiKeyEnvVar: String? {
+        switch provider.kind {
+        case "anthropic": return "ANTHROPIC_API_KEY"
+        case "openai": return "OPENAI_API_KEY"
+        default: return nil
+        }
+    }
+
+    /// Manual fetch trigger (the menu button): bypass the cache and surface errors.
+    private func fetchModels() {
+        Task { await fetchModelsAsync(silentOnError: false, refresh: true) }
+    }
+
+    /// Fetch the live model list for the current kind via the bun-service →
+    /// seher-bridge → pi path. Failures (not signed in, no key, offline, bridge
+    /// not rebuilt) leave the hardcoded catalog in place. `silentOnError` skips
+    /// the in-menu error message for the automatic on-appear fetch so a missing
+    /// credential doesn't nag — an explicit "Refresh" still reports the reason.
+    /// `refresh` bypasses pi's model cache (manual refresh; the auto fetch may
+    /// serve a warm cache).
+    private func fetchModelsAsync(silentOnError: Bool, refresh: Bool) async {
+        isFetchingModels = true
+        fetchModelsError = nil
+        defer { isFetchingModels = false }
+        let kind = provider.kind
+        let apiKey = apiKeyEnvVar.flatMap { provider.envOverrides[$0] }
+        let baseUrl = kind == "openai" ? provider.envOverrides["OPENAI_BASE_URL"] : nil
+        do {
+            let models = try await service.modelsList(kind: kind, apiKey: apiKey, baseUrl: baseUrl, refresh: refresh)
+            // The kind may have changed while the request was in flight.
+            guard provider.kind == kind else { return }
+            fetchedModels = models
+            if models.isEmpty, !silentOnError {
+                fetchModelsError = "No models returned"
+            }
+        } catch {
+            guard provider.kind == kind else { return }
+            if !silentOnError {
+                fetchModelsError = error.localizedDescription
             }
         }
     }

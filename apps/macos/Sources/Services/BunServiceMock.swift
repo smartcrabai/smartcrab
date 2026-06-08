@@ -41,6 +41,10 @@
             try await stub.authCredentialStatus()
         }
 
+        public func modelsList(kind: String, apiKey: String?, baseUrl: String?, refresh: Bool) async throws -> [String] {
+            try await stub.modelsList(kind: kind, apiKey: apiKey, baseUrl: baseUrl, refresh: refresh)
+        }
+
         public func adapterLoad(adapterId: String) async throws -> DiscordAdapterConfig {
             try await stub.adapterLoad(adapterId: adapterId)
         }
