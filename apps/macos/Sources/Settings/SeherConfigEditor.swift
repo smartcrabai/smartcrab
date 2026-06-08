@@ -99,6 +99,8 @@ public struct SeherConfigEditor: View {
         }
     }
 
+    private static let backoffRange = 1 ... 3600
+
     private var defaultsSection: some View {
         Section("Defaults") {
             Picker("Fallback provider", selection: $config.defaults.fallbackProviderId) {
@@ -108,12 +110,35 @@ public struct SeherConfigEditor: View {
                 }
             }
 
-            Stepper(
-                value: $config.defaults.rateLimitBackoffSeconds,
-                in: 1 ... 3600
-            ) {
-                LabeledContent("Rate-limit backoff (s)") {
-                    Text("\(config.defaults.rateLimitBackoffSeconds)")
+            LabeledContent("Rate-limit backoff (s)") {
+                HStack(spacing: 8) {
+                    TextField(
+                        "",
+                        value: $config.defaults.rateLimitBackoffSeconds,
+                        format: .number.grouping(.never)
+                    )
+                    .labelsHidden()
+                    .multilineTextAlignment(.trailing)
+                    .frame(width: 64)
+                    #if os(macOS)
+                    .textFieldStyle(.roundedBorder)
+                    #endif
+
+                    Stepper(
+                        "",
+                        value: $config.defaults.rateLimitBackoffSeconds,
+                        in: Self.backoffRange
+                    )
+                    .labelsHidden()
+                }
+                .onChange(of: config.defaults.rateLimitBackoffSeconds) { _, newValue in
+                    let clamped = min(
+                        max(newValue, Self.backoffRange.lowerBound),
+                        Self.backoffRange.upperBound
+                    )
+                    if clamped != newValue {
+                        config.defaults.rateLimitBackoffSeconds = clamped
+                    }
                 }
             }
         }
