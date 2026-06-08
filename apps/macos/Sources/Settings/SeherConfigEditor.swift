@@ -121,7 +121,7 @@ public struct SeherConfigEditor: View {
                     .multilineTextAlignment(.trailing)
                     .frame(width: 64)
                     #if os(macOS)
-                    .textFieldStyle(.roundedBorder)
+                        .textFieldStyle(.roundedBorder)
                     #endif
 
                     Stepper(
