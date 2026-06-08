@@ -49,6 +49,26 @@ private final class SpyBunService: BunServiceProtocol {
         try await stub.settingsSave(config)
     }
 
+    func modelsList(kind: String, apiKey: String?, baseUrl: String?, refresh: Bool) async throws -> [String] {
+        try await stub.modelsList(kind: kind, apiKey: apiKey, baseUrl: baseUrl, refresh: refresh)
+    }
+
+    func authStart(kind: String) async throws -> AuthStartResult {
+        try await stub.authStart(kind: kind)
+    }
+
+    func authStatus(sessionId: String) async throws -> AuthSessionStatus {
+        try await stub.authStatus(sessionId: sessionId)
+    }
+
+    func authCancel(sessionId: String) async throws {
+        try await stub.authCancel(sessionId: sessionId)
+    }
+
+    func authCredentialStatus() async throws -> CredentialStatusResult {
+        try await stub.authCredentialStatus()
+    }
+
     func adapterSave(adapterId: String, config: DiscordAdapterConfig) async throws {
         try await stub.adapterSave(adapterId: adapterId, config: config)
     }
