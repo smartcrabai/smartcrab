@@ -14,6 +14,7 @@ public struct ChatView: View {
     @State private var isSending: Bool = false
     @State private var errorMessage: String?
     @State private var needsProviderSetup: Bool = false
+    @State private var composerHeight: CGFloat = 0
     @AppStorage("smartcrab.welcomeDismissed") private var welcomeDismissed: Bool = false
 
     public init(service: BunServiceProtocol) {
@@ -39,7 +40,7 @@ public struct ChatView: View {
         VStack(spacing: 0) {
             messageList
             Divider()
-            ChatComposer(isSending: isSending) { content in
+            ChatComposer(isSending: isSending, onHeightChange: { composerHeight = $0 }) { content in
                 await send(content)
             }
         }
@@ -98,19 +99,39 @@ public struct ChatView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             // `defaultScrollAnchor(.bottom)` opens at the latest message and
-            // keeps the scroll glued to the bottom when new messages arrive,
-            // without the ScrollViewReader/scrollTo dance.
-            ScrollView {
-                LazyVStack(spacing: 12) {
-                    ForEach(messages) { message in
-                        ChatBubbleRow(message: message)
-                            .id(message.id)
+            // keeps the scroll glued to the bottom when new messages arrive.
+            // The ScrollViewReader additionally re-pins to the bottom when the
+            // composer grows to fit multiple lines (tracked via `composerHeight`)
+            // so the latest message is never hidden behind it. Keying off the
+            // composer height — rather than the scroll view's own height —
+            // avoids yanking the user back to the bottom on window resizes while
+            // they're reading history.
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(spacing: 12) {
+                        ForEach(messages) { message in
+                            ChatBubbleRow(message: message)
+                                .id(message.id)
+                        }
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+                .defaultScrollAnchor(.bottom)
+                .onChange(of: messages.count) { _, _ in
+                    scrollToBottom(proxy)
+                }
+                .onChange(of: composerHeight) { _, _ in
+                    scrollToBottom(proxy)
+                }
             }
-            .defaultScrollAnchor(.bottom)
+        }
+    }
+
+    private func scrollToBottom(_ proxy: ScrollViewProxy) {
+        guard let lastID = messages.last?.id else { return }
+        withAnimation(.easeOut(duration: 0.15)) {
+            proxy.scrollTo(lastID, anchor: .bottom)
         }
     }
 
