@@ -5,6 +5,14 @@ import {
   configurePipelineAuthorCommands,
   pipelineAuthor,
   buildSystemPrompt,
+  makePipelineListTool,
+  makePipelineGetTool,
+  makePipelineEditTool,
+  makePipelineDeleteTool,
+  PIPELINE_LIST_TOOL_NAME,
+  PIPELINE_GET_TOOL_NAME,
+  PIPELINE_EDIT_TOOL_NAME,
+  PIPELINE_DELETE_TOOL_NAME,
   type PipelineAuthorParams,
 } from "../commands/pipeline-author.commands.ts";
 import type { RouteRequest } from "../router.ts";
@@ -130,6 +138,93 @@ describe("pipeline.author", () => {
       },
     });
     await expect(pipelineAuthor({ instruction: "bad" })).rejects.toThrow();
+  });
+});
+
+describe("pipeline management tools", () => {
+  // Loosely typed view of a tool, mirroring how router.ts drives them: parse
+  // the input, then call the handler. Lets the tests poke parse/handler without
+  // wrestling each factory's precise inferred signatures.
+  type LooseTool = {
+    name: string;
+    parameters: { parse: (i: unknown) => unknown };
+    handler: (a?: unknown) => unknown;
+  };
+
+  it("list tool takes no params and returns the listing string", async () => {
+    const tool = makePipelineListTool({
+      description: "list",
+      onList: () => "[]",
+    }) as unknown as LooseTool;
+    expect(tool.name).toBe(PIPELINE_LIST_TOOL_NAME);
+    // Router parses params before calling handler; an empty object is valid.
+    tool.parameters.parse({});
+    expect(await tool.handler()).toBe("[]");
+  });
+
+  it("get tool forwards the id and rejects an empty id", async () => {
+    let fetched = "";
+    const tool = makePipelineGetTool({
+      description: "get",
+      onGet: (id) => {
+        fetched = id;
+        return "{}";
+      },
+    }) as unknown as LooseTool;
+    expect(tool.name).toBe(PIPELINE_GET_TOOL_NAME);
+
+    const parsed = tool.parameters.parse({ id: "pl-3" });
+    expect(await tool.handler(parsed)).toBe("{}");
+    expect(fetched).toBe("pl-3");
+
+    expect(() => tool.parameters.parse({ id: "" })).toThrow();
+  });
+
+  it("edit tool requires an id and forwards a clean definition", async () => {
+    let seenId = "";
+    let seenName = "";
+    const tool = makePipelineEditTool({
+      description: "edit",
+      onEdit: (id, pipeline) => {
+        seenId = id;
+        seenName = pipeline.name;
+        // `id` must be stripped before reaching the callback.
+        expect("id" in pipeline).toBe(false);
+        return "ok";
+      },
+    }) as unknown as LooseTool;
+    expect(tool.name).toBe(PIPELINE_EDIT_TOOL_NAME);
+
+    const parsed = tool.parameters.parse({ ...VALID_PIPELINE, id: "pl-42" });
+    expect(await tool.handler(parsed)).toBe("ok");
+    expect(seenId).toBe("pl-42");
+    expect(seenName).toBe("demo");
+  });
+
+  it("edit tool rejects a missing id", () => {
+    const tool = makePipelineEditTool({
+      description: "edit",
+      onEdit: () => "ok",
+    }) as unknown as LooseTool;
+    expect(() => tool.parameters.parse(VALID_PIPELINE)).toThrow();
+  });
+
+  it("delete tool forwards the id and rejects an empty id", async () => {
+    let deleted = "";
+    const tool = makePipelineDeleteTool({
+      description: "delete",
+      onDelete: (id) => {
+        deleted = id;
+        return "gone";
+      },
+    }) as unknown as LooseTool;
+    expect(tool.name).toBe(PIPELINE_DELETE_TOOL_NAME);
+
+    const parsed = tool.parameters.parse({ id: "pl-7" });
+    expect(await tool.handler(parsed)).toBe("gone");
+    expect(deleted).toBe("pl-7");
+
+    expect(() => tool.parameters.parse({ id: "" })).toThrow();
   });
 });
 
