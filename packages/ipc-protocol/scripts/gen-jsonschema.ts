@@ -37,7 +37,7 @@ const stringNullable: JsonSchema = nullable({ type: "string" });
 
 const executionStatus: JsonSchema = {
   type: "string",
-  enum: ["pending", "running", "succeeded", "failed", "cancelled"],
+  enum: ["pending", "running", "completed", "failed", "cancelled"],
 };
 
 const executionTrigger: JsonSchema = {
@@ -76,6 +76,7 @@ const pipeline: JsonSchema = {
     createdAt: isoDateTime,
     updatedAt: isoDateTime,
     isActive: { type: "boolean" },
+    lastExecutionStatus: nullable(executionStatus),
   },
 };
 

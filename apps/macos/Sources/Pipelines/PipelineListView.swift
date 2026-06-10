@@ -168,10 +168,21 @@ public struct PipelineListView: View {
     }
 
     private func row(for pipeline: PipelineSummary) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
+        // Matches ExecutionStatusBadge's colour for "failed".
+        let lastRunFailed = pipeline.lastExecutionStatus == "failed"
+        return VStack(alignment: .leading, spacing: 2) {
             HStack {
-                Text(pipeline.name).font(.headline)
+                Text(pipeline.name)
+                    .font(.headline)
+                    .foregroundStyle(lastRunFailed ? Color.red : Color.primary)
                 Spacer()
+                if lastRunFailed {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.red)
+                        .font(.caption2)
+                        .help("Last execution failed")
+                        .accessibilityLabel("Last execution failed")
+                }
                 if pipeline.isActive {
                     Image(systemName: "circle.fill")
                         .foregroundStyle(.green)

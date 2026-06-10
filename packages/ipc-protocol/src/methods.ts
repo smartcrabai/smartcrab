@@ -21,6 +21,9 @@ export interface Pipeline {
   createdAt: IsoDateTime;
   updatedAt: IsoDateTime;
   isActive: boolean;
+  /** Status of the most recent execution, or null if the pipeline has never
+   *  run. Only populated by `pipeline.list`. */
+  lastExecutionStatus?: ExecutionStatus | null;
 }
 
 /** Pipeline trigger source. */
@@ -30,7 +33,7 @@ export type ExecutionTrigger = "manual" | "cron" | "chat" | "api";
 export type ExecutionStatus =
   | "pending"
   | "running"
-  | "succeeded"
+  | "completed"
   | "failed"
   | "cancelled";
 
