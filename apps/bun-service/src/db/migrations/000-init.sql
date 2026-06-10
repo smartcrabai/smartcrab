@@ -1,5 +1,5 @@
 -- Initial schema. Ported from crates/smartcrab-app/src-tauri/src/db/schema.rs.
--- Timestamps are stored as INTEGER (unix epoch milliseconds) instead of TEXT.
+-- Timestamps are stored as INTEGER (unix epoch seconds) instead of TEXT.
 
 CREATE TABLE IF NOT EXISTS pipelines (
     id TEXT PRIMARY KEY,
