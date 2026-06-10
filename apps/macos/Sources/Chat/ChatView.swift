@@ -16,6 +16,9 @@ public struct ChatView: View {
     @State private var needsProviderSetup: Bool = false
     @State private var composerHeight: CGFloat = 0
     @AppStorage("smartcrab.welcomeDismissed") private var welcomeDismissed: Bool = false
+    /// Window-level draft store so unsent input survives tab switches (this
+    /// view is recreated each time the sidebar selection changes).
+    @Environment(DraftStore.self) private var drafts
 
     public init(service: BunServiceProtocol) {
         self.service = service
@@ -37,10 +40,15 @@ public struct ChatView: View {
     }
 
     private var chatView: some View {
-        VStack(spacing: 0) {
+        @Bindable var drafts = drafts
+        return VStack(spacing: 0) {
             messageList
             Divider()
-            ChatComposer(isSending: isSending, onHeightChange: { composerHeight = $0 }) { content in
+            ChatComposer(
+                draft: $drafts.chatDraft,
+                isSending: isSending,
+                onHeightChange: { composerHeight = $0 }
+            ) { content in
                 await send(content)
             }
         }
@@ -175,4 +183,5 @@ public struct ChatView: View {
     NavigationStack {
         ChatView(service: StubBunService())
     }
+    .environment(DraftStore())
 }
