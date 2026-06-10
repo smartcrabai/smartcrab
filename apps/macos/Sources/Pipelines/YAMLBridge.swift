@@ -19,6 +19,11 @@ public extension PipelineGraph {
         }
 
         var collected: [Parsed] = []
+        var trigger: PipelineTriggerInfo?
+        var inTrigger = false
+        // True only while scanning items of the trigger's `triggers:` list,
+        // so list items under other keys aren't misattributed.
+        var inTriggersList = false
         var inNodes = false
         var inNextBlock = false
         // Indent of the current `conditions:` key, or nil when not inside a
@@ -49,6 +54,51 @@ public extension PipelineGraph {
         for raw in yaml.split(separator: "\n", omittingEmptySubsequences: false) {
             let indent = raw.prefix { $0 == " " }.count
             let line = raw.trimmingCharacters(in: .whitespaces)
+            // Top-level `trigger:` block — capture the type and its settings
+            // (cron schedule / discord trigger ids) so the canvas can surface
+            // them on input nodes. YAML keys are order-free, so the block may
+            // appear before or after `nodes:`.
+            if indent == 0, line.hasPrefix("trigger:") {
+                let v = line.dropFirst("trigger:".count).trimmingCharacters(in: .whitespaces)
+                // Flow-style mappings (`trigger: {...}`) aren't parsed; leave
+                // the trigger nil rather than recording an empty one.
+                if v.isEmpty {
+                    trigger = PipelineTriggerInfo()
+                    inTrigger = true
+                    inTriggersList = false
+                }
+                inNodes = false
+                continue
+            }
+            if inTrigger {
+                if indent == 0, !line.isEmpty, !line.hasPrefix("#") {
+                    // Dedent to the next top-level key ends the block; fall
+                    // through so that key (e.g. `nodes:`) is still processed.
+                    inTrigger = false
+                } else {
+                    if line.hasPrefix("type:") {
+                        trigger?.type = unquote(line.dropFirst("type:".count))
+                        inTriggersList = false
+                    } else if line.hasPrefix("schedule:") {
+                        trigger?.schedule = unquote(line.dropFirst("schedule:".count))
+                        inTriggersList = false
+                    } else if line.hasPrefix("triggers:") {
+                        let v = line.dropFirst("triggers:".count).trimmingCharacters(in: .whitespaces)
+                        if v.isEmpty {
+                            inTriggersList = true
+                        } else {
+                            trigger?.triggers = stripInlineList(v).map { unquote(Substring($0)) }
+                            inTriggersList = false
+                        }
+                    } else if inTriggersList, line.hasPrefix("- ") {
+                        trigger?.triggers.append(unquote(line.dropFirst(2)))
+                    } else if line.contains(":") {
+                        // Any other key ends the `triggers:` list.
+                        inTriggersList = false
+                    }
+                    continue
+                }
+            }
             if line.hasPrefix("nodes:") { inNodes = true; continue }
             guard inNodes else { continue }
             if line.isEmpty { continue }
@@ -162,6 +212,6 @@ public extension PipelineGraph {
             return normal + conditional
         }
 
-        self = PipelineGraph(nodes: nodes, edges: edges)
+        self = PipelineGraph(nodes: nodes, edges: edges, trigger: trigger)
     }
 }
