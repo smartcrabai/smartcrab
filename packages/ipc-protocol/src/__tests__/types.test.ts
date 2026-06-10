@@ -232,7 +232,7 @@ describe("Domain type smoke imports", () => {
       pipelineId: "p",
       triggerType: "cron",
       triggerData: "{\"cronId\":\"c1\"}",
-      status: "succeeded",
+      status: "completed",
       startedAt: "2024-01-01T00:00:00Z",
       completedAt: "2024-01-01T00:01:00Z",
       errorMessage: null,

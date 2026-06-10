@@ -28,6 +28,10 @@ export interface PipelineRow {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  /** Status of the most recent execution ("running" | "completed" | "failed"
+   *  | "cancelled"), or null if the pipeline has never run. Only populated by
+   *  `listPipelines`. */
+  last_execution_status?: string | null;
 }
 
 export interface ExecutionRow {

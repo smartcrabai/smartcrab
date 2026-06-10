@@ -42,6 +42,11 @@ export class SqlitePipelineDatabase implements PipelineDatabase {
   constructor(private readonly db: Database) {}
 
   listPipelines(): PipelineRow[] {
+    // The latest execution per pipeline (started_at ties broken by rowid,
+    // matching listExecutions' ordering) so the GUI can flag pipelines whose
+    // most recent run failed. A correlated subquery (not a window-function
+    // scan over all executions) so the pipeline_id index keeps pipeline.list
+    // fast as history grows.
     const rows = this.db
       .query<
         {
@@ -53,10 +58,17 @@ export class SqlitePipelineDatabase implements PipelineDatabase {
           enabled: number;
           created_at: number;
           updated_at: number;
+          last_execution_status: string | null;
         },
         []
       >(
-        "SELECT id, name, description, yaml_content, max_loop_count, enabled, created_at, updated_at FROM pipelines ORDER BY name ASC",
+        `SELECT p.id, p.name, p.description, p.yaml_content, p.max_loop_count, p.enabled, p.created_at, p.updated_at,
+                (SELECT e.status FROM pipeline_executions e
+                 WHERE e.pipeline_id = p.id
+                 ORDER BY e.started_at DESC, e.rowid DESC
+                 LIMIT 1) AS last_execution_status
+         FROM pipelines p
+         ORDER BY p.name ASC`,
       )
       .all();
     return rows.map((r) => ({
@@ -68,6 +80,7 @@ export class SqlitePipelineDatabase implements PipelineDatabase {
       is_active: r.enabled === 1,
       created_at: new Date(r.created_at * 1000).toISOString(),
       updated_at: new Date(r.updated_at * 1000).toISOString(),
+      last_execution_status: r.last_execution_status,
     }));
   }
 

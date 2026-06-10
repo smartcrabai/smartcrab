@@ -366,12 +366,22 @@ public struct PipelineSummary: Identifiable, Hashable, Codable, Sendable {
     public var name: String
     public var description: String?
     public var isActive: Bool
+    /// Status of the most recent execution ("running" / "completed" /
+    /// "failed" / "cancelled"), or nil if the pipeline has never run.
+    public var lastExecutionStatus: String?
 
-    public init(id: String, name: String, description: String? = nil, isActive: Bool = true) {
+    public init(
+        id: String,
+        name: String,
+        description: String? = nil,
+        isActive: Bool = true,
+        lastExecutionStatus: String? = nil
+    ) {
         self.id = id
         self.name = name
         self.description = description
         self.isActive = isActive
+        self.lastExecutionStatus = lastExecutionStatus
     }
 }
 
@@ -841,8 +851,8 @@ public final class StubBunService: BunServiceProtocol {
 
     public func pipelineList() async throws -> [PipelineSummary] {
         [
-            PipelineSummary(id: "pl-1", name: "Daily Standup Summary", description: "Aggregates Slack messages."),
-            PipelineSummary(id: "pl-2", name: "Issue Triage", description: "Classifies new GitHub issues."),
+            PipelineSummary(id: "pl-1", name: "Daily Standup Summary", description: "Aggregates Slack messages.", lastExecutionStatus: "completed"),
+            PipelineSummary(id: "pl-2", name: "Issue Triage", description: "Classifies new GitHub issues.", lastExecutionStatus: "failed"),
             PipelineSummary(id: "pl-3", name: "Release Notes", description: "Drafts release notes from PRs."),
         ]
     }
@@ -928,14 +938,14 @@ public final class StubBunService: BunServiceProtocol {
 
     public func executionHistory(limit _: Int, offset _: Int, statusFilter _: String?, pipelineId: String?) async throws -> [ExecutionSummary] {
         let all = [ExecutionSummary(id: "ex-1", pipelineId: "pl-1", pipelineName: "Daily Standup Summary",
-                                    triggerType: "manual", status: "succeeded",
+                                    triggerType: "manual", status: "completed",
                                     startedAt: Self.isoNow, completedAt: Self.isoNow)]
         guard let pipelineId else { return all }
         return all.filter { $0.pipelineId == pipelineId }
     }
 
     public func executionDetail(id: String) async throws -> ExecutionDetail {
-        ExecutionDetail(id: id, pipelineId: "pl-1", triggerType: "manual", status: "succeeded",
+        ExecutionDetail(id: id, pipelineId: "pl-1", triggerType: "manual", status: "completed",
                         startedAt: Self.isoNow, completedAt: Self.isoNow, errorMessage: nil,
                         nodeExecutions: [], logs: [])
     }

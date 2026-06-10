@@ -402,9 +402,18 @@
                 let name: String
                 let description: String?
                 let isActive: Bool
+                let lastExecutionStatus: String?
             }
             let rows: [WirePipeline] = try await call(method: "pipeline.list", params: EmptyParams())
-            return rows.map { PipelineSummary(id: $0.id, name: $0.name, description: $0.description, isActive: $0.isActive) }
+            return rows.map {
+                PipelineSummary(
+                    id: $0.id,
+                    name: $0.name,
+                    description: $0.description,
+                    isActive: $0.isActive,
+                    lastExecutionStatus: $0.lastExecutionStatus
+                )
+            }
         }
 
         private struct EmptyParams: Encodable {}

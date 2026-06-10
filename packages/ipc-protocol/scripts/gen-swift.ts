@@ -157,7 +157,7 @@ const TYPES: TypeDef[] = [
     cases: [
       { swift: "pending", raw: "pending" },
       { swift: "running", raw: "running" },
-      { swift: "succeeded", raw: "succeeded" },
+      { swift: "completed", raw: "completed" },
       { swift: "failed", raw: "failed" },
       { swift: "cancelled", raw: "cancelled" },
     ],
@@ -198,6 +198,7 @@ const TYPES: TypeDef[] = [
       { name: "createdAt", type: t.date },
       { name: "updatedAt", type: t.date },
       { name: "isActive", type: t.bool },
+      { name: "lastExecutionStatus", type: t.optional(t.named("ExecutionStatus")) },
     ],
   },
   {
