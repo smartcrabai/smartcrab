@@ -544,8 +544,15 @@
 
         // MARK: - Execution history
 
-        public func executionHistory(limit: Int, offset _: Int, statusFilter _: String?) async throws -> [ExecutionSummary] {
-            struct Params: Encodable, Sendable { let limit: Int }
+        public func executionHistory(limit: Int, offset: Int, statusFilter: String?, pipelineId: String?) async throws -> [ExecutionSummary] {
+            // `pipelineId` encodes as `pipeline_id` (convertToSnakeCase); nil
+            // optionals are omitted entirely, matching the optional RPC params.
+            struct Params: Encodable, Sendable {
+                let limit: Int
+                let offset: Int
+                let status: String?
+                let pipelineId: String?
+            }
             struct WireExecution: Decodable {
                 let id: String
                 let pipelineId: String
@@ -555,7 +562,10 @@
                 let startedAt: String
                 let completedAt: String?
             }
-            let rows: [WireExecution] = try await call(method: "execution.history", params: Params(limit: limit))
+            let rows: [WireExecution] = try await call(
+                method: "execution.history",
+                params: Params(limit: limit, offset: offset, status: statusFilter, pipelineId: pipelineId)
+            )
             return rows.map {
                 ExecutionSummary(id: $0.id, pipelineId: $0.pipelineId, pipelineName: $0.pipelineName,
                                  triggerType: $0.triggerType, status: $0.status,

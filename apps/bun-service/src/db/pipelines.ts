@@ -168,18 +168,30 @@ export class SqlitePipelineDatabase implements PipelineDatabase {
       .get(id);
     return r ? mapExecutionRow(r) : null;
   }
-  listExecutions(opts: { pipelineId?: string; limit: number }): ExecutionRow[] {
-    const rows: ExecutionDbRow[] = opts.pipelineId
-      ? this.db
-          .query<ExecutionDbRow, [string, number]>(
-            `${EXECUTION_SELECT} WHERE e.pipeline_id = ?1 ORDER BY e.started_at DESC LIMIT ?2`,
-          )
-          .all(opts.pipelineId, opts.limit)
-      : this.db
-          .query<ExecutionDbRow, [number]>(
-            `${EXECUTION_SELECT} ORDER BY e.started_at DESC LIMIT ?1`,
-          )
-          .all(opts.limit);
+  listExecutions(opts: {
+    pipelineId?: string;
+    status?: string;
+    limit: number;
+    offset?: number;
+  }): ExecutionRow[] {
+    const where: string[] = [];
+    const params: (string | number)[] = [];
+    if (opts.pipelineId) {
+      params.push(opts.pipelineId);
+      where.push(`e.pipeline_id = ?${params.length}`);
+    }
+    if (opts.status) {
+      params.push(opts.status);
+      where.push(`e.status = ?${params.length}`);
+    }
+    const whereSql = where.length > 0 ? ` WHERE ${where.join(" AND ")}` : "";
+    // started_at has second resolution, so ties are common; rowid breaks them
+    // deterministically so OFFSET pagination neither skips nor repeats rows.
+    const sql = `${EXECUTION_SELECT}${whereSql} ORDER BY e.started_at DESC, e.rowid DESC LIMIT ?${params.length + 1} OFFSET ?${params.length + 2}`;
+    params.push(opts.limit, opts.offset ?? 0);
+    const rows = this.db
+      .query<ExecutionDbRow, (string | number)[]>(sql)
+      .all(...params);
     return rows.map(mapExecutionRow);
   }
   insertExecutionLog(row: {

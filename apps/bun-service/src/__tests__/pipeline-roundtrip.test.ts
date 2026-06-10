@@ -140,6 +140,48 @@ nodes:
     expect(detail.node_executions).toEqual([]);
   });
 
+  test("execution.history filters by pipeline_id and status, paginates with offset", async () => {
+    const a = (await handlers["pipeline.save"]({
+      name: "history-a",
+      yaml_content: yamlFromSwiftUI,
+    })) as { id: string };
+    const b = (await handlers["pipeline.save"]({
+      name: "history-b",
+      yaml_content: yamlFromSwiftUI,
+    })) as { id: string };
+
+    // Insert finalized executions directly so started_at and status are
+    // deterministic (pipeline.execute finalizes asynchronously).
+    const insert = db.query(
+      "INSERT INTO pipeline_executions (id, pipeline_id, trigger_type, status, started_at) VALUES (?1, ?2, 'manual', ?3, ?4)",
+    );
+    insert.run("ex-a1", a.id, "completed", 100);
+    insert.run("ex-a2", a.id, "failed", 200);
+    insert.run("ex-a3", a.id, "completed", 300);
+    insert.run("ex-b1", b.id, "completed", 400);
+
+    const forA = (await handlers["execution.history"]({
+      pipeline_id: a.id,
+    })) as Array<{ id: string }>;
+    expect(forA.map((e) => e.id)).toEqual(["ex-a3", "ex-a2", "ex-a1"]);
+
+    const failedA = (await handlers["execution.history"]({
+      pipeline_id: a.id,
+      status: "failed",
+    })) as Array<{ id: string }>;
+    expect(failedA.map((e) => e.id)).toEqual(["ex-a2"]);
+
+    const page1 = (await handlers["execution.history"]({
+      limit: 2,
+    })) as Array<{ id: string }>;
+    const page2 = (await handlers["execution.history"]({
+      limit: 2,
+      offset: 2,
+    })) as Array<{ id: string }>;
+    expect(page1.map((e) => e.id)).toEqual(["ex-b1", "ex-a3"]);
+    expect(page2.map((e) => e.id)).toEqual(["ex-a2", "ex-a1"]);
+  });
+
   test("execution.detail rejects unknown execution ids", async () => {
     await expect(
       handlers["execution.detail"]({ execution_id: "nope" }),
