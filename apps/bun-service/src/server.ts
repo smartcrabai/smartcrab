@@ -1,4 +1,4 @@
-import { setCronStore, setCronJobCallback } from "./commands/cron.commands";
+import { setCronStore, setCronScheduler, setCronJobCallback } from "./commands/cron.commands";
 import { bootstrapCronRunner } from "./cron/runner";
 import { CronScheduler } from "./cron/scheduler";
 import { configurePipelineCommands } from "./commands/pipeline.commands";
@@ -129,15 +129,23 @@ async function main(): Promise<void> {
     cronStore.markRun(job.id, new Date().toISOString());
     try {
       const { default: pipelineHandlers } = await import("./commands/pipeline.commands");
-      await pipelineHandlers["pipeline.execute"]({ id: job.pipeline_id });
+      await pipelineHandlers["pipeline.execute"]({
+        id: job.pipeline_id,
+        trigger_type: "cron",
+      });
     } catch (err) {
       console.error(`[cron] job ${job.id} pipeline.execute failed:`, err);
     }
   };
   setCronJobCallback(cronCallback);
+  // The bootstrap scheduler must be the same instance the cron.* commands
+  // operate on, otherwise jobs restored at startup can never be unscheduled
+  // by cron.delete / pipeline.delete.
+  const cronScheduler = new CronScheduler();
+  setCronScheduler(cronScheduler);
   bootstrapCronRunner({
     store: cronStore,
-    scheduler: new CronScheduler(),
+    scheduler: cronScheduler,
     callback: cronCallback,
   });
   configureSkillsCommands({ registry: new SkillsRegistry({ db: new BunSqliteSkillsDb(db) }) });

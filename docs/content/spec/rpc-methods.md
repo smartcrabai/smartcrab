@@ -20,7 +20,7 @@ This document is the wire-level contract — what each method accepts and return
 |-----------|---------|
 | `system`   | [`system.ping`](#system-ping), [`system.version`](#system-version) |
 | `pipeline` | [`pipeline.list`](#pipeline-list), [`pipeline.get`](#pipeline-get), [`pipeline.save`](#pipeline-save), [`pipeline.delete`](#pipeline-delete), [`pipeline.execute`](#pipeline-execute) |
-| `execution` | [`execution.history`](#execution-history), [`execution.logs`](#execution-logs) |
+| `execution` | [`execution.history`](#execution-history), [`execution.logs`](#execution-logs), [`execution.detail`](#execution-detail) |
 | `cron`     | [`cron.list`](#cron-list), [`cron.create`](#cron-create), [`cron.update`](#cron-update), [`cron.delete`](#cron-delete), [`cron.run-now`](#cron-run-now) |
 | `chat`     | [`chat.start`](#chat-start), [`chat.stop`](#chat-stop), [`chat.status`](#chat-status), [`chat.send`](#chat-send), [`chat.bubble-history`](#chat-bubble-history), [`chat.bubble-send`](#chat-bubble-send) |
 | `skill`    | [`skill.list`](#skill-list), [`skill.get`](#skill-get), [`skill.create`](#skill-create), [`skill.delete`](#skill-delete), [`skill.invoke`](#skill-invoke), [`skill.auto-generate`](#skill-auto-generate), [`skill.reload`](#skill-reload) |
@@ -101,14 +101,20 @@ params: { id: string }
 result: { ok: true }
 ```
 
+Also unschedules the pipeline's cron jobs and removes its executions, execution logs, and cron job rows (foreign keys would otherwise block the delete).
+
 ### pipeline.execute
 
 ```ts
-params: { id: string; trigger_data?: unknown }
+params: {
+  id: string;
+  trigger_type?: string;       // "manual" (default) | "cron" | "chat" | "api"
+  trigger_data?: string | null // pre-serialized JSON, stored verbatim
+}
 result: { execution_id: string }
 ```
 
-Returns immediately. The execution runs in a background IIFE and updates `pipeline_executions.status` when it ends. There is currently no streaming progress on the wire — observers poll `execution.history` and `execution.logs`.
+Returns immediately. The execution runs in a background IIFE and updates `pipeline_executions.status` when it ends. `trigger_data` is parsed back into a value and fed to the entry nodes as input. There is currently no streaming progress on the wire — observers poll `execution.history` and `execution.logs`.
 
 ## execution
 
@@ -150,6 +156,18 @@ interface ExecutionLogRow {
   timestamp: string;
 }
 ```
+
+### execution.detail
+
+```ts
+params: { execution_id: string }
+result: ExecutionRow & {
+  node_executions: [];         // per-node recording not implemented yet
+  logs: ExecutionLogRow[];
+}
+```
+
+Throws if the execution id is unknown.
 
 ## cron
 
