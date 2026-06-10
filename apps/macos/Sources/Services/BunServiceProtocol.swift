@@ -679,7 +679,9 @@ public protocol BunServiceProtocol: AnyObject {
     func skillDelete(id: String) async throws
 
     // Execution history
-    func executionHistory(limit: Int, offset: Int, statusFilter: String?) async throws -> [ExecutionSummary]
+    /// `pipelineId` narrows the history to a single pipeline; `nil` returns
+    /// executions across all pipelines.
+    func executionHistory(limit: Int, offset: Int, statusFilter: String?, pipelineId: String?) async throws -> [ExecutionSummary]
     func executionDetail(id: String) async throws -> ExecutionDetail
 }
 
@@ -924,10 +926,12 @@ public final class StubBunService: BunServiceProtocol {
 
     public func skillDelete(id _: String) async throws {}
 
-    public func executionHistory(limit _: Int, offset _: Int, statusFilter _: String?) async throws -> [ExecutionSummary] {
-        [ExecutionSummary(id: "ex-1", pipelineId: "pl-1", pipelineName: "Daily Standup Summary",
-                          triggerType: "manual", status: "succeeded",
-                          startedAt: Self.isoNow, completedAt: Self.isoNow)]
+    public func executionHistory(limit _: Int, offset _: Int, statusFilter _: String?, pipelineId: String?) async throws -> [ExecutionSummary] {
+        let all = [ExecutionSummary(id: "ex-1", pipelineId: "pl-1", pipelineName: "Daily Standup Summary",
+                                    triggerType: "manual", status: "succeeded",
+                                    startedAt: Self.isoNow, completedAt: Self.isoNow)]
+        guard let pipelineId else { return all }
+        return all.filter { $0.pipelineId == pipelineId }
     }
 
     public func executionDetail(id: String) async throws -> ExecutionDetail {

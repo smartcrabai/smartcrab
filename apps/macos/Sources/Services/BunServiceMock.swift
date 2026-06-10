@@ -149,8 +149,8 @@
             try await stub.skillDelete(id: id)
         }
 
-        public func executionHistory(limit: Int, offset: Int, statusFilter: String?) async throws -> [ExecutionSummary] {
-            try await stub.executionHistory(limit: limit, offset: offset, statusFilter: statusFilter)
+        public func executionHistory(limit: Int, offset: Int, statusFilter: String?, pipelineId: String?) async throws -> [ExecutionSummary] {
+            try await stub.executionHistory(limit: limit, offset: offset, statusFilter: statusFilter, pipelineId: pipelineId)
         }
 
         public func executionDetail(id: String) async throws -> ExecutionDetail {

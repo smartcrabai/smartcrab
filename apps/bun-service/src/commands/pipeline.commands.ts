@@ -79,7 +79,9 @@ export interface PipelineDatabase {
   getExecution(id: string): ExecutionRow | null | Promise<ExecutionRow | null>;
   listExecutions(opts: {
     pipelineId?: string;
+    status?: string;
     limit: number;
+    offset?: number;
   }): ExecutionRow[] | Promise<ExecutionRow[]>;
   insertExecutionLog(row: {
     execution_id: string;
@@ -290,12 +292,14 @@ const pipelineExecute: Handler<
 };
 
 const executionHistory: Handler<
-  { pipeline_id?: string; limit?: number },
+  { pipeline_id?: string; status?: string; limit?: number; offset?: number },
   ExecutionRow[]
 > = async (params, ctx) =>
   await ctx.db.listExecutions({
     pipelineId: params.pipeline_id,
+    status: params.status,
     limit: params.limit ?? 50,
+    offset: params.offset ?? 0,
   });
 
 const executionLogs: Handler<
@@ -367,8 +371,12 @@ const handlers = {
     trigger_type?: string;
     trigger_data?: string | null;
   }) => pipelineExecute(params, requireContext()),
-  "execution.history": (params: { pipeline_id?: string; limit?: number }) =>
-    executionHistory(params, requireContext()),
+  "execution.history": (params: {
+    pipeline_id?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }) => executionHistory(params, requireContext()),
   "execution.logs": (params: { execution_id: string }) =>
     executionLogs(params, requireContext()),
   "execution.detail": (params: { execution_id: string }) =>

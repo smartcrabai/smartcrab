@@ -165,8 +165,8 @@ private final class SpyBunService: BunServiceProtocol {
         try await stub.skillDelete(id: id)
     }
 
-    func executionHistory(limit: Int, offset: Int, statusFilter: String?) async throws -> [ExecutionSummary] {
-        try await stub.executionHistory(limit: limit, offset: offset, statusFilter: statusFilter)
+    func executionHistory(limit: Int, offset: Int, statusFilter: String?, pipelineId: String?) async throws -> [ExecutionSummary] {
+        try await stub.executionHistory(limit: limit, offset: offset, statusFilter: statusFilter, pipelineId: pipelineId)
     }
 
     func executionDetail(id: String) async throws -> ExecutionDetail {
