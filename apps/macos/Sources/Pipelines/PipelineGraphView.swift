@@ -34,10 +34,13 @@ public struct PipelineGraphView: View {
                 .allowsHitTesting(false)
 
                 ForEach(graph.nodes) { node in
-                    NodeView(node: node)
-                        .position(transformed(node.position))
-                        .scaleEffect(currentScale)
-                        .accessibilityLabel(Text("\(node.kind.rawValue) node \(node.name)"))
+                    NodeView(
+                        node: node,
+                        triggerLabel: node.kind == .input ? graph.trigger?.label : nil
+                    )
+                    .position(transformed(node.position))
+                    .scaleEffect(currentScale)
+                    .accessibilityLabel(Text("\(node.kind.rawValue) node \(node.name)"))
                 }
 
                 if graph.nodes.isEmpty {
