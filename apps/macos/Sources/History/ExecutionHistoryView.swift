@@ -18,7 +18,7 @@ public struct ExecutionHistoryView: View {
     @State private var hasMore = true
     @State private var page = 0
     @State private var statusFilter: StatusFilter = .all
-    @State private var selection: ExecutionSummary.ID?
+    @State private var openedExecution: ExecutionSummary.ID?
 
     public init(
         service: any BunServiceProtocol,
@@ -32,15 +32,24 @@ public struct ExecutionHistoryView: View {
         self.showsTitle = showsTitle
     }
 
+    /// Drill-in is a plain state-driven view swap, not a `NavigationStack`
+    /// push: a pushed `navigationDestination` inside the `NavigationSplitView`
+    /// detail column leaves the window's sidebar unable to switch tabs on
+    /// macOS while the destination is shown.
     public var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                header
-                Divider()
-                content
-            }
-            .navigationDestination(for: ExecutionSummary.ID.self) { id in
-                ExecutionLogView(service: service, executionId: id)
+        Group {
+            if let openedExecution {
+                ExecutionLogView(
+                    service: service,
+                    executionId: openedExecution,
+                    onBack: { self.openedExecution = nil }
+                )
+            } else {
+                VStack(spacing: 0) {
+                    header
+                    Divider()
+                    content
+                }
             }
         }
         .task { await reload() }
@@ -90,11 +99,15 @@ public struct ExecutionHistoryView: View {
     }
 
     private var list: some View {
-        List(selection: $selection) {
+        List {
             ForEach(executions) { execution in
-                NavigationLink(value: execution.id) {
+                Button {
+                    openedExecution = execution.id
+                } label: {
                     ExecutionRow(execution: execution)
+                        .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
             }
             if hasMore && !executions.isEmpty {
                 HStack {
@@ -230,6 +243,9 @@ private struct ExecutionRow: View {
                 }
             }
             Spacer()
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
         }
         .padding(.vertical, 4)
     }

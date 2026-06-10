@@ -5,6 +5,7 @@ import SwiftUI
 public struct ExecutionLogView: View {
     private let service: any BunServiceProtocol
     private let executionId: String
+    private let onBack: () -> Void
 
     @State private var detail: ExecutionDetail?
     @State private var loadError: String?
@@ -12,36 +13,57 @@ public struct ExecutionLogView: View {
     @State private var logLevelFilter: LogLevelFilter = .all
     @State private var nodeFilter: String?
 
-    public init(service: any BunServiceProtocol, executionId: String) {
+    /// `onBack` backs the header's back button. The in-content header
+    /// replaces `.navigationTitle`/`.toolbar` so the view works without a
+    /// `NavigationStack` ancestor (see `ExecutionHistoryView.body`).
+    public init(
+        service: any BunServiceProtocol,
+        executionId: String,
+        onBack: @escaping () -> Void
+    ) {
         self.service = service
         self.executionId = executionId
+        self.onBack = onBack
     }
 
     public var body: some View {
-        Group {
-            if let detail {
-                content(detail: detail)
-            } else if let loadError {
-                errorState(loadError)
-            } else {
-                loadingState
-            }
-        }
-        .navigationTitle("Execution")
-        .task { await reload() }
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    Task { await reload() }
-                } label: {
-                    Label("Refresh", systemImage: "arrow.clockwise")
+        VStack(spacing: 0) {
+            headerBar
+            Divider()
+            Group {
+                if let detail {
+                    content(detail: detail)
+                } else if let loadError {
+                    errorState(loadError)
+                } else {
+                    loadingState
                 }
-                .disabled(isLoading)
             }
         }
+        .task(id: executionId) { await reload() }
     }
 
     // MARK: - Subviews
+
+    private var headerBar: some View {
+        HStack(spacing: 12) {
+            Button {
+                onBack()
+            } label: {
+                Label("Back", systemImage: "chevron.left")
+            }
+            .keyboardShortcut(.cancelAction)
+            Text("Execution").font(.headline)
+            Spacer()
+            Button {
+                Task { await reload() }
+            } label: {
+                Label("Refresh", systemImage: "arrow.clockwise")
+            }
+            .disabled(isLoading)
+        }
+        .padding(12)
+    }
 
     private func content(detail: ExecutionDetail) -> some View {
         #if os(macOS)
