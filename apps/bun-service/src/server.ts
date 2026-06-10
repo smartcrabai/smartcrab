@@ -18,6 +18,7 @@ import { createSqlitePairingStore, setPairingStore } from "./adapters/chat/pairi
 import { rebindSharedToDb } from "./memory/shared-store";
 import { SkillsRegistry } from "./skills/registry";
 import { dispatch } from "./dispatcher";
+import { pumpLines } from "./rpc-loop";
 import { chatRegistry, ensureAdaptersLoaded } from "./registry";
 import {
   JSON_RPC_ERRORS,
@@ -71,7 +72,10 @@ function shutdown(reason: string, code = 0): void {
   if (shuttingDown) return;
   shuttingDown = true;
   log(`shutdown: ${reason}`);
-  process.nextTick(() => process.exit(code));
+  // Drain stdout before exiting so responses already handed to the stream
+  // (possibly several at once, since requests complete concurrently) are not
+  // truncated by process.exit.
+  process.stdout.write("", () => process.exit(code));
 }
 
 process.on("SIGTERM", () => shutdown("SIGTERM"));
@@ -203,25 +207,11 @@ async function main(): Promise<void> {
 
   await ensureAdaptersLoaded();
 
-  const decoder = new TextDecoder();
-  let buffer = "";
-
-  const stdin = Bun.stdin.stream();
-  try {
-    for await (const chunk of stdin as AsyncIterable<Uint8Array>) {
-      buffer += decoder.decode(chunk, { stream: true });
-      let idx: number;
-      while ((idx = buffer.indexOf("\n")) >= 0) {
-        const line = buffer.slice(0, idx);
-        buffer = buffer.slice(idx + 1);
-        await handleLine(line);
-      }
-    }
-  } catch (err) {
-    log("stdin error:", err);
-  }
-
-  if (buffer.trim()) await handleLine(buffer);
+  // Requests are dispatched concurrently (see pumpLines) so a slow handler
+  // cannot head-of-line-block fast requests like pipeline.list.
+  await pumpLines(Bun.stdin.stream(), handleLine, (err) =>
+    log("stdin/handler error:", err),
+  );
 
   shutdown("stdin closed");
 }

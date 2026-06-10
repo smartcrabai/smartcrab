@@ -58,12 +58,26 @@ export class DiscordChatAdapter implements ChatAdapter {
   private client: DiscordClientLike | null = null;
   private detachListener: (() => void) | null = null;
   private running = false;
+  private startInFlight: Promise<void> | null = null;
 
   constructor(private readonly options: DiscordChatAdapterOptions = {}) {}
 
+  /**
+   * Concurrent `start()` calls coalesce onto one login. The RPC server
+   * dispatches requests concurrently, and the GUI has two independent
+   * `chat.start` call sites (launch autostart and the Settings toggle), so
+   * without this guard two logins could race and leak a client.
+   */
   async start(options: ChatStartOptions = {}): Promise<void> {
     if (this.running) return;
+    if (this.startInFlight) return this.startInFlight;
+    this.startInFlight = this.doStart(options).finally(() => {
+      this.startInFlight = null;
+    });
+    return this.startInFlight;
+  }
 
+  private async doStart(options: ChatStartOptions): Promise<void> {
     const config = await this.loadConfig();
     // Per-call token wins (the macOS host sources it from Keychain on each
     // chat.start). Falls back to the persisted config for headless runs.
@@ -89,6 +103,15 @@ export class DiscordChatAdapter implements ChatAdapter {
   }
 
   async stop(): Promise<void> {
+    // Let an in-flight start finish first so stop() actually tears it down
+    // instead of no-opping on `running === false` and leaving the adapter up.
+    if (this.startInFlight) {
+      try {
+        await this.startInFlight;
+      } catch {
+        // Start failed; there is nothing to tear down.
+      }
+    }
     if (!this.running) return;
     this.running = false;
 
