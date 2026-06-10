@@ -6,7 +6,9 @@
 // SwiftUI's TextField/TextEditor do not reliably route a plain Return to a
 // newline there; on other platforms it falls back to a SwiftUI TextEditor.
 // The send action is delivered via an async closure so the parent can show a
-// spinner and block re-entry while a request is in flight.
+// spinner and block re-entry while a request is in flight. The draft text is
+// owned by the parent (via a binding) so it survives this view being torn
+// down, e.g. when the user navigates to another tab and back.
 
 import SwiftUI
 #if canImport(AppKit)
@@ -20,17 +22,19 @@ public struct ChatComposer: View {
     private let onHeightChange: ((CGFloat) -> Void)?
     private let onSend: SendAction
 
-    @State private var draft: String = ""
+    @Binding private var draft: String
 
     // Approximate line height used to grow the editor up to `maxVisibleLines`.
     private let lineHeight: CGFloat = 18
     private let maxVisibleLines = 6
 
     public init(
+        draft: Binding<String>,
         isSending: Bool,
         onHeightChange: ((CGFloat) -> Void)? = nil,
         onSend: @escaping SendAction
     ) {
+        _draft = draft
         self.isSending = isSending
         self.onHeightChange = onHeightChange
         self.onSend = onSend
@@ -210,11 +214,13 @@ public struct ChatComposer: View {
 #endif
 
 #Preview("ChatComposer idle") {
-    ChatComposer(isSending: false) { _ in }
+    @Previewable @State var draft = ""
+    ChatComposer(draft: $draft, isSending: false) { _ in }
         .padding()
 }
 
 #Preview("ChatComposer sending") {
-    ChatComposer(isSending: true) { _ in }
+    @Previewable @State var draft = ""
+    ChatComposer(draft: $draft, isSending: true) { _ in }
         .padding()
 }

@@ -36,9 +36,21 @@ enum SidebarTab: String, CaseIterable, Identifiable, Hashable {
     }
 }
 
+/// Per-window store for unsent input drafts. Tab switches tear down and
+/// recreate the detail views, so any draft kept in view-local `@State` would
+/// be lost; holding it here preserves it for the lifetime of the window.
+/// Owned by `AppRoot` (one per window) rather than the `App` so that
+/// multiple windows don't share — and clobber — each other's drafts.
+@MainActor
+@Observable
+final class DraftStore {
+    var chatDraft: String = ""
+}
+
 struct AppRoot: View {
     @Environment(BunServiceContainer.self) private var bun
     @State private var selection: SidebarTab? = .chat
+    @State private var drafts = DraftStore()
 
     var body: some View {
         NavigationSplitView {
@@ -50,6 +62,7 @@ struct AppRoot: View {
         } detail: {
             detailView(for: selection ?? .chat)
         }
+        .environment(drafts)
     }
 
     /// Uses `List` (without `selection:`) to get the sidebar material that
