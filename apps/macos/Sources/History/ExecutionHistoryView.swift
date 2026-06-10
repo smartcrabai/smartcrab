@@ -2,9 +2,15 @@ import SwiftUI
 
 /// Paginated, filterable list of pipeline executions with status colour
 /// coding. Selecting a row drills into `ExecutionLogView`.
+///
+/// Pass `pipelineId` to scope the list to a single pipeline (used when the
+/// view is embedded in the pipeline authoring screen); `showsTitle: false`
+/// drops the large heading for embedded contexts.
 public struct ExecutionHistoryView: View {
     private let service: any BunServiceProtocol
     private let pageSize: Int
+    private let pipelineId: String?
+    private let showsTitle: Bool
 
     @State private var executions: [ExecutionSummary] = []
     @State private var loadError: String?
@@ -14,9 +20,16 @@ public struct ExecutionHistoryView: View {
     @State private var statusFilter: StatusFilter = .all
     @State private var selection: ExecutionSummary.ID?
 
-    public init(service: any BunServiceProtocol, pageSize: Int = 50) {
+    public init(
+        service: any BunServiceProtocol,
+        pageSize: Int = 50,
+        pipelineId: String? = nil,
+        showsTitle: Bool = true
+    ) {
         self.service = service
         self.pageSize = pageSize
+        self.pipelineId = pipelineId
+        self.showsTitle = showsTitle
     }
 
     public var body: some View {
@@ -40,7 +53,9 @@ public struct ExecutionHistoryView: View {
 
     private var header: some View {
         HStack(spacing: 12) {
-            Text("Execution History").font(.title2).bold()
+            if showsTitle {
+                Text("Execution History").font(.title2).bold()
+            }
             Spacer()
 
             Picker("Status", selection: $statusFilter) {
@@ -146,7 +161,8 @@ public struct ExecutionHistoryView: View {
             let batch = try await service.executionHistory(
                 limit: pageSize,
                 offset: targetPage * pageSize,
-                statusFilter: statusFilter.rpcValue
+                statusFilter: statusFilter.rpcValue,
+                pipelineId: pipelineId
             )
             if replacing {
                 executions = batch

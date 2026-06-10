@@ -2,13 +2,13 @@ import SwiftUI
 
 /// Replaces the legacy drag-and-drop `PipelineEditorView`. Pipelines are
 /// authored by chatting with an LLM that emits a structured pipeline via the
-/// `pipeline.author` RPC; the right pane just renders the result (read-only
-/// graph or raw YAML for manual touch-ups).
+/// `pipeline.author` RPC; the right pane renders the result (read-only graph
+/// or raw YAML for manual touch-ups) plus the pipeline's execution history.
 ///
 /// Layout:
 ///
 ///     +-----------------------+-----------------------+
-///     | NL composer + log     | [Graph | YAML]        |
+///     | NL composer + log     | [Graph|Yaml|History]  |
 ///     | (chat-style)          |                       |
 ///     +-----------------------+-----------------------+
 ///     | status bar (saved at / validation messages)   |
@@ -32,7 +32,7 @@ public struct PipelineAuthoringView: View {
     @FocusState private var promptFocused: Bool
 
     private enum RightTab: String, CaseIterable, Identifiable {
-        case graph, yaml
+        case graph, yaml, history
         var id: String {
             rawValue
         }
@@ -174,8 +174,31 @@ public struct PipelineAuthoringView: View {
                     isDisabled: isBusy,
                     onSave: { Task { await saveManualYamlEdit() } }
                 )
+            case .history:
+                if summary.id.isEmpty {
+                    historyPlaceholder
+                } else {
+                    ExecutionHistoryView(
+                        service: service,
+                        pipelineId: summary.id,
+                        showsTitle: false
+                    )
+                }
             }
         }
+    }
+
+    private var historyPlaceholder: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "clock.arrow.circlepath")
+                .font(.system(size: 36))
+                .foregroundStyle(.secondary)
+            Text("Pipeline not saved yet").font(.headline)
+            Text("Save and run the pipeline to see its history here.")
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
     }
 
     // MARK: - Status bar
