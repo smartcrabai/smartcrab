@@ -182,6 +182,41 @@ nodes:
     expect(page2.map((e) => e.id)).toEqual(["ex-a2", "ex-a1"]);
   });
 
+  test("pipeline.list reports the latest execution status per pipeline", async () => {
+    const failing = (await handlers["pipeline.save"]({
+      name: "status-failing",
+      yaml_content: yamlFromSwiftUI,
+    })) as { id: string };
+    const healthy = (await handlers["pipeline.save"]({
+      name: "status-healthy",
+      yaml_content: yamlFromSwiftUI,
+    })) as { id: string };
+    const neverRan = (await handlers["pipeline.save"]({
+      name: "status-never-ran",
+      yaml_content: yamlFromSwiftUI,
+    })) as { id: string };
+
+    // Insert finalized executions directly so started_at and status are
+    // deterministic. Same started_at on the failing pipeline exercises the
+    // rowid tie-break: the later insert ("failed") must win.
+    const insert = db.query(
+      "INSERT INTO pipeline_executions (id, pipeline_id, trigger_type, status, started_at) VALUES (?1, ?2, 'manual', ?3, ?4)",
+    );
+    insert.run("st-f1", failing.id, "completed", 100);
+    insert.run("st-f2", failing.id, "failed", 100);
+    insert.run("st-h1", healthy.id, "failed", 100);
+    insert.run("st-h2", healthy.id, "completed", 200);
+
+    const list = (await handlers["pipeline.list"]()) as Array<{
+      id: string;
+      last_execution_status: string | null;
+    }>;
+    const byId = new Map(list.map((p) => [p.id, p.last_execution_status]));
+    expect(byId.get(failing.id)).toBe("failed");
+    expect(byId.get(healthy.id)).toBe("completed");
+    expect(byId.get(neverRan.id)).toBeNull();
+  });
+
   test("execution.detail rejects unknown execution ids", async () => {
     await expect(
       handlers["execution.detail"]({ execution_id: "nope" }),

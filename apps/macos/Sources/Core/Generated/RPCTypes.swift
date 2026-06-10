@@ -117,7 +117,7 @@ public enum ExecutionTrigger: String, Codable, Sendable, CaseIterable {
 public enum ExecutionStatus: String, Codable, Sendable, CaseIterable {
     case pending
     case running
-    case succeeded
+    case completed
     case failed
     case cancelled
 }
@@ -148,8 +148,9 @@ public struct Pipeline: Codable, Sendable, Equatable {
     public var createdAt: String
     public var updatedAt: String
     public var isActive: Bool
+    public var lastExecutionStatus: ExecutionStatus?
 
-    public init(id: String, name: String, description: String? = nil, yamlContent: String, maxLoopCount: Int, createdAt: String, updatedAt: String, isActive: Bool) {
+    public init(id: String, name: String, description: String? = nil, yamlContent: String, maxLoopCount: Int, createdAt: String, updatedAt: String, isActive: Bool, lastExecutionStatus: ExecutionStatus? = nil) {
         self.id = id
         self.name = name
         self.description = description
@@ -158,6 +159,7 @@ public struct Pipeline: Codable, Sendable, Equatable {
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.isActive = isActive
+        self.lastExecutionStatus = lastExecutionStatus
     }
 }
 
