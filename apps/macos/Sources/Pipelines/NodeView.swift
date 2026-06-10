@@ -5,6 +5,9 @@ import SwiftUI
 public struct NodeView: View {
     public let node: PipelineGraphNode
     public var selected: Bool = false
+    /// Pipeline trigger summary (e.g. "Cron: 0 9 * * *") rendered on input
+    /// nodes in place of the action label.
+    public var triggerLabel: String?
     public var onPortPress: ((Port) -> Void)?
 
     public enum Port { case input, output }
@@ -14,10 +17,12 @@ public struct NodeView: View {
     public init(
         node: PipelineGraphNode,
         selected: Bool = false,
+        triggerLabel: String? = nil,
         onPortPress: ((Port) -> Void)? = nil
     ) {
         self.node = node
         self.selected = selected
+        self.triggerLabel = triggerLabel
         self.onPortPress = onPortPress
     }
 
@@ -39,8 +44,8 @@ public struct NodeView: View {
                 .foregroundStyle(.primary)
                 .lineLimit(1)
 
-            if !node.action.label.isEmpty {
-                Text(node.action.label)
+            if !subtitle.isEmpty {
+                Text(subtitle)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -52,6 +57,13 @@ public struct NodeView: View {
         .overlay(border)
         .overlay(alignment: .top) { portHandle(.input) }
         .overlay(alignment: .bottom) { portHandle(.output) }
+    }
+
+    /// Trigger summary wins over the action label (input nodes carry no
+    /// action, so in practice the two never compete).
+    private var subtitle: String {
+        if let triggerLabel, !triggerLabel.isEmpty { return triggerLabel }
+        return node.action.label
     }
 
     // MARK: - Styling

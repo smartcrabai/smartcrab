@@ -173,6 +173,112 @@ final class PipelineAuthoringTests: XCTestCase {
         XCTAssertEqual(graph.node(id: "reply")?.action, .chatSend(adapter: "discord"))
     }
 
+    /// The top-level `trigger:` block is captured so the canvas can show the
+    /// cron schedule on input nodes.
+    func test_yamlParse_cronTrigger() {
+        let yaml = """
+        name: cron-pipeline
+        version: "1.0"
+        trigger:
+          type: cron
+          schedule: "0 9 * * *"
+        nodes:
+          - id: start
+            name: Start
+            next: end
+          - id: end
+            name: End
+        """
+        let graph = PipelineGraph(yaml: yaml)
+        XCTAssertEqual(graph.trigger?.type, "cron")
+        XCTAssertEqual(graph.trigger?.schedule, "0 9 * * *")
+        XCTAssertEqual(graph.trigger?.label, "Cron: 0 9 * * *")
+    }
+
+    /// Discord triggers capture the id list in block form, and list items
+    /// under other keys are not misattributed to `triggers`.
+    func test_yamlParse_discordTriggerBlockList() {
+        let yaml = """
+        name: discord-pipeline
+        version: "1.0"
+        trigger:
+          type: discord
+          channels:
+            - "999"
+          triggers:
+            - "123"
+            - "456"
+        nodes:
+          - id: start
+            name: Start
+            next: end
+          - id: end
+            name: End
+        """
+        let graph = PipelineGraph(yaml: yaml)
+        XCTAssertEqual(graph.trigger?.type, "discord")
+        XCTAssertEqual(graph.trigger?.triggers, ["123", "456"])
+        XCTAssertEqual(graph.trigger?.label, "Discord (2)")
+    }
+
+    /// Discord triggers also parse from an inline flow sequence.
+    func test_yamlParse_discordTriggerInlineList() {
+        let yaml = """
+        name: discord-pipeline
+        version: "1.0"
+        trigger:
+          type: discord
+          triggers: ["123", "456"]
+        nodes:
+          - id: start
+            name: Start
+            next: end
+          - id: end
+            name: End
+        """
+        XCTAssertEqual(PipelineGraph(yaml: yaml).trigger?.triggers, ["123", "456"])
+    }
+
+    /// YAML keys are order-free: a `trigger:` block written after `nodes:`
+    /// is still captured, and top-level comments don't end the block.
+    func test_yamlParse_triggerAfterNodes() {
+        let yaml = """
+        name: reordered
+        version: "1.0"
+        nodes:
+          - id: start
+            name: Start
+            next: end
+          - id: end
+            name: End
+        trigger:
+        # run every morning
+          type: cron
+          schedule: "0 9 * * *"
+        """
+        let graph = PipelineGraph(yaml: yaml)
+        XCTAssertEqual(graph.nodes.count, 2)
+        XCTAssertEqual(graph.trigger?.label, "Cron: 0 9 * * *")
+    }
+
+    /// A pipeline without a trigger block parses with `trigger == nil`, and
+    /// node-level `type:` lines never leak into the trigger.
+    func test_yamlParse_noTrigger() {
+        let yaml = """
+        name: no-trigger
+        version: "1.0"
+        nodes:
+          - id: start
+            name: Start
+            action:
+              type: shell_command
+              command_template: "echo hi"
+        """
+        let graph = PipelineGraph(yaml: yaml)
+        XCTAssertNil(graph.trigger)
+        XCTAssertEqual(graph.node(id: "start")?.action, .shell)
+    }
+
     // MARK: - Auto-layout
 
     /// Every node gets a position; a linear chain stacks downward by layer.

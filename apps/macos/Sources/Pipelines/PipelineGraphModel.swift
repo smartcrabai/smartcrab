@@ -36,6 +36,34 @@ public enum PipelineNodeAction: Equatable, Sendable {
     }
 }
 
+/// Pipeline-level trigger configuration (`trigger:` block in YAML), surfaced
+/// on input nodes in the canvas. Mirrors `TriggerConfig` in
+/// `apps/bun-service/src/engine/yaml-schema.ts`.
+public struct PipelineTriggerInfo: Equatable, Sendable {
+    public var type: String
+    public var schedule: String?
+    public var triggers: [String]
+
+    public init(type: String = "", schedule: String? = nil, triggers: [String] = []) {
+        self.type = type
+        self.schedule = schedule
+        self.triggers = triggers
+    }
+
+    /// Short one-line summary rendered inside the input node.
+    public var label: String {
+        switch type {
+        case "cron":
+            guard let schedule, !schedule.isEmpty else { return "Cron" }
+            return "Cron: \(schedule)"
+        case "discord":
+            return triggers.isEmpty ? "Discord" : "Discord (\(triggers.count))"
+        default:
+            return type.isEmpty ? "" : type.capitalized
+        }
+    }
+}
+
 public struct PipelineGraphNode: Identifiable, Equatable, Sendable {
     public let id: String
     public var name: String
@@ -93,10 +121,16 @@ public struct PipelineGraphEdge: Identifiable, Equatable, Sendable {
 public struct PipelineGraph: Equatable, Sendable {
     public var nodes: [PipelineGraphNode]
     public var edges: [PipelineGraphEdge]
+    public var trigger: PipelineTriggerInfo?
 
-    public init(nodes: [PipelineGraphNode] = [], edges: [PipelineGraphEdge] = []) {
+    public init(
+        nodes: [PipelineGraphNode] = [],
+        edges: [PipelineGraphEdge] = [],
+        trigger: PipelineTriggerInfo? = nil
+    ) {
         self.nodes = nodes
         self.edges = edges
+        self.trigger = trigger
     }
 
     public func node(id: String) -> PipelineGraphNode? {
