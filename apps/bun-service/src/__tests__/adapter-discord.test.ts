@@ -216,6 +216,49 @@ describe("DiscordChatAdapter lifecycle", () => {
     expect(adapter.isRunning()).toBe(false);
   });
 
+  it("concurrent start calls coalesce onto a single login", async () => {
+    const clients: MockClient[] = [];
+    setDiscordClientFactory(() => {
+      const client = makeMockClient();
+      clients.push(client);
+      return client;
+    });
+
+    const adapter = new DiscordChatAdapter({
+      configSource: { kind: "literal", config: { bot_token: "tok" } },
+    });
+    await Promise.all([adapter.start(), adapter.start()]);
+
+    expect(clients.length).toBe(1);
+    expect(clients[0]!.loginCalls).toEqual(["tok"]);
+    await adapter.stop();
+  });
+
+  it("stop during an in-flight start waits and tears the client down", async () => {
+    const client = makeMockClient();
+    let releaseLogin!: () => void;
+    const loginGate = new Promise<void>((resolve) => {
+      releaseLogin = resolve;
+    });
+    client.login = mock(async (token: string) => {
+      await loginGate;
+      client.loginCalls.push(token);
+      return token;
+    });
+    setDiscordClientFactory(() => client);
+
+    const adapter = new DiscordChatAdapter({
+      configSource: { kind: "literal", config: { bot_token: "tok" } },
+    });
+    const starting = adapter.start();
+    const stopping = adapter.stop();
+    releaseLogin();
+    await Promise.all([starting, stopping]);
+
+    expect(adapter.isRunning()).toBe(false);
+    expect(client.destroyed).toBe(true);
+  });
+
   it("start fails when token is empty", async () => {
     const adapter = new DiscordChatAdapter({
       configSource: { kind: "literal", config: { bot_token: "" } },
