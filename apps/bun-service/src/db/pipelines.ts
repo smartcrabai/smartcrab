@@ -7,13 +7,37 @@ import type {
   PipelineRow,
 } from "../commands/pipeline.commands.ts";
 
-function notImplemented(method: string): Error {
-  return new Error(`PipelineDatabase.${method} is not yet wired (PR-1 scope: pipeline.list only)`);
+const EXECUTION_SELECT =
+  "SELECT e.id, e.pipeline_id, p.name AS pipeline_name, e.trigger_type, e.trigger_data, e.status, e.started_at, e.ended_at, e.error FROM pipeline_executions e JOIN pipelines p ON p.id = e.pipeline_id";
+
+type ExecutionDbRow = {
+  id: string;
+  pipeline_id: string;
+  pipeline_name: string;
+  trigger_type: string;
+  trigger_data: string | null;
+  status: string;
+  started_at: number;
+  ended_at: number | null;
+  error: string | null;
+};
+
+function mapExecutionRow(r: ExecutionDbRow): ExecutionRow {
+  return {
+    id: r.id,
+    pipeline_id: r.pipeline_id,
+    pipeline_name: r.pipeline_name,
+    trigger_type: r.trigger_type,
+    trigger_data: r.trigger_data,
+    status: r.status,
+    started_at: new Date(r.started_at * 1000).toISOString(),
+    completed_at: r.ended_at ? new Date(r.ended_at * 1000).toISOString() : null,
+    error_message: r.error,
+  };
 }
 
 /** Adapter from raw `bun:sqlite` rows to the PipelineDatabase interface
- *  used by pipeline.commands. Only `listPipelines` is fully implemented;
- *  other methods will be filled in by subsequent PRs as they are wired. */
+ *  used by pipeline.commands. */
 export class SqlitePipelineDatabase implements PipelineDatabase {
   constructor(private readonly db: Database) {}
 
@@ -117,35 +141,39 @@ export class SqlitePipelineDatabase implements PipelineDatabase {
       .query("UPDATE pipeline_executions SET status = ?2, ended_at = ?3, error = ?4 WHERE id = ?1")
       .run(id, status, endedAtSec, errorMessage ?? null);
   }
+  getExecution(id: string): ExecutionRow | null {
+    const r = this.db
+      .query<ExecutionDbRow, [string]>(`${EXECUTION_SELECT} WHERE e.id = ?1`)
+      .get(id);
+    return r ? mapExecutionRow(r) : null;
+  }
   listExecutions(opts: { pipelineId?: string; limit: number }): ExecutionRow[] {
-    const sql = opts.pipelineId
-      ? "SELECT e.id, e.pipeline_id, p.name AS pipeline_name, e.trigger_type, e.trigger_data, e.status, e.started_at, e.ended_at, e.error FROM pipeline_executions e JOIN pipelines p ON p.id = e.pipeline_id WHERE e.pipeline_id = ?1 ORDER BY e.started_at DESC LIMIT ?2"
-      : "SELECT e.id, e.pipeline_id, p.name AS pipeline_name, e.trigger_type, e.trigger_data, e.status, e.started_at, e.ended_at, e.error FROM pipeline_executions e JOIN pipelines p ON p.id = e.pipeline_id ORDER BY e.started_at DESC LIMIT ?1";
-    type Row = {
-      id: string;
-      pipeline_id: string;
-      pipeline_name: string;
-      trigger_type: string;
-      trigger_data: string | null;
-      status: string;
-      started_at: number;
-      ended_at: number | null;
-      error: string | null;
-    };
-    const rows: Row[] = opts.pipelineId
-      ? this.db.query<Row, [string, number]>(sql).all(opts.pipelineId, opts.limit)
-      : this.db.query<Row, [number]>(sql).all(opts.limit);
-    return rows.map((r) => ({
-      id: r.id,
-      pipeline_id: r.pipeline_id,
-      pipeline_name: r.pipeline_name,
-      trigger_type: r.trigger_type,
-      trigger_data: r.trigger_data,
-      status: r.status,
-      started_at: new Date(r.started_at * 1000).toISOString(),
-      completed_at: r.ended_at ? new Date(r.ended_at * 1000).toISOString() : null,
-      error_message: r.error,
-    }));
+    const rows: ExecutionDbRow[] = opts.pipelineId
+      ? this.db
+          .query<ExecutionDbRow, [string, number]>(
+            `${EXECUTION_SELECT} WHERE e.pipeline_id = ?1 ORDER BY e.started_at DESC LIMIT ?2`,
+          )
+          .all(opts.pipelineId, opts.limit)
+      : this.db
+          .query<ExecutionDbRow, [number]>(
+            `${EXECUTION_SELECT} ORDER BY e.started_at DESC LIMIT ?1`,
+          )
+          .all(opts.limit);
+    return rows.map(mapExecutionRow);
+  }
+  insertExecutionLog(row: {
+    execution_id: string;
+    node_id: string | null;
+    level: string;
+    message: string;
+    timestamp: string;
+  }): void {
+    const timestampSec = Math.floor(Date.parse(row.timestamp) / 1000);
+    this.db
+      .query(
+        "INSERT INTO execution_logs (execution_id, node_id, level, message, timestamp) VALUES (?1, ?2, ?3, ?4, ?5)",
+      )
+      .run(row.execution_id, row.node_id, row.level, row.message, timestampSec);
   }
   listExecutionLogs(executionId: string): ExecutionLogRow[] {
     type Row = {

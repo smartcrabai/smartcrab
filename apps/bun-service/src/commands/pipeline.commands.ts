@@ -74,10 +74,19 @@ export interface PipelineDatabase {
     errorMessage?: string,
   ): void | Promise<void>;
 
+  getExecution(id: string): ExecutionRow | null | Promise<ExecutionRow | null>;
   listExecutions(opts: {
     pipelineId?: string;
     limit: number;
   }): ExecutionRow[] | Promise<ExecutionRow[]>;
+  insertExecutionLog(row: {
+    execution_id: string;
+    node_id: string | null;
+    level: string;
+    message: string;
+    /** ISO-8601 event time (from the executor event, not the write time). */
+    timestamp: string;
+  }): void | Promise<void>;
   listExecutionLogs(
     executionId: string,
   ): ExecutionLogRow[] | Promise<ExecutionLogRow[]>;
@@ -129,6 +138,48 @@ const pipelineDelete: Handler<{ id: string }, { ok: true }> = async (
   return { ok: true };
 };
 
+/** Project an executor event onto an `execution_logs` row. */
+function logRowForEvent(event: NodeExecutionEvent): {
+  node_id: string | null;
+  level: string;
+  message: string;
+} {
+  switch (event.type) {
+    case "execution_started":
+      return {
+        node_id: null,
+        level: "info",
+        message: `Execution started for pipeline '${event.pipelineName}'`,
+      };
+    case "node_started":
+      return {
+        node_id: event.nodeId,
+        level: "info",
+        message: `Node '${event.nodeName}' started (iteration ${event.iteration})`,
+      };
+    case "node_completed":
+      return {
+        node_id: event.nodeId,
+        level: "info",
+        message: `Node '${event.nodeName}' completed`,
+      };
+    case "node_failed":
+      return {
+        node_id: event.nodeId,
+        level: "error",
+        message: `Node '${event.nodeName}' failed: ${event.error}`,
+      };
+    case "execution_completed":
+      return {
+        node_id: null,
+        level: event.status === "completed" ? "info" : "error",
+        message: event.errorMessage
+          ? `Execution ${event.status}: ${event.errorMessage}`
+          : `Execution ${event.status}`,
+      };
+  }
+}
+
 const pipelineExecute: Handler<
   { id: string; trigger_data?: unknown },
   { execution_id: string }
@@ -164,6 +215,19 @@ const pipelineExecute: Handler<
         { executionId },
       )) {
         ctx.emit?.(event);
+        try {
+          await ctx.db.insertExecutionLog({
+            execution_id: executionId,
+            timestamp: event.timestamp,
+            ...logRowForEvent(event),
+          });
+        } catch (logErr) {
+          // A failed log write must not abort the execution itself.
+          console.error(
+            `[pipeline] failed to persist execution log for ${executionId}:`,
+            logErr,
+          );
+        }
         if (event.type === "execution_completed") {
           finalStatus = event.status;
           errorMessage = event.errorMessage;
@@ -193,6 +257,25 @@ const executionLogs: Handler<
   { execution_id: string },
   ExecutionLogRow[]
 > = async (params, ctx) => await ctx.db.listExecutionLogs(params.execution_id);
+
+export interface ExecutionDetailResult extends ExecutionRow {
+  /** Per-node executions are not recorded yet; kept for wire compatibility
+   *  with the macOS `ExecutionDetail` Codable shape. */
+  node_executions: never[];
+  logs: ExecutionLogRow[];
+}
+
+const executionDetail: Handler<
+  { execution_id: string },
+  ExecutionDetailResult
+> = async (params, ctx) => {
+  const row = await ctx.db.getExecution(params.execution_id);
+  if (!row) {
+    throw new Error(`Execution with id '${params.execution_id}' not found`);
+  }
+  const logs = await ctx.db.listExecutionLogs(params.execution_id);
+  return { ...row, node_executions: [], logs };
+};
 
 // ---------------------------------------------------------------------------
 // Module-level context injection
@@ -243,6 +326,8 @@ const handlers = {
     executionHistory(params, requireContext()),
   "execution.logs": (params: { execution_id: string }) =>
     executionLogs(params, requireContext()),
+  "execution.detail": (params: { execution_id: string }) =>
+    executionDetail(params, requireContext()),
 } as const;
 
 export type PipelineCommandMap = typeof handlers;
