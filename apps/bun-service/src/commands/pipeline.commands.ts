@@ -57,8 +57,10 @@ export interface PipelineDatabase {
   savePipeline(input: {
     id?: string;
     name: string;
-    description?: string;
+    description?: string | null;
     yaml_content: string;
+    max_loop_count?: number;
+    is_active?: boolean;
   }): PipelineRow | Promise<PipelineRow>;
   deletePipeline(id: string): void | Promise<void>;
 
@@ -122,7 +124,14 @@ const pipelineGet: Handler<{ id: string }, PipelineRow> = async (
 };
 
 const pipelineSave: Handler<
-  { id?: string; name: string; description?: string; yaml_content: string },
+  {
+    id?: string;
+    name: string;
+    description?: string | null;
+    yaml_content: string;
+    max_loop_count?: number;
+    is_active?: boolean;
+  },
   PipelineRow
 > = async (params, ctx) => {
   // Validate YAML before persisting.
@@ -134,6 +143,16 @@ const pipelineDelete: Handler<{ id: string }, { ok: true }> = async (
   params,
   ctx,
 ) => {
+  // Unschedule this pipeline's cron jobs from the in-process scheduler first;
+  // deleting only their DB rows would leave zombie timers firing (and failing
+  // with "Pipeline not found") until the service restarts.
+  const cron = await import("./cron.commands.ts");
+  const jobs = await cron.listCronJobs();
+  for (const job of jobs) {
+    if (job.pipeline_id === params.id) {
+      await cron.deleteCronJob({ id: job.id });
+    }
+  }
   await ctx.db.deletePipeline(params.id);
   return { ok: true };
 };
@@ -180,10 +199,27 @@ function logRowForEvent(event: NodeExecutionEvent): {
   }
 }
 
+/** Wire values for `pipeline_executions.trigger_type`. The macOS client
+ *  decodes this column as a closed enum, so an unknown value would break
+ *  decoding of the whole execution history list. */
+const TRIGGER_TYPES = new Set(["manual", "cron", "chat", "api"]);
+
 const pipelineExecute: Handler<
-  { id: string; trigger_data?: unknown },
+  { id: string; trigger_type?: string; trigger_data?: string | null },
   { execution_id: string }
 > = async (params, ctx) => {
+  const triggerType = params.trigger_type ?? "manual";
+  if (!TRIGGER_TYPES.has(triggerType)) {
+    throw new Error(
+      `invalid trigger_type '${triggerType}' (expected one of: ${[...TRIGGER_TYPES].join(", ")})`,
+    );
+  }
+  if (params.trigger_data != null && typeof params.trigger_data !== "string") {
+    // The dispatcher does not validate params; a non-string here would
+    // otherwise surface as an opaque SQLite bind error.
+    throw new Error("trigger_data must be a JSON-encoded string");
+  }
+
   const pipeline = await ctx.db.getPipeline(params.id);
   if (!pipeline) throw new Error(`Pipeline with id '${params.id}' not found`);
   const resolved = parsePipeline(pipeline.yaml_content);
@@ -193,14 +229,23 @@ const pipelineExecute: Handler<
       ? crypto.randomUUID()
       : `exec-${Date.now()}`;
 
+  // `trigger_data` arrives pre-serialized (JSON string) per the RPC contract;
+  // store it verbatim and parse it back into a value for the executor input.
+  const triggerData = params.trigger_data ?? null;
+  let input: unknown = null;
+  if (triggerData !== null) {
+    try {
+      input = JSON.parse(triggerData);
+    } catch {
+      input = triggerData;
+    }
+  }
+
   await ctx.db.insertExecution({
     id: executionId,
     pipeline_id: params.id,
-    trigger_type: "manual",
-    trigger_data:
-      params.trigger_data === undefined
-        ? null
-        : JSON.stringify(params.trigger_data),
+    trigger_type: triggerType,
+    trigger_data: triggerData,
   });
 
   // Run in the background; events are pushed through `ctx.emit` when set.
@@ -210,7 +255,7 @@ const pipelineExecute: Handler<
     try {
       for await (const event of executePipeline(
         resolved,
-        params.trigger_data,
+        input,
         ctx.deps,
         { executionId },
       )) {

@@ -120,7 +120,28 @@ export class SqlitePipelineDatabase implements PipelineDatabase {
     return this.getPipeline(id) as PipelineRow;
   }
   deletePipeline(id: string): void {
-    this.db.query("DELETE FROM pipelines WHERE id = ?1").run(id);
+    // Dependent rows must go first: with PRAGMA foreign_keys = ON, deleting a
+    // pipeline that has executions or cron jobs would otherwise fail with a
+    // FOREIGN KEY constraint error.
+    //
+    // Deleting while an execution is still running is allowed by design: the
+    // background loop's remaining log writes fail (caught and reported) and
+    // its finalizeExecution becomes a no-op on the vanished row.
+    this.db.transaction(() => {
+      this.db
+        .query(
+          "DELETE FROM execution_logs WHERE execution_id IN (SELECT id FROM pipeline_executions WHERE pipeline_id = ?1)",
+        )
+        .run(id);
+      this.db
+        .query(
+          "DELETE FROM node_executions WHERE execution_id IN (SELECT id FROM pipeline_executions WHERE pipeline_id = ?1)",
+        )
+        .run(id);
+      this.db.query("DELETE FROM pipeline_executions WHERE pipeline_id = ?1").run(id);
+      this.db.query("DELETE FROM cron_jobs WHERE pipeline_id = ?1").run(id);
+      this.db.query("DELETE FROM pipelines WHERE id = ?1").run(id);
+    })();
   }
   insertExecution(row: {
     id: string;

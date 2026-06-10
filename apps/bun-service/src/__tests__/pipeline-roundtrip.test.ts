@@ -7,6 +7,7 @@
 import { Database } from "bun:sqlite";
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
+import { createCronJob, listCronJobs } from "../commands/cron.commands";
 import handlers, { configurePipelineCommands } from "../commands/pipeline.commands";
 import { openDb } from "../db";
 import { SqlitePipelineDatabase } from "../db/pipelines";
@@ -84,6 +85,24 @@ nodes:
     expect(list.map((p) => p.id)).not.toContain(saved.id);
   });
 
+  /** pipeline.execute runs in the background; poll until it finalizes and
+   *  return the finalized history row. */
+  async function waitForExecution(
+    pipelineId: string,
+    executionId: string,
+  ): Promise<{ id: string; status: string; trigger_data: string | null }> {
+    for (let i = 0; i < 100; i++) {
+      const history = (await handlers["execution.history"]({
+        pipeline_id: pipelineId,
+      })) as Array<{ id: string; status: string; trigger_data: string | null }>;
+      const row = history.find((e) => e.id === executionId);
+      if (!row) throw new Error(`execution ${executionId} missing from history`);
+      if (row.status !== "running") return row;
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    throw new Error(`execution ${executionId} did not finalize in time`);
+  }
+
   test("execute persists execution logs readable via execution.logs and execution.detail", async () => {
     const saved = (await handlers["pipeline.save"]({
       name: "log-smoke",
@@ -94,18 +113,8 @@ nodes:
       id: saved.id,
     })) as { execution_id: string };
 
-    // pipeline.execute runs in the background; poll until it finalizes.
-    let status = "running";
-    for (let i = 0; i < 100 && status === "running"; i++) {
-      await new Promise((r) => setTimeout(r, 10));
-      const history = (await handlers["execution.history"]({
-        pipeline_id: saved.id,
-      })) as Array<{ id: string; status: string }>;
-      const row = history.find((e) => e.id === execution_id);
-      if (!row) throw new Error(`execution ${execution_id} missing from history`);
-      status = row.status;
-    }
-    expect(status).toBe("completed");
+    const finalized = await waitForExecution(saved.id, execution_id);
+    expect(finalized.status).toBe("completed");
 
     const logs = (await handlers["execution.logs"]({
       execution_id,
@@ -135,5 +144,92 @@ nodes:
     await expect(
       handlers["execution.detail"]({ execution_id: "nope" }),
     ).rejects.toThrow("not found");
+  });
+
+  test("delete succeeds for a pipeline with executions, logs, and cron jobs", async () => {
+    const saved = (await handlers["pipeline.save"]({
+      name: "delete-cascade",
+      yaml_content: yamlFromSwiftUI,
+    })) as { id: string };
+
+    const { execution_id } = (await handlers["pipeline.execute"]({
+      id: saved.id,
+    })) as { execution_id: string };
+    await waitForExecution(saved.id, execution_id);
+
+    db.query(
+      "INSERT INTO cron_jobs (id, pipeline_id, expression, enabled) VALUES ('cj-1', ?1, '* * * * *', 1)",
+    ).run(saved.id);
+
+    // foreign_keys = ON (via openDb): this used to fail with a FOREIGN KEY
+    // constraint error because dependent rows were not removed first.
+    await handlers["pipeline.delete"]({ id: saved.id });
+
+    const list = (await handlers["pipeline.list"]()) as Array<{ id: string }>;
+    expect(list.map((p) => p.id)).not.toContain(saved.id);
+    const counts = db
+      .query<{ executions: number; logs: number; crons: number }, [string, string]>(
+        "SELECT (SELECT COUNT(*) FROM pipeline_executions WHERE pipeline_id = ?1) AS executions, (SELECT COUNT(*) FROM execution_logs WHERE execution_id = ?2) AS logs, (SELECT COUNT(*) FROM cron_jobs WHERE pipeline_id = ?1) AS crons",
+      )
+      .get(saved.id, execution_id);
+    expect(counts).toEqual({ executions: 0, logs: 0, crons: 0 });
+  });
+
+  test("delete removes the pipeline's cron jobs from the cron command layer", async () => {
+    const saved = (await handlers["pipeline.save"]({
+      name: "delete-unschedules",
+      yaml_content: yamlFromSwiftUI,
+    })) as { id: string };
+
+    const job = await createCronJob({
+      pipeline_id: saved.id,
+      schedule: "* * * * *",
+    });
+    expect((await listCronJobs()).map((j) => j.id)).toContain(job.id);
+
+    await handlers["pipeline.delete"]({ id: saved.id });
+    expect((await listCronJobs()).map((j) => j.id)).not.toContain(job.id);
+  });
+
+  test("execute rejects unknown trigger_type and non-string trigger_data", async () => {
+    const saved = (await handlers["pipeline.save"]({
+      name: "trigger-validation",
+      yaml_content: yamlFromSwiftUI,
+    })) as { id: string };
+
+    await expect(
+      handlers["pipeline.execute"]({ id: saved.id, trigger_type: "discord" }),
+    ).rejects.toThrow("invalid trigger_type");
+    await expect(
+      handlers["pipeline.execute"]({
+        id: saved.id,
+        // Bypass the compile-time contract the way a misbehaving client would.
+        trigger_data: { city: "tokyo" } as unknown as string,
+      }),
+    ).rejects.toThrow("JSON-encoded string");
+  });
+
+  test("execute stores trigger_data verbatim and honors trigger_type", async () => {
+    const saved = (await handlers["pipeline.save"]({
+      name: "trigger-data",
+      yaml_content: yamlFromSwiftUI,
+    })) as { id: string };
+
+    const triggerData = '{"city":"tokyo"}';
+    const { execution_id } = (await handlers["pipeline.execute"]({
+      id: saved.id,
+      trigger_type: "cron",
+      trigger_data: triggerData,
+    })) as { execution_id: string };
+
+    const finalized = await waitForExecution(saved.id, execution_id);
+    expect(finalized.status).toBe("completed");
+    // Stored as-is — not double-encoded into "\"{\\\"city\\\":...\"".
+    expect(finalized.trigger_data).toBe(triggerData);
+
+    const detail = (await handlers["execution.detail"]({
+      execution_id,
+    })) as { trigger_type: string };
+    expect(detail.trigger_type).toBe("cron");
   });
 });
