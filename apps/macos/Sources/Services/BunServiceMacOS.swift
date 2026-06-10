@@ -564,7 +564,10 @@
         }
 
         public func executionDetail(id: String) async throws -> ExecutionDetail {
-            try await fallback.executionDetail(id: id)
+            struct Params: Encodable, Sendable { let executionId: String }
+            // `ExecutionDetail` decodes the wire shape directly: the Bun side
+            // returns snake_case keys and the shared decoder converts them.
+            return try await call(method: "execution.detail", params: Params(executionId: id))
         }
 
         // MARK: - Internals
