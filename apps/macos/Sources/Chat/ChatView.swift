@@ -124,6 +124,7 @@ public struct ChatView: View {
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
+                    .readableWidth()
                 }
                 .defaultScrollAnchor(.bottom)
                 .onChange(of: messages.count) { _, _ in

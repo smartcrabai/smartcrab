@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		A001000000000000000000A1 /* SmartCrabApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A1 /* SmartCrabApp.swift */; };
 		A001000000000000000000A2 /* AppRoot.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A2 /* AppRoot.swift */; };
+		A0010000000000000000AE01 /* ReadableWidth.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0010000000000000000AE01 /* ReadableWidth.swift */; };
 		A001000000000000000000A3 /* RPCTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A3 /* RPCTypes.swift */; };
 		A001000000000000000000A4 /* BunServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A4 /* BunServiceProtocol.swift */; };
 		A001000000000000000000A5 /* BunServiceMacOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A5 /* BunServiceMacOS.swift */; };
@@ -19,6 +20,7 @@
 		A001000000000000000000C0 /* seher-bridge in Resources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000C0 /* seher-bridge */; };
 		A001000000000000000000B1 /* SmartCrabApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A1 /* SmartCrabApp.swift */; };
 		A001000000000000000000B2 /* AppRoot.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A2 /* AppRoot.swift */; };
+		A0010000000000000000AE02 /* ReadableWidth.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0010000000000000000AE01 /* ReadableWidth.swift */; };
 		A001000000000000000000B3 /* RPCTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A3 /* RPCTypes.swift */; };
 		A001000000000000000000B4 /* BunServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A4 /* BunServiceProtocol.swift */; };
 		A001000000000000000000B5 /* BunServiceMacOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001000000000000000000A5 /* BunServiceMacOS.swift */; };
@@ -88,6 +90,7 @@
 /* Begin PBXFileReference section */
 		B001000000000000000000A1 /* SmartCrabApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartCrabApp.swift; sourceTree = "<group>"; };
 		B001000000000000000000A2 /* AppRoot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRoot.swift; sourceTree = "<group>"; };
+		B0010000000000000000AE01 /* ReadableWidth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadableWidth.swift; sourceTree = "<group>"; };
 		B001000000000000000000A3 /* RPCTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RPCTypes.swift; sourceTree = "<group>"; };
 		B001000000000000000000A4 /* BunServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BunServiceProtocol.swift; sourceTree = "<group>"; };
 		B001000000000000000000A5 /* BunServiceMacOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BunServiceMacOS.swift; sourceTree = "<group>"; };
@@ -200,6 +203,7 @@
 			children = (
 				B001000000000000000000A1 /* SmartCrabApp.swift */,
 				B001000000000000000000A2 /* AppRoot.swift */,
+				B0010000000000000000AE01 /* ReadableWidth.swift */,
 				F001000000000000000000B3 /* Generated */,
 			);
 			path = Core;
@@ -317,6 +321,7 @@
 			files = (
 				A001000000000000000000A1 /* SmartCrabApp.swift in Sources */,
 				A001000000000000000000A2 /* AppRoot.swift in Sources */,
+				A0010000000000000000AE01 /* ReadableWidth.swift in Sources */,
 				A001000000000000000000A3 /* RPCTypes.swift in Sources */,
 				A001000000000000000000A4 /* BunServiceProtocol.swift in Sources */,
 				A001000000000000000000A5 /* BunServiceMacOS.swift in Sources */,
@@ -352,6 +357,7 @@
 			files = (
 				A001000000000000000000B1 /* SmartCrabApp.swift in Sources */,
 				A001000000000000000000B2 /* AppRoot.swift in Sources */,
+				A0010000000000000000AE02 /* ReadableWidth.swift in Sources */,
 				A001000000000000000000B3 /* RPCTypes.swift in Sources */,
 				A001000000000000000000B4 /* BunServiceProtocol.swift in Sources */,
 				A001000000000000000000B5 /* BunServiceMacOS.swift in Sources */,

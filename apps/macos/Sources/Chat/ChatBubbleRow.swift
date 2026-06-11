@@ -29,6 +29,8 @@ public struct ChatBubbleRow: View {
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
+            // Keep bubbles at a chat-like width instead of spanning the row.
+            .frame(maxWidth: 560, alignment: isFromUser ? .trailing : .leading)
 
             if !isFromUser { Spacer(minLength: 40) }
         }

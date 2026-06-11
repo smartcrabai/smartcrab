@@ -35,6 +35,8 @@ public struct SettingsView: View {
                 }
             }
             .pickerStyle(.segmented)
+            .labelsHidden()
+            .frame(maxWidth: 360)
             .padding(.horizontal)
             .padding(.top, 12)
             .padding(.bottom, 8)
