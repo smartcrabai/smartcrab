@@ -45,6 +45,7 @@ public struct SeherConfigEditor: View {
             }
         }
         .listStyle(.inset)
+        .readableWidth()
         .safeAreaInset(edge: .bottom, spacing: 0) {
             HStack {
                 Spacer()

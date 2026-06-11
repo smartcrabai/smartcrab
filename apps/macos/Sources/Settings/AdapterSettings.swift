@@ -98,6 +98,7 @@ public struct AdapterSettings: View {
             }
         }
         .formStyle(.grouped)
+        .readableWidth()
         .safeAreaInset(edge: .bottom, spacing: 0) {
             HStack {
                 Spacer()

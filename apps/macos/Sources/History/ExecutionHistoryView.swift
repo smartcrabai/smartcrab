@@ -73,6 +73,7 @@ public struct ExecutionHistoryView: View {
                 }
             }
             .pickerStyle(.segmented)
+            .labelsHidden()
             .frame(maxWidth: 360)
 
             if isLoading { ProgressView().controlSize(.small) }
@@ -125,6 +126,7 @@ public struct ExecutionHistoryView: View {
             }
         }
         .listStyle(.inset)
+        .readableWidth()
     }
 
     private var emptyState: some View {
