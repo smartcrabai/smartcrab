@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "skills": {
+    "peekaboo": {
+      "source": "openclaw/Peekaboo/skills/peekaboo",
+      "sourceType": "github",
+      "commit": "7c3862b03285a5d793fa102b5c6ebd00c0c601ed",
+      "agents": [
+        "claude-code"
+      ]
+    }
+  }
+}
