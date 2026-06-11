@@ -98,6 +98,7 @@ public struct SkillsView: View {
                 }
             }
             .listStyle(.inset)
+            .readableWidth()
         }
     }
 

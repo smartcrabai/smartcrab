@@ -31,7 +31,7 @@ public struct PipelineListView: View {
         #if os(macOS)
             HSplitView {
                 sidebarColumn
-                    .frame(minWidth: 220, idealWidth: 280)
+                    .frame(minWidth: 220, idealWidth: 280, maxWidth: 400)
                 detailColumn
                     .frame(minWidth: 420)
             }
