@@ -1,23 +1,24 @@
 import SwiftUI
 
-/// List of scheduled cron jobs with create/delete actions.
+/// Per-pipeline schedule management for the pipeline authoring detail pane.
 ///
-/// Backed by `BunServiceProtocol`. When running under `SmartCrabPreview`
-/// (iOS Simulator), the injected service is the mock implementation that
-/// returns deterministic stub data.
-public struct CronListView: View {
+/// Cron jobs remain persisted and executed by the Bun service. This view scopes
+/// the existing cron CRUD operations to the selected pipeline by filtering
+/// `cron.list` client-side and passing a one-item pipeline list to the editor.
+public struct PipelineScheduleView: View {
     private let service: any BunServiceProtocol
+    private let pipeline: PipelineSummary
 
     @State private var jobs: [CronJob] = []
-    @State private var pipelines: [PipelineSummary] = []
     @State private var loadError: String?
     @State private var isLoading = false
     @State private var selection: CronJob.ID?
     @State private var editing: CronEditTarget?
     @State private var pendingDelete: CronJob?
 
-    public init(service: any BunServiceProtocol) {
+    public init(service: any BunServiceProtocol, pipeline: PipelineSummary) {
         self.service = service
+        self.pipeline = pipeline
     }
 
     public var body: some View {
@@ -26,11 +27,11 @@ public struct CronListView: View {
             Divider()
             content
         }
-        .task { await reload() }
+        .task(id: pipeline.id) { await reload() }
         .sheet(item: $editing) { target in
             CronEditView(
                 service: service,
-                pipelines: pipelines,
+                pipelines: [pipeline],
                 existing: target.job,
                 onSaved: { _ in
                     editing = nil
@@ -40,7 +41,7 @@ public struct CronListView: View {
             )
         }
         .alert(
-            "Delete cron job?",
+            "Delete schedule?",
             isPresented: .isPresenting($pendingDelete),
             presenting: pendingDelete
         ) { job in
@@ -49,7 +50,7 @@ public struct CronListView: View {
                 Task { await delete(job) }
             }
         } message: { job in
-            Text("Schedule \"\(job.schedule)\" will be removed.")
+            Text("Schedule \"\(job.schedule)\" will be removed from \(pipeline.name).")
         }
     }
 
@@ -57,7 +58,13 @@ public struct CronListView: View {
 
     private var header: some View {
         HStack(spacing: 12) {
-            Text("Cron Jobs").font(.title2).bold()
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Schedules").font(.title3).bold()
+                Text(pipeline.name.isEmpty ? pipeline.id : pipeline.name)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
             Spacer()
             if isLoading { ProgressView().controlSize(.small) }
             Button {
@@ -72,7 +79,7 @@ public struct CronListView: View {
             } label: {
                 Label("Add", systemImage: "plus")
             }
-            .disabled(pipelines.isEmpty)
+            .disabled(pipeline.id.isEmpty)
         }
         .padding(12)
     }
@@ -90,19 +97,17 @@ public struct CronListView: View {
 
     private var table: some View {
         Table(jobs, selection: $selection) {
-            TableColumn("Pipeline") { job in
-                Text(pipelineName(for: job.pipelineId))
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-            }
             TableColumn("Expression") { job in
                 Text(job.schedule).font(.system(.body, design: .monospaced))
             }
-            TableColumn("Next Run") { job in
-                Text(job.nextRunAt ?? "-").foregroundStyle(.secondary)
-            }
             TableColumn("Status") { job in
                 StatusBadge(active: job.isActive)
+            }
+            TableColumn("Next Run") { job in
+                Text(displayDate(job.nextRunAt)).foregroundStyle(.secondary)
+            }
+            TableColumn("Last Run") { job in
+                Text(displayDate(job.lastRunAt)).foregroundStyle(.secondary)
             }
             TableColumn("Actions") { job in
                 HStack(spacing: 8) {
@@ -117,13 +122,11 @@ public struct CronListView: View {
 
     private var emptyState: some View {
         VStack(spacing: 8) {
-            Image(systemName: "clock.badge.questionmark")
+            Image(systemName: "calendar.badge.clock")
                 .font(.system(size: 36))
                 .foregroundStyle(.secondary)
-            Text("No cron jobs yet").font(.headline)
-            Text(pipelines.isEmpty
-                ? "Create a pipeline first, then schedule it here."
-                : "Click Add to schedule a pipeline.")
+            Text("No schedules yet").font(.headline)
+            Text("Click Add to run this pipeline on a cron schedule.")
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -135,7 +138,7 @@ public struct CronListView: View {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 32))
                 .foregroundStyle(.orange)
-            Text("Failed to load cron jobs").font(.headline)
+            Text("Failed to load schedules").font(.headline)
             Text(message).font(.caption).foregroundStyle(.secondary)
             Button("Retry") { Task { await reload() } }
         }
@@ -143,22 +146,16 @@ public struct CronListView: View {
         .padding()
     }
 
-    // MARK: - Helpers
-
-    private func pipelineName(for id: String) -> String {
-        pipelines.first(where: { $0.id == id })?.name ?? id
-    }
+    // MARK: - Actions
 
     private func reload() async {
+        guard !pipeline.id.isEmpty else { return }
         isLoading = true
         loadError = nil
         defer { isLoading = false }
         do {
-            async let jobsTask = service.cronList()
-            async let pipelinesTask = service.pipelineList()
-            let (loadedJobs, loadedPipelines) = try await (jobsTask, pipelinesTask)
-            jobs = loadedJobs
-            pipelines = loadedPipelines
+            let loadedJobs = try await service.cronList()
+            jobs = Self.jobs(for: pipeline.id, in: loadedJobs)
         } catch {
             loadError = String(describing: error)
         }
@@ -172,5 +169,50 @@ public struct CronListView: View {
         } catch {
             loadError = String(describing: error)
         }
+    }
+
+    // MARK: - Helpers
+
+    static func jobs(for pipelineId: String, in jobs: [CronJob]) -> [CronJob] {
+        jobs.filter { $0.pipelineId == pipelineId }
+    }
+
+    private func displayDate(_ value: String?) -> String {
+        guard let value, !value.isEmpty else { return "-" }
+        return value
+    }
+}
+
+// MARK: - Edit target
+
+enum CronEditTarget: Identifiable {
+    case new
+    case existing(CronJob)
+
+    var id: String {
+        switch self {
+        case .new: return "__new__"
+        case let .existing(job): return job.id
+        }
+    }
+
+    var job: CronJob? {
+        if case let .existing(job) = self { return job }
+        return nil
+    }
+}
+
+// MARK: - Status badge
+
+struct StatusBadge: View {
+    let active: Bool
+    var body: some View {
+        Text(active ? "Active" : "Paused")
+            .font(.caption).bold()
+            .padding(.horizontal, 8)
+            .padding(.vertical, 2)
+            .background(active ? Color.green.opacity(0.2) : Color.gray.opacity(0.2))
+            .foregroundStyle(active ? .green : .secondary)
+            .clipShape(Capsule())
     }
 }

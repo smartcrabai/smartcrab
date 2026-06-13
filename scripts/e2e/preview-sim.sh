@@ -77,7 +77,7 @@ npx --yes serve-sim --detach >"${SERVE_SIM_OUT}" 2>&1 || {
 }
 
 echo "[preview] step 5/5 capturing screenshots for each tab"
-TABS="chat pipelines cron skills history settings"
+TABS="chat pipelines skills history settings"
 sleep 3
 for tab in ${TABS}; do
   xcrun simctl io "${DEVICE}" screenshot "${OUT_DIR}/${tab}.png"

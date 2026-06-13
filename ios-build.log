@@ -1,0 +1,470 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project apps/macos/SmartCrab.xcodeproj -scheme SmartCrabPreview -destination "platform=iOS Simulator,name=iPhone 17" -configuration Debug build
+
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (1 target)
+    Target 'SmartCrabPreview' in project 'SmartCrab' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --print-asset-tag-combinations --output-format xml1 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/SmartCrab/Assets.xcassets
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: d79b2b7c2ed9673c1087c4a402982cc0
+Build description path: /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/XCBuildData/d79b2b7c2ed9673c1087c4a402982cc0.xcbuilddata
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk /Users/takumi/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator26.5-23F73-6cfe768891a92b912361537c460fe42b.sdkstatcache
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/SmartCrab.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk -o /Users/takumi/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator26.5-23F73-6cfe768891a92b912361537c460fe42b.sdkstatcache
+
+CreateBuildDirectory /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/SmartCrab.xcodeproj
+    builtin-create-build-directory /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator
+
+CreateBuildDirectory /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/SmartCrab.xcodeproj
+    builtin-create-build-directory /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator
+
+WriteAuxiliaryFile /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrab-bba81f66835b84933ec85c99ed035a89-VFS-iphonesimulator/all-product-headers.yaml
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/SmartCrab.xcodeproj
+    write-file /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrab-bba81f66835b84933ec85c99ed035a89-VFS-iphonesimulator/all-product-headers.yaml
+
+WriteAuxiliaryFile /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview-project-headers.hmap (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    write-file /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview-project-headers.hmap
+
+WriteAuxiliaryFile /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview.DependencyStaticMetadataFileList (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    write-file /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview.DependencyStaticMetadataFileList
+
+WriteAuxiliaryFile /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview-own-target-headers.hmap (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    write-file /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview-own-target-headers.hmap
+
+WriteAuxiliaryFile /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview.DependencyMetadataFileList (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    write-file /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview.DependencyMetadataFileList
+
+WriteAuxiliaryFile /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview-generated-files.hmap (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    write-file /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview-generated-files.hmap
+
+WriteAuxiliaryFile /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview-all-target-headers.hmap (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    write-file /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview-all-target-headers.hmap
+
+WriteAuxiliaryFile /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview.hmap (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    write-file /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview.hmap
+
+WriteAuxiliaryFile /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview-all-non-framework-target-headers.hmap (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    write-file /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview-all-non-framework-target-headers.hmap
+
+WriteAuxiliaryFile /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview-DebugDylibInstallName-normal-arm64.txt (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    write-file /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview-DebugDylibInstallName-normal-arm64.txt
+
+WriteAuxiliaryFile /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview-DebugDylibPath-normal-arm64.txt (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    write-file /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview-DebugDylibPath-normal-arm64.txt
+
+WriteAuxiliaryFile /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview.SwiftFileList (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    write-file /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview.SwiftFileList
+
+WriteAuxiliaryFile /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview_const_extract_protocols.json (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    write-file /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview_const_extract_protocols.json
+
+WriteAuxiliaryFile /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview.SwiftConstValuesFileList (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    write-file /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview.LinkFileList (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    write-file /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview.LinkFileList
+
+WriteAuxiliaryFile /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview-OutputFileMap.json (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    write-file /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview-OutputFileMap.json
+
+MkDir /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator/SmartCrabPreview.app (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    /bin/mkdir -p /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator/SmartCrabPreview.app
+
+Ld /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator/SmartCrabPreview.app/__preview.dylib normal (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios17.0-simulator -dynamiclib -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk -O0 -L/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator -F/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator -install_name @rpath/SmartCrabPreview.debug.dylib -Xlinker -dead_strip -rdynamic -Xlinker -no_deduplicate -Xlinker -objc_abi_version -Xlinker 2 -Xlinker -dependency_info -Xlinker /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview_dependency_info.dat -o /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator/SmartCrabPreview.app/__preview.dylib
+
+MkDir /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/assetcatalog_output/thinned (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    /bin/mkdir -p /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/assetcatalog_output/thinned
+
+MkDir /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/assetcatalog_output/unthinned (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    /bin/mkdir -p /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/assetcatalog_output/unthinned
+
+GenerateAssetSymbols /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/SmartCrab/Assets.xcassets (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/SmartCrab/Assets.xcassets --compile /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator/SmartCrabPreview.app --output-format human-readable-text --notices --warnings --export-dependency-info /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/assetcatalog_dependencies --output-partial-info-plist /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/assetcatalog_generated_info.plist --compress-pngs --enable-on-demand-resources YES --development-region en --target-device iphone --target-device ipad --minimum-deployment-target 17.0 --platform iphonesimulator --bundle-identifier ai.smartcrab.preview --generate-swift-asset-symbol-extensions NO --generate-swift-asset-symbols /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/DerivedSources/GeneratedAssetSymbols.swift --generate-objc-asset-symbols /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/DerivedSources/GeneratedAssetSymbols.h --generate-asset-symbol-index /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/* com.apple.actool.compilation-results */
+/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/DerivedSources/GeneratedAssetSymbols.h
+/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/DerivedSources/GeneratedAssetSymbols.swift
+
+
+CompileAssetCatalogVariant thinned /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator/SmartCrabPreview.app /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/SmartCrab/Assets.xcassets (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/SmartCrab/Assets.xcassets --compile /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/assetcatalog_output/thinned --output-format human-readable-text --notices --warnings --export-dependency-info /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/assetcatalog_dependencies_thinned --output-partial-info-plist /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/assetcatalog_generated_info.plist_thinned --compress-pngs --enable-on-demand-resources YES --filter-for-thinning-device-configuration iPhone18,3 --filter-for-device-os-version 26.5 --development-region en --target-device iphone --target-device ipad --minimum-deployment-target 17.0 --platform iphonesimulator
+/* com.apple.actool.compilation-results */
+/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/assetcatalog_generated_info.plist_thinned
+
+
+SwiftDriver SmartCrabPreview normal arm64 com.apple.xcode.tools.swift.compiler (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name SmartCrabPreview -Onone @/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk -target arm64-apple-ios17.0-simulator -g -module-cache-path /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator -F /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator -emit-localized-strings -emit-localized-strings-path /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64 -c -j8 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/takumi/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator26.5-23F73-6cfe768891a92b912361537c460fe42b.sdkstatcache -output-file-map /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview_const_extract_protocols.json -Xcc -iquote -Xcc /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview-generated-files.hmap -Xcc -I/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview-own-target-headers.hmap -Xcc -I/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview-all-target-headers.hmap -Xcc -iquote -Xcc /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview-project-headers.hmap -Xcc -I/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/DerivedSources-normal/arm64 -Xcc -I/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/DerivedSources/arm64 -Xcc -I/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview-Swift.h -working-directory /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos -experimental-emit-module-separately -disable-cmo
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_Builtin_stddef-9TQR09OM8M68TTH8FUL2FVIZ0.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/ptrauth-D0G4WAP8VJ1JANGCBFJ4UMA02.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_Builtin_stdarg-4HX4H1BF45P855DMTTKMYHOGL.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_Builtin_float-D0RP5950LCYKGWQEZFKO6NU2V.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_SwiftConcurrencyShims-C75FISC9QPIFM2VQ429AC3FXF.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_Builtin_stdbool-7ESUZ5ZS16PE6BLX38ED21JGI.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_AvailabilityInternal-7IM8ECHNUTA8F4XLKWW7HSTAM.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/ptrcheck-1B9MFV68VBGZP1OX9FIOJSVKI.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/DeveloperToolsSupport-DGJ7RJNCBNSR0YP4M5532SUPL.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/SwiftShims-62A7GC7IG7KL3TSURNFFJFOO0.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_DarwinFoundation1-N6MYY3Z5Z4N6HW11LWHI4H8W.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_DarwinFoundation2-83DZWKBFTEIY8BL0GI8W1VP0O.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_Builtin_limits-BCLHJGOS6KWTH12X2HV9D4D13.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/sys_types-4H0R71I0G1F1VVPOVDU7H9VZN.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_Builtin_stdint-886J71L9FSKOQA7NYLCXSFSVP.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_Builtin_tgmath-5IL33CDAC1ABAM6QK1U2OP0GC.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_DarwinFoundation3-CYEVYYDKOAOVV1QJYW39Q5437.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_Builtin_intrinsics-45C3TSJ8NPP29LTTCPML4LTCL.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_Builtin_stdatomic-DCMMFA1ISBIBFXXIFEHZPUMO3.pcm
+
+LinkAssetCatalog /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/SmartCrab/Assets.xcassets (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    builtin-linkAssetCatalog --thinned /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/assetcatalog_output/thinned --thinned-dependencies /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/assetcatalog_dependencies_thinned --thinned-info-plist-content /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/assetcatalog_generated_info.plist_thinned --unthinned /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/assetcatalog_output/unthinned --unthinned-dependencies /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/assetcatalog_dependencies_unthinned --unthinned-info-plist-content /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/assetcatalog_generated_info.plist_unthinned --output /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator/SmartCrabPreview.app --plist-output /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/assetcatalog_generated_info.plist
+
+ProcessInfoPlistFile /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator/SmartCrabPreview.app/Info.plist /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/SmartCrab/Preview-Info.plist (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    builtin-infoPlistUtility /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/SmartCrab/Preview-Info.plist -producttype com.apple.product-type.application -genpkginfo /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator/SmartCrabPreview.app/PkgInfo -expandbuildsettings -format binary -platform iphonesimulator -additionalcontentfile /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/assetcatalog_generated_info.plist -o /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator/SmartCrabPreview.app/Info.plist
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_Builtin_inttypes-C53NMLOJ87DSAN4YVI83MEUNO.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Darwin-A02Y9F0CBWP9CMX9TLP0YWN5R.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/simd-E0YI3UG8INGRY19UEXMWUZWP7.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/MachO-36WHUK10SCVE41L8OE0S8SIY4.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/ObjectiveC-7YHNR6LQDQZS1HO27DF6J4DXU.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Spatial-CVLLHN2BKGOJE76TN3HMKCJUP.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/os_object-21EZCJOVVRS51BEWJKBX32F6R.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/os_workgroup-9BE47NZF5ER2WUV208PYCNGIK.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Dispatch-5JDA07B70FPJGPJKOQ8H2BA5F.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/XPC-F3T21OENQAXKP03YBB6UHETWZ.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/CoreFoundation-57XRE96PN1KKKLUIMWR7G9XB9.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/os-E76YW8QAGMWGU684H6D76VCEA.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/CoreGraphics-33UXRXSUF9JSBZTTVCC7MBI1I.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Security-7E3XX809DO0WQ9Q1GAJQTPXWB.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/CFNetwork-7MSWFJBOZP3ZVSEM2AHBR6IQV.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Foundation-8YYBOHGKLXZSEK113T38B4UIT.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/CoreText-6I718NHCWDW4JD1DIF3LGMZEF.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/ImageIO-9BMU2LE5XQUD6GMX6F9EWG8PC.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/FileProvider-ADIN37WNF3QPF85S7FPQ0NXJ4.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Accessibility-8WYRZ9K5JPMBLUB06K2CMBLI2.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/OSLog-1IIERUCVY52XXCYDUWJ2CM9QZ.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/UIUtilities-10WI2KMIADV8U2UZJCTYP6Q0I.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Symbols-BN7OW5Y27M5YZOQ4A6T2A638L.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/DataDetection-ADTE54QXK7S1SH0H837TVGYTW.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/IOSurface-7AQJSPCV9994LG92R3CGBEOQE.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/CoreTransferable-9XBFXSW27QSD5US5HRGT2LE4I.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/OpenGLES-9A9ZI9EZJK4A0H2RW4MB6QY6M.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/UniformTypeIdentifiers-6T6Z6ST4MG1Z5LNYV31W6U1WB.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/UserNotifications-CQLUFSCMBJ30J32I6UJQ4A0J0.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Metal-CPRII7MQ39BLESCWLYBLBPQLF.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/CoreData-4T92IRCY9SE51F917Z6SZUJA.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/CoreVideo-3ZQV0FYL0C3TP48C6C8SF2DZ0.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/QuartzCore-639Q91S1QTKTXVSSOLWDGFVUH.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/CoreImage-JUULDYWATMDXOXCQ7T54DWN9.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/SwiftUICore-1FHDKAG5LCL5S9D5EMPTAKYZX.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/UIKit-BYMIFWQ7JIXW2YDBMGA31XADI.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/SwiftUI-E1MACN3D7YHIOAQINBE5UXGY.pcm
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ SmartCrabPreview (in target 'SmartCrabPreview' from project 'SmartCrab')
+
+EmitSwiftModule normal arm64 (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+/Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/PipelineAuthoringView.swift:55:54: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+        service: BunServiceProtocol = StubBunService.shared,
+                                                     ^
+/Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Services/BunServiceProtocol.swift:702:23: note: static property declared here
+    public static let shared = StubBunService()
+                      ^
+/Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/PipelineListView.swift:26:62: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+    public init(service: BunServiceProtocol = StubBunService.shared) {
+                                                             ^
+/Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Services/BunServiceProtocol.swift:702:23: note: static property declared here
+    public static let shared = StubBunService()
+                      ^
+
+SwiftCompile normal arm64 Compiling\ SmartCrabApp.swift,\ AppRoot.swift,\ ReadableWidth.swift,\ RPCTypes.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Core/SmartCrabApp.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Core/AppRoot.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Core/ReadableWidth.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Core/Generated/RPCTypes.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Core/SmartCrabApp.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Core/AppRoot.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Core/ReadableWidth.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Core/Generated/RPCTypes.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 Compiling\ AuthFlowSheet.swift,\ SeherConfigEditor.swift,\ SettingsView.swift,\ EdgeShape.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Settings/AuthFlowSheet.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Settings/SeherConfigEditor.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Settings/SettingsView.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/EdgeShape.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Settings/AuthFlowSheet.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Settings/SeherConfigEditor.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Settings/SettingsView.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/EdgeShape.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 Compiling\ ChatBubbleRow.swift,\ ChatComposer.swift,\ ChatView.swift,\ AdapterSettings.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Chat/ChatBubbleRow.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Chat/ChatComposer.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Chat/ChatView.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Settings/AdapterSettings.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Chat/ChatBubbleRow.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Chat/ChatComposer.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Chat/ChatView.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Settings/AdapterSettings.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 Compiling\ ExecutionHistoryView.swift,\ ExecutionLogView.swift,\ GeneratedAssetSymbols.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/History/ExecutionHistoryView.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/History/ExecutionLogView.swift /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/History/ExecutionHistoryView.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/History/ExecutionLogView.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 Compiling\ YAMLBridge.swift,\ CronEditView.swift,\ CronListView.swift,\ SkillsView.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/YAMLBridge.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Cron/CronEditView.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Cron/CronListView.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Skills/SkillsView.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+Failed frontend command:
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -c /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Core/SmartCrabApp.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Core/AppRoot.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Core/ReadableWidth.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Core/Generated/RPCTypes.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Services/BunServiceProtocol.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Services/BunServiceMacOS.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Services/BunServiceMock.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Services/KeychainStore.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Chat/ChatBubbleRow.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Chat/ChatComposer.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Chat/ChatView.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Settings/AdapterSettings.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Settings/AuthFlowSheet.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Settings/SeherConfigEditor.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Settings/SettingsView.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/EdgeShape.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/NodeView.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/PipelineAuthoringView.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/PipelineScheduleView.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/PipelineAutoLayout.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/PipelineGraphView.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/PipelineGraphModel.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/PipelineListView.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/PipelineYamlView.swift -primary-file /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/YAMLBridge.swift -primary-file /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Cron/CronEditView.swift -primary-file /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Cron/CronListView.swift -primary-file /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Skills/SkillsView.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/History/ExecutionHistoryView.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/History/ExecutionLogView.swift /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/DerivedSources/GeneratedAssetSymbols.swift -supplementary-output-file-map /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/supplementaryOutputs-7 -emit-localized-strings -emit-localized-strings-path /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64 -target arm64-apple-ios17.0-simulator -module-can-import-version DeveloperToolsSupport 23.40.26 23.40.26 -load-resolved-plugin /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/swift/host/plugins/libFoundationMacros.dylib\#/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server\#FoundationMacros -load-resolved-plugin /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/swift/host/plugins/libObservationMacros.dylib\#/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server\#ObservationMacros -load-resolved-plugin /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/swift/host/plugins/libPreviewsMacros.dylib\#/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server\#PreviewsMacros -load-resolved-plugin /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/swift/host/plugins/libSwiftMacros.dylib\#/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server\#SwiftMacros -load-resolved-plugin /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/swift/host/plugins/libSwiftUIMacros.dylib\#/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server\#SwiftUIMacros -disable-implicit-swift-modules -Xcc -fno-implicit-modules -Xcc -fno-implicit-module-maps -explicit-swift-module-map-file /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview-dependencies-1.json -debug-module-path /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview.swiftmodule -Xllvm -aarch64-use-tbi -enable-objc-interop -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk -I /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator -F /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator -no-color-diagnostics -Xcc -fno-color-diagnostics -enable-testing -g -debug-info-format\=dwarf -dwarf-version\=4 -module-cache-path /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -swift-version 5 -Onone -D DEBUG -serialize-debugging-options -const-gather-protocols-file /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview_const_extract_protocols.json -enable-experimental-feature DebugDescriptionMacro -enable-bare-slash-regex -empty-abi-descriptor -validate-clang-modules-once -clang-build-session-file /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -working-directory -Xcc /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos -enable-anonymous-context-mangled-names -file-compilation-dir /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -Xcc -ivfsstatcache -Xcc /Users/takumi/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator26.5-23F73-6cfe768891a92b912361537c460fe42b.sdkstatcache -Xcc -I/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/swift-overrides.hmap -Xcc -iquote -Xcc /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview-generated-files.hmap -Xcc -I/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview-own-target-headers.hmap -Xcc -I/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview-all-target-headers.hmap -Xcc -iquote -Xcc /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview-project-headers.hmap -Xcc -I/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/DerivedSources-normal/arm64 -Xcc -I/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/DerivedSources/arm64 -Xcc -I/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/DerivedSources -Xcc -DDEBUG\=1 -no-auto-bridging-header-chaining -module-name SmartCrabPreview -frontend-parseable-output -disable-clang-spi -clang-target arm64-apple-ios26.5-simulator -target-sdk-version 26.5 -target-sdk-name iphonesimulator26.5 -in-process-plugin-server-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/libSwiftInProcPluginServer.dylib -o /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/YAMLBridge.o -o /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/CronEditView.o -o /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/CronListView.o -o /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SkillsView.o -index-unit-output-path /SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/YAMLBridge.o -index-unit-output-path /SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/CronEditView.o -index-unit-output-path /SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/CronListView.o -index-unit-output-path /SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SkillsView.o -index-store-path /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Index.noindex/DataStore -index-system-modules
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/YAMLBridge.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Cron/CronEditView.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Cron/CronListView.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+/Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Cron/CronListView.swift:105:17: error: 'StatusBadge' is inaccessible due to 'private' protection level
+                StatusBadge(active: job.isActive)
+                ^
+/Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/PipelineScheduleView.swift:207:16: note: 'StatusBadge' declared here
+private struct StatusBadge: View {
+               ^
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Skills/SkillsView.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 Compiling\ BunServiceProtocol.swift,\ BunServiceMacOS.swift,\ BunServiceMock.swift,\ KeychainStore.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Services/BunServiceProtocol.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Services/BunServiceMacOS.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Services/BunServiceMock.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Services/KeychainStore.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Services/BunServiceProtocol.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Services/BunServiceMacOS.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Services/BunServiceMock.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Services/KeychainStore.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 Compiling\ NodeView.swift,\ PipelineAuthoringView.swift,\ PipelineScheduleView.swift,\ PipelineAutoLayout.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/NodeView.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/PipelineAuthoringView.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/PipelineScheduleView.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/PipelineAutoLayout.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/NodeView.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/PipelineAuthoringView.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+/Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/PipelineAuthoringView.swift:55:54: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+        service: BunServiceProtocol = StubBunService.shared,
+                                                     ^
+/Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Services/BunServiceProtocol.swift:702:23: note: static property declared here
+    public static let shared = StubBunService()
+                      ^
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/PipelineScheduleView.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/PipelineAutoLayout.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 Compiling\ PipelineGraphView.swift,\ PipelineGraphModel.swift,\ PipelineListView.swift,\ PipelineYamlView.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/PipelineGraphView.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/PipelineGraphModel.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/PipelineListView.swift /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/PipelineYamlView.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/PipelineGraphView.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/PipelineGraphModel.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/PipelineListView.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+/Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/PipelineListView.swift:26:62: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+    public init(service: BunServiceProtocol = StubBunService.shared) {
+                                                             ^
+/Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Services/BunServiceProtocol.swift:702:23: note: static property declared here
+    public static let shared = StubBunService()
+                      ^
+
+SwiftCompile normal arm64 /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos/Sources/Pipelines/PipelineYamlView.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    
+
+SwiftDriverJobDiscovery normal arm64 Emitting module for SmartCrabPreview (in target 'SmartCrabPreview' from project 'SmartCrab')
+
+SwiftDriver\ Compilation\ Requirements SmartCrabPreview normal arm64 com.apple.xcode.tools.swift.compiler (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name SmartCrabPreview -Onone @/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk -target arm64-apple-ios17.0-simulator -g -module-cache-path /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator -F /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator -emit-localized-strings -emit-localized-strings-path /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64 -c -j8 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/takumi/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator26.5-23F73-6cfe768891a92b912361537c460fe42b.sdkstatcache -output-file-map /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/takumi/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview_const_extract_protocols.json -Xcc -iquote -Xcc /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview-generated-files.hmap -Xcc -I/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview-own-target-headers.hmap -Xcc -I/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview-all-target-headers.hmap -Xcc -iquote -Xcc /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/SmartCrabPreview-project-headers.hmap -Xcc -I/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/DerivedSources-normal/arm64 -Xcc -I/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/DerivedSources/arm64 -Xcc -I/Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview-Swift.h -working-directory /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos -experimental-emit-module-separately -disable-cmo
+
+SwiftDriverJobDiscovery normal arm64 Compiling BunServiceProtocol.swift, BunServiceMacOS.swift, BunServiceMock.swift, KeychainStore.swift (in target 'SmartCrabPreview' from project 'SmartCrab')
+
+SwiftMergeGeneratedHeaders /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/DerivedSources/SmartCrabPreview-Swift.h /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview-Swift.h (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    builtin-swiftHeaderTool -arch arm64 /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview-Swift.h -o /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/DerivedSources/SmartCrabPreview-Swift.h
+
+Copy /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator/SmartCrabPreview.swiftmodule/arm64-apple-ios-simulator.swiftmodule /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview.swiftmodule (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview.swiftmodule /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator/SmartCrabPreview.swiftmodule/arm64-apple-ios-simulator.swiftmodule
+
+Copy /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator/SmartCrabPreview.swiftmodule/arm64-apple-ios-simulator.swiftdoc /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview.swiftdoc (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview.swiftdoc /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator/SmartCrabPreview.swiftmodule/arm64-apple-ios-simulator.swiftdoc
+
+Copy /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator/SmartCrabPreview.swiftmodule/arm64-apple-ios-simulator.abi.json /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview.abi.json (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview.abi.json /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator/SmartCrabPreview.swiftmodule/arm64-apple-ios-simulator.abi.json
+
+Copy /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator/SmartCrabPreview.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview.swiftsourceinfo (in target 'SmartCrabPreview' from project 'SmartCrab')
+    cd /Users/takumi/.local/share/cruise/worktrees/20260612112835452/apps/macos
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Intermediates.noindex/SmartCrab.build/Debug-iphonesimulator/SmartCrabPreview.build/Objects-normal/arm64/SmartCrabPreview.swiftsourceinfo /Users/takumi/Library/Developer/Xcode/DerivedData/SmartCrab-gbdewvskvvkyciaehleaausjruqn/Build/Products/Debug-iphonesimulator/SmartCrabPreview.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo
+

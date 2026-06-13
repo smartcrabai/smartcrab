@@ -32,7 +32,7 @@ public struct PipelineAuthoringView: View {
     @FocusState private var promptFocused: Bool
 
     private enum RightTab: String, CaseIterable, Identifiable {
-        case graph, yaml, history
+        case graph, yaml, schedule, history
         var id: String {
             rawValue
         }
@@ -174,6 +174,12 @@ public struct PipelineAuthoringView: View {
                     isDisabled: isBusy,
                     onSave: { Task { await saveManualYamlEdit() } }
                 )
+            case .schedule:
+                if summary.id.isEmpty {
+                    schedulePlaceholder
+                } else {
+                    PipelineScheduleView(service: service, pipeline: summary)
+                }
             case .history:
                 if summary.id.isEmpty {
                     historyPlaceholder
@@ -195,6 +201,19 @@ public struct PipelineAuthoringView: View {
                 .foregroundStyle(.secondary)
             Text("Pipeline not saved yet").font(.headline)
             Text("Save and run the pipeline to see its history here.")
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
+    }
+
+    private var schedulePlaceholder: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "calendar.badge.clock")
+                .font(.system(size: 36))
+                .foregroundStyle(.secondary)
+            Text("Pipeline not saved yet").font(.headline)
+            Text("Save this pipeline before scheduling it.")
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
