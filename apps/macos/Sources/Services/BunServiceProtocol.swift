@@ -1,6 +1,6 @@
 // BunServiceProtocol.swift
 // Unified contract for the Bun-backed JSON-RPC service. Used by every
-// SwiftUI feature (Chat, Settings, Pipelines, Cron, Skills, History).
+// SwiftUI feature (Chat, Settings, Pipelines, Skills, History).
 
 import Foundation
 

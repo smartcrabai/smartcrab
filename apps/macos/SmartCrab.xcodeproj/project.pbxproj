@@ -51,6 +51,7 @@
 		B1B1B1B1B1B1B1B1B1B10001 /* PipelineGraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A1A1A10001 /* PipelineGraphView.swift */; };
 		B1B1B1B1B1B1B1B1B1B10002 /* PipelineYamlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A1A1A10002 /* PipelineYamlView.swift */; };
 		B1B1B1B1B1B1B1B1B1B10003 /* PipelineAuthoringView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A1A1A10003 /* PipelineAuthoringView.swift */; };
+		B1B1B1B1B1B1B1B1B1B10005 /* PipelineScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A1A1A10005 /* PipelineScheduleView.swift */; };
 		B1B1B1B1B1B1B1B1B1B10004 /* PipelineAutoLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A1A1A10004 /* PipelineAutoLayout.swift */; };
 		A686CAC3A98562C295D9EF28 /* PipelineGraphModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77913F0D6640FDAFBAC33005 /* PipelineGraphModel.swift */; };
 		214D14AD917B12B2815643B5 /* PipelineListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 014AA9CA46D73C784A08EBD7 /* PipelineListView.swift */; };
@@ -72,6 +73,7 @@
 		C1C1C1C1C1C1C1C1C1C10001 /* PipelineGraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A1A1A10001 /* PipelineGraphView.swift */; };
 		C1C1C1C1C1C1C1C1C1C10002 /* PipelineYamlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A1A1A10002 /* PipelineYamlView.swift */; };
 		C1C1C1C1C1C1C1C1C1C10003 /* PipelineAuthoringView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A1A1A10003 /* PipelineAuthoringView.swift */; };
+		C1C1C1C1C1C1C1C1C1C10005 /* PipelineScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A1A1A10005 /* PipelineScheduleView.swift */; };
 		C1C1C1C1C1C1C1C1C1C10004 /* PipelineAutoLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A1A1A10004 /* PipelineAutoLayout.swift */; };
 		A5EF8FF9F0845E93D1DAE64C /* PipelineGraphModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77913F0D6640FDAFBAC33005 /* PipelineGraphModel.swift */; };
 		D7C63EAEBFC38110ECF74364 /* PipelineListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 014AA9CA46D73C784A08EBD7 /* PipelineListView.swift */; };
@@ -121,6 +123,7 @@
 		77913F0D6640FDAFBAC33005 /* PipelineGraphModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipelineGraphModel.swift; sourceTree = "<group>"; };
 		014AA9CA46D73C784A08EBD7 /* PipelineListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipelineListView.swift; sourceTree = "<group>"; };
 		3C8F1FAF56935F1FA8FF8A5D /* YAMLBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YAMLBridge.swift; sourceTree = "<group>"; };
+        A1A1A1A1A1A1A1A1A1A10005 /* PipelineScheduleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipelineScheduleView.swift; sourceTree = "<group>"; };
 		7CA62B3BFF34E28A47A07C4F /* CronEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CronEditView.swift; sourceTree = "<group>"; };
 		3D08CB3290131889AAC0F0E8 /* CronListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CronListView.swift; sourceTree = "<group>"; };
 		5F765B20DB5CA7F98606F41E /* SkillsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkillsView.swift; sourceTree = "<group>"; };
@@ -276,6 +279,7 @@
 				AAA180D2A8D18BF2C0BD2CB2 /* EdgeShape.swift */,
 				69FF220B4BFC3F8A29D5644F /* NodeView.swift */,
 				A1A1A1A1A1A1A1A1A1A10003 /* PipelineAuthoringView.swift */,
+				A1A1A1A1A1A1A1A1A1A10005 /* PipelineScheduleView.swift */,
 				A1A1A1A1A1A1A1A1A1A10004 /* PipelineAutoLayout.swift */,
 				A1A1A1A1A1A1A1A1A1A10001 /* PipelineGraphView.swift */,
 				77913F0D6640FDAFBAC33005 /* PipelineGraphModel.swift */,
@@ -337,6 +341,7 @@
 				F85189E0342274F66D075679 /* EdgeShape.swift in Sources */,
 				2D53007C3CBD8FA05947F981 /* NodeView.swift in Sources */,
 				B1B1B1B1B1B1B1B1B1B10003 /* PipelineAuthoringView.swift in Sources */,
+				B1B1B1B1B1B1B1B1B1B10005 /* PipelineScheduleView.swift in Sources */,
 				B1B1B1B1B1B1B1B1B1B10004 /* PipelineAutoLayout.swift in Sources */,
 				B1B1B1B1B1B1B1B1B1B10001 /* PipelineGraphView.swift in Sources */,
 				A686CAC3A98562C295D9EF28 /* PipelineGraphModel.swift in Sources */,
@@ -373,6 +378,7 @@
 				CD2A78E0F922845A2F4C5574 /* EdgeShape.swift in Sources */,
 				E8BD0C3774FF2D6A4CE88ACC /* NodeView.swift in Sources */,
 				C1C1C1C1C1C1C1C1C1C10003 /* PipelineAuthoringView.swift in Sources */,
+				C1C1C1C1C1C1C1C1C1C10005 /* PipelineScheduleView.swift in Sources */,
 				C1C1C1C1C1C1C1C1C1C10004 /* PipelineAutoLayout.swift in Sources */,
 				C1C1C1C1C1C1C1C1C1C10001 /* PipelineGraphView.swift in Sources */,
 				A5EF8FF9F0845E93D1DAE64C /* PipelineGraphModel.swift in Sources */,

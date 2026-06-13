@@ -42,7 +42,7 @@ open .build/dd-mac/Build/Products/Debug/SmartCrab.app
 ```
 
 The app spawns the embedded Bun service as a subprocess and exposes Chat,
-Pipelines, Cron, Skills, History, and Settings tabs.
+Pipelines, Skills, History, and Settings tabs.
 
 ## 4. Discord round-trip (requires credentials)
 

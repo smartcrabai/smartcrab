@@ -61,11 +61,11 @@ if [ -z "${WID}" ]; then
 fi
 echo "[preview-mac] window id ${WID}"
 
-# 5. Capture per tab. The app exposes Cmd+1..6 to jump to each tab — SwiftUI's
+# 5. Capture per tab. The app exposes Cmd+1..5 to jump to each tab — SwiftUI's
 #    List(selection:) doesn't respond reliably to synthetic mouse events from
 #    System Events / CGEvent, so the keyboard shortcut is the most reliable
 #    automation surface.
-TABS="Chat Pipelines Cron Skills History Settings"
+TABS="Chat Pipelines Skills History Settings"
 i=1
 for tab in ${TABS}; do
   osascript <<APPLESCRIPT >/dev/null 2>&1 || true

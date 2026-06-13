@@ -21,9 +21,9 @@ SmartCrab runs as **two cooperating processes** packaged inside a single `.app`:
 ```
 ┌─────────────────────────────────────────┐
 │   SwiftUI host process (apps/macos/)    │
-│   • 6 sidebar tabs:                     │
-│       Chat / Pipelines / Cron /         │
-│       Skills / History / Settings       │
+│   • 5 sidebar tabs:                     │
+│       Chat / Pipelines / Skills /       │
+│       History / Settings                │
 │   • All UI state lives here             │
 └──────────────┬──────────────────────────┘
                │ stdin/stdout
@@ -50,7 +50,7 @@ The SwiftUI process owns all UI; the Bun process owns all business logic, persis
 
 ### SwiftUI host (`apps/macos/`)
 
-- `SmartCrabApp` mounts `AppRoot`, which wires a `NavigationSplitView` of `SidebarTab` cases (Chat / Pipelines / Cron / Skills / History / Settings) to per-tab views. `Cmd+1` … `Cmd+6` jump between tabs.
+- `SmartCrabApp` mounts `AppRoot`, which wires a `NavigationSplitView` of `SidebarTab` cases (Chat / Pipelines / Skills / History / Settings) to per-tab views. `Cmd+1` … `Cmd+5` jump between tabs.
 - `BunServiceContainer` is a `@MainActor ObservableObject` that publishes a `BunServiceProtocol` into the SwiftUI environment. On macOS the implementation is `BunServiceMacOS` (real subprocess). On the iOS Simulator preview target it is `BunServiceMock`, used purely for UI verification — there is no Bun child process in that build.
 - `BunServiceMacOS.start()` resolves `Bundle.main.url(forResource: "smartcrab-service")`, captures the user's login-shell `$PATH` once (so the child can find tools like `claude`, `bun` that GUI-launched apps would otherwise miss), `Process.run()`s the binary, and wires `readabilityHandler` on stdout to parse one JSON-RPC response per line.
 - Each request is a Swift struct encoded with `.convertToSnakeCase`; responses are decoded with `.convertFromSnakeCase`. The bridge keeps an `idCounter` and a `pending: [String: Continuation]` dictionary.
@@ -91,8 +91,7 @@ Each SwiftUI tab is a thin client over a small set of JSON-RPC methods. The full
 | Tab | Service methods used |
 |-----|----------------------|
 | **Chat** | `chat.bubble-history`, `chat.bubble-send`, `settings.app-load` (to decide whether to show the welcome view when no providers are configured) |
-| **Pipelines** | `pipeline.list`, `pipeline.get`, `pipeline.save`, `pipeline.execute` |
-| **Cron** | `cron.list`, `cron.create`, `cron.update`, `cron.delete` |
+| **Pipelines** | `pipeline.list`, `pipeline.get`, `pipeline.save`, `pipeline.execute`, plus `cron.list`, `cron.create`, `cron.update`, `cron.delete` for per-pipeline schedules |
 | **Skills** | `skill.list`, `skill.auto-generate`, `skill.invoke`, `skill.delete` |
 | **History** | `execution.history`, `execution.logs` |
 | **Settings** | `settings.app-load`, `settings.app-save`, `settings.adapter-load`, `settings.adapter-save` |

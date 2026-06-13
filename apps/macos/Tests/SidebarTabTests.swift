@@ -1,6 +1,6 @@
 // SidebarTabTests.swift
 // Tests for SidebarTab enum — display labels, SF Symbol names,
-// shortcut numbers, and ordering that the sidebar and Cmd+1..6 depend on.
+// shortcut numbers, and ordering that the sidebar and Cmd+1..5 depend on.
 
 import AppKit
 @testable import SmartCrab
@@ -12,10 +12,18 @@ final class SidebarTabTests: XCTestCase {
 
     /// Given the SidebarTab enum,
     /// When listing all cases,
-    /// Then there are exactly 6 tabs in the declared order.
-    func test_allCases_hasExactlySixTabsInOrder() {
-        let expected: [SidebarTab] = [.chat, .pipelines, .cron, .skills, .history, .settings]
+    /// Then there are exactly 5 tabs in the declared order.
+    func test_allCases_hasExactlyFiveTabsInOrder() {
+        let expected: [SidebarTab] = [.chat, .pipelines, .skills, .history, .settings]
         XCTAssertEqual(SidebarTab.allCases, expected)
+    }
+
+    /// Given the product navigation model,
+    /// When listing sidebar tab labels,
+    /// Then Cron is no longer exposed as a top-level destination.
+    func test_allCases_doesNotExposeCronAsTopLevelTab() {
+        let labels = SidebarTab.allCases.map(\.rawValue)
+        XCTAssertFalse(labels.contains("Cron"))
     }
 
     // MARK: rawValue (display label)
@@ -26,7 +34,6 @@ final class SidebarTabTests: XCTestCase {
     func test_rawValue_matchesExpectedDisplayLabels() {
         XCTAssertEqual(SidebarTab.chat.rawValue, "Chat")
         XCTAssertEqual(SidebarTab.pipelines.rawValue, "Pipelines")
-        XCTAssertEqual(SidebarTab.cron.rawValue, "Cron")
         XCTAssertEqual(SidebarTab.skills.rawValue, "Skills")
         XCTAssertEqual(SidebarTab.history.rawValue, "History")
         XCTAssertEqual(SidebarTab.settings.rawValue, "Settings")
@@ -58,12 +65,12 @@ final class SidebarTabTests: XCTestCase {
         }
     }
 
-    // MARK: shortcutNumber (Cmd+1..6)
+    // MARK: shortcutNumber (Cmd+1..5)
 
     /// Given each SidebarTab case,
     /// When reading shortcutNumber,
     /// Then it returns a 1-based index matching allCases order.
-    /// shortcutNumber drives the Cmd+1..6 keyboard shortcuts in AppRoot;
+    /// shortcutNumber drives the Cmd+1..5 keyboard shortcuts in AppRoot;
     /// a mismatch would silently mis-map a shortcut after case reordering.
     func test_shortcutNumber_isOneBased_matchingAllCasesOrder() {
         for (index, tab) in SidebarTab.allCases.enumerated() {
