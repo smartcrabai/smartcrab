@@ -204,7 +204,7 @@ enum CronEditTarget: Identifiable {
 
 // MARK: - Status badge
 
-private struct StatusBadge: View {
+struct StatusBadge: View {
     let active: Bool
     var body: some View {
         Text(active ? "Active" : "Paused")
