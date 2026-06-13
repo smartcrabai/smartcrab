@@ -6,7 +6,6 @@ import SwiftUI
 enum SidebarTab: String, CaseIterable, Identifiable, Hashable {
     case chat = "Chat"
     case pipelines = "Pipelines"
-    case cron = "Cron"
     case skills = "Skills"
     case history = "History"
     case settings = "Settings"
@@ -19,14 +18,13 @@ enum SidebarTab: String, CaseIterable, Identifiable, Hashable {
         switch self {
         case .chat: return "bubble.left.and.bubble.right"
         case .pipelines: return "rectangle.connected.to.line.below"
-        case .cron: return "clock.arrow.circlepath"
         case .skills: return "puzzlepiece.extension"
         case .history: return "clock"
         case .settings: return "gearshape"
         }
     }
 
-    /// 1-based shortcut number for the View menu (Cmd+1 ... Cmd+6).
+    /// 1-based shortcut number for the View menu (Cmd+1 ... Cmd+5).
     var shortcutNumber: Int {
         SidebarTab.allCases.firstIndex(of: self)! + 1
     }
@@ -110,8 +108,6 @@ struct AppRoot: View {
             ChatView(service: bun.service)
         case .pipelines:
             PipelineListView(service: bun.service)
-        case .cron:
-            CronListView(service: bun.service)
         case .skills:
             SkillsView(service: bun.service)
         case .history:

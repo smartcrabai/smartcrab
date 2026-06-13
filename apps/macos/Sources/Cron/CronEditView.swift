@@ -50,7 +50,7 @@ public struct CronEditView: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text(isEditing ? "Edit Cron Job" : "New Cron Job")
+            Text(isEditing ? "Edit Schedule" : "New Schedule")
                 .font(.title2).bold()
 
             Form {
