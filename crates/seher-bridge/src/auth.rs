@@ -55,7 +55,9 @@ fn login(writer: &FrameWriter<Stdout>, provider: &str) -> i32 {
         "openai-codex" | "codex" | "chatgpt-codex" => login_codex(writer),
         other => emit_error(
             writer,
-            &format!("unsupported login provider '{other}' (expected github-copilot or openai-codex)"),
+            &format!(
+                "unsupported login provider '{other}' (expected github-copilot or openai-codex)"
+            ),
         ),
     }
 }
@@ -128,7 +130,10 @@ fn login_codex(writer: &FrameWriter<Stdout>) -> i32 {
                 .as_deref()
                 .filter(|u| redirect_uri_needs_callback_server(u))
             else {
-                return emit_error(writer, "OAuth flow did not provide a localhost redirect URI");
+                return emit_error(
+                    writer,
+                    "OAuth flow did not provide a localhost redirect URI",
+                );
             };
             match start_oauth_callback_server(uri) {
                 Ok(s) => s,
