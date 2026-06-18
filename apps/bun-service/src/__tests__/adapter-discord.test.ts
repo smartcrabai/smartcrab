@@ -46,6 +46,24 @@ function makeMockChannel(): DiscordChannelLike & { sent: string[] } {
   };
 }
 
+/**
+ * A mock channel that also has a `messages.fetch` implementation, pre-loaded
+ * with the given history messages. Discord returns messages in reverse
+ * chronological order (newest first), so the array is reversed internally.
+ */
+function makeMockChannelWithHistory(
+  messages: DiscordMessageLike[],
+): DiscordChannelLike & { sent: string[] } {
+  const channel = makeMockChannel();
+  // Build a Map keyed by message id, newest-first order (discord.js Collection order)
+  const orderedNewestFirst = [...messages].reverse();
+  const messageMap = new Map(orderedNewestFirst.map((m) => [m.id, m]));
+  (channel as any).messages = {
+    fetch: mock(async (_opts: { limit: number; before?: string }) => messageMap),
+  };
+  return channel;
+}
+
 function makeMockClient(channels: Record<string, DiscordChannelLike> = {}): MockClient {
   const fetched = new Map<string, DiscordChannelLike>(Object.entries(channels));
   const listeners: Record<string, Array<(...args: any[]) => void>> = {};
@@ -653,7 +671,9 @@ describe("attachMessageListener DM pairing", () => {
 });
 
 describe("defaultLlmHandler", () => {
-  it("forwards the message content to route() and returns its text", async () => {
+  it("forwards the message content to route() and returns its text when limit=0", async () => {
+    // Given: a client and limit=0 (no history)
+    const client = makeMockClient();
     const routeMock = mock(async (_req: { prompt: string }) => ({
       text: "router-reply",
       kind: "claude" as const,
@@ -661,13 +681,16 @@ describe("defaultLlmHandler", () => {
     const router = await import("../router.ts");
     const spy = spyOn(router, "route").mockImplementation(routeMock as unknown as typeof router.route);
     try {
-      const result = await defaultLlmHandler({
+      // When: the factory-returned handler is called
+      const handler = defaultLlmHandler(client, () => 0);
+      const result = await handler({
         id: "m",
         content: "hello",
         channelId: "ch1",
         author: { id: "u1", bot: false },
       });
 
+      // Then: route receives the raw content and result text is returned
       expect(result).toBe("router-reply");
       expect(routeMock).toHaveBeenCalledTimes(1);
       expect((routeMock.mock.calls as any)[0][0]).toMatchObject({ prompt: "hello" });
@@ -677,19 +700,185 @@ describe("defaultLlmHandler", () => {
   });
 
   it("propagates route() failures so the listener's catch logs them", async () => {
+    const client = makeMockClient();
     const router = await import("../router.ts");
     const spy = spyOn(router, "route").mockImplementation(async () => {
       throw new Error("router: seher-bridge unavailable and no LLM adapter registered");
     });
     try {
+      const handler = defaultLlmHandler(client, () => 0);
       await expect(
-        defaultLlmHandler({
+        handler({
           id: "m",
           content: "hi",
           channelId: "c",
           author: { id: "u", bot: false },
         }),
       ).rejects.toThrow(/router/);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("includes channel history in prompt when getContextLimit returns > 0", async () => {
+    // Given: a channel with 2 historical messages
+    const historyMsgs: DiscordMessageLike[] = [
+      {
+        id: "h1",
+        content: "older user message",
+        channelId: "ch1",
+        guildId: "g1",
+        author: { id: "u1", bot: false },
+      },
+      {
+        id: "h2",
+        content: "bot replied this",
+        channelId: "ch1",
+        guildId: "g1",
+        author: { id: "bot1", bot: true },
+      },
+    ];
+    const channel = makeMockChannelWithHistory(historyMsgs);
+    const client = makeMockClient({ "ch1": channel });
+
+    const router = await import("../router.ts");
+    const routeMock = mock(async () => ({ text: "reply", kind: "claude" as const }));
+    const spy = spyOn(router, "route").mockImplementation(
+      routeMock as unknown as typeof router.route,
+    );
+
+    try {
+      // When: handler fires with getContextLimit=2
+      const handler = defaultLlmHandler(client, () => 2);
+      await handler({
+        id: "cur",
+        content: "current question",
+        channelId: "ch1",
+        guildId: "g1",
+        author: { id: "u2", bot: false },
+      });
+
+      // Then: route receives a prompt that contains history
+      expect(routeMock).toHaveBeenCalledTimes(1);
+      const call = (routeMock.mock.calls as any)[0][0];
+      expect(call.prompt).toContain("older user message");
+      expect(call.prompt).toContain("bot replied this");
+      expect(call.prompt).toContain("current question");
+      // History precedes the current message
+      expect(call.prompt.indexOf("older user message")).toBeLessThan(
+        call.prompt.indexOf("current question"),
+      );
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("labels bot messages as 'Assistant:' and user messages as 'User:'", async () => {
+    const historyMsgs: DiscordMessageLike[] = [
+      {
+        id: "h1",
+        content: "user said this",
+        channelId: "ch1",
+        guildId: "g1",
+        author: { id: "u1", bot: false },
+      },
+      {
+        id: "h2",
+        content: "bot replied this",
+        channelId: "ch1",
+        guildId: "g1",
+        author: { id: "bot1", bot: true },
+      },
+    ];
+    const channel = makeMockChannelWithHistory(historyMsgs);
+    const client = makeMockClient({ "ch1": channel });
+
+    const router = await import("../router.ts");
+    const routeMock = mock(async () => ({ text: "reply", kind: "claude" as const }));
+    const spy = spyOn(router, "route").mockImplementation(
+      routeMock as unknown as typeof router.route,
+    );
+
+    try {
+      const handler = defaultLlmHandler(client, () => 5);
+      await handler({
+        id: "cur",
+        content: "current",
+        channelId: "ch1",
+        guildId: "g1",
+        author: { id: "u1", bot: false },
+      });
+
+      const call = (routeMock.mock.calls as any)[0][0];
+      expect(call.prompt).toContain("User: user said this");
+      expect(call.prompt).toContain("Assistant: bot replied this");
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("sends plain content when limit is 0 even if channel has history", async () => {
+    // Given: a channel with history but limit=0
+    const historyMsgs: DiscordMessageLike[] = [
+      {
+        id: "h1",
+        content: "some old message",
+        channelId: "ch1",
+        guildId: "g1",
+        author: { id: "u1", bot: false },
+      },
+    ];
+    const channel = makeMockChannelWithHistory(historyMsgs);
+    const client = makeMockClient({ "ch1": channel });
+
+    const router = await import("../router.ts");
+    const routeMock = mock(async () => ({ text: "reply", kind: "claude" as const }));
+    const spy = spyOn(router, "route").mockImplementation(
+      routeMock as unknown as typeof router.route,
+    );
+
+    try {
+      // When: limit=0
+      const handler = defaultLlmHandler(client, () => 0);
+      await handler({
+        id: "m",
+        content: "hello",
+        channelId: "ch1",
+        author: { id: "u2", bot: false },
+      });
+
+      // Then: route gets only the current content
+      const call = (routeMock.mock.calls as any)[0][0];
+      expect(call.prompt).toBe("hello");
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("falls back gracefully to single-turn when messages.fetch is unavailable", async () => {
+    // Given: a channel WITHOUT messages.fetch (e.g. voice channel or DM fallback)
+    const channel = makeMockChannel(); // no .messages field
+    const client = makeMockClient({ "ch1": channel });
+
+    const router = await import("../router.ts");
+    const routeMock = mock(async () => ({ text: "reply", kind: "claude" as const }));
+    const spy = spyOn(router, "route").mockImplementation(
+      routeMock as unknown as typeof router.route,
+    );
+
+    try {
+      const handler = defaultLlmHandler(client, () => 5);
+      await handler({
+        id: "m",
+        content: "hello",
+        channelId: "ch1",
+        author: { id: "u1", bot: false },
+      });
+
+      // Should not throw — falls back to single-turn
+      expect(routeMock).toHaveBeenCalledTimes(1);
+      const call = (routeMock.mock.calls as any)[0][0];
+      expect(call.prompt).toBe("hello");
     } finally {
       spy.mockRestore();
     }

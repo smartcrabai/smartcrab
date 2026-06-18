@@ -150,11 +150,27 @@ async function main(): Promise<void> {
   });
   configureSkillsCommands({ registry: new SkillsRegistry({ db: new BunSqliteSkillsDb(db) }) });
 
+  // Reads chatContextLimit from the persisted seher_config row. Queried
+  // per-request so Settings changes take effect without a restart.
+  const CHAT_CONTEXT_LIMIT_DEFAULT = 10;
+  const getContextLimit = (): number => {
+    const row = db
+      .query<{ config_json: string }, []>("SELECT config_json FROM seher_config WHERE id = 1")
+      .get();
+    if (!row) return CHAT_CONTEXT_LIMIT_DEFAULT;
+    try {
+      const cfg = JSON.parse(row.config_json) as { defaults?: { chatContextLimit?: number } };
+      return cfg.defaults?.chatContextLimit ?? CHAT_CONTEXT_LIMIT_DEFAULT;
+    } catch {
+      return CHAT_CONTEXT_LIMIT_DEFAULT;
+    }
+  };
+
   // Dynamic import: chat-bubble.commands → router → llmRegistry proxy
   // triggers a circular init when statically imported here, same as the
   // discord adapter wiring above.
   void import("./commands/chat-bubble.commands").then(({ configureChatBubbleCommands }) => {
-    configureChatBubbleCommands({ db });
+    configureChatBubbleCommands({ db, getContextLimit });
   });
 
   // Have the Discord adapter read its config from the chat_adapter_config
@@ -164,7 +180,7 @@ async function main(): Promise<void> {
   // Dynamic import on purpose: importing the discord module at the top of
   // server.ts before the dispatcher has finished walking adapter glob
   // imports triggers a circular-init crash through the LLM registry proxy.
-  void import("./adapters/chat/discord").then(({ setDiscordConfigLoader }) => {
+  void import("./adapters/chat/discord").then(({ setDiscordConfigLoader, setDiscordContextLimitGetter }) => {
     setDiscordConfigLoader(() => {
       const row = db
         .query<{ config_json: string; enabled: number }, [string]>(
@@ -177,6 +193,7 @@ async function main(): Promise<void> {
       // `chat.start({ token })`; only non-secret knobs live here.
       return { dm_policy: cfg.dmPolicy };
     });
+    setDiscordContextLimitGetter(getContextLimit);
   });
 
   // Migration 005-memory-realign aligned the on-disk memory schema with

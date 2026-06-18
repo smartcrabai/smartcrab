@@ -220,6 +220,29 @@ describe("translateToSeherConfig", () => {
     expect(result.providers["c2"]!.models.build!.model).toBe("openai/gpt-4o");
     expect(Object.keys(result.providers)).toHaveLength(3);
   });
+
+  test("chatContextLimit in defaults does not leak into the seher-bridge config", () => {
+    // Given: an in-app config with chatContextLimit set
+    // chatContextLimit is bun-service-internal and must never reach seher-bridge / Rust.
+    const cfg: InAppSeherConfig = {
+      providers: [{ id: "main", kind: "anthropic", model: "claude-3", envOverrides: {} }],
+      priorities: [],
+      defaults: {
+        fallbackProviderId: "main",
+        rateLimitBackoffSeconds: 30,
+        chatContextLimit: 5,
+      },
+    };
+
+    // When: translating to SeherConfig
+    const result = translateToSeherConfig(cfg);
+
+    // Then: the output contains no trace of chatContextLimit
+    const serialised = JSON.stringify(result);
+    expect(serialised).not.toContain("chatContextLimit");
+    expect(serialised).not.toContain("chat_context_limit");
+    expect(serialised).not.toContain("contextLimit");
+  });
 });
 
 describe("writeSeherConfig", () => {

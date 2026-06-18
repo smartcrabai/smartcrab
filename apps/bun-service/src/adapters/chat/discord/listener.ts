@@ -1,4 +1,5 @@
 import { route } from "../../../router.js";
+import { buildPromptWithHistory, type HistoryMessage } from "../format-history.js";
 import { getPairingStore, type PairingStore } from "../pairing-store.js";
 import type { DiscordClientLike, DiscordMessageLike } from "./client.js";
 import { DISCORD_ADAPTER_ID, type DiscordDmPolicy } from "./types.js";
@@ -52,6 +53,12 @@ export interface AttachListenerOptions {
    * module-level handle set by `server.ts` at boot. Tests inject a fake.
    */
   pairingStore?: PairingStore | null;
+  /**
+   * Returns the number of previous channel messages to include in the LLM
+   * prompt context. Queried per-request so Settings changes take effect
+   * without a restart. 0 disables history (legacy single-turn behavior).
+   */
+  getContextLimit?: () => number;
 }
 
 /**
@@ -62,10 +69,38 @@ export interface AttachListenerOptions {
  * engine -- instead of unconditionally spawning the Claude Code CLI which
  * fails silently when run inside the macOS app sandbox.
  */
-export const defaultLlmHandler: DiscordMessageHandler = async (message) => {
-  const result = await route({ prompt: message.content });
-  return result.text;
-};
+export function defaultLlmHandler(
+  client: DiscordClientLike,
+  getContextLimit: () => number,
+): DiscordMessageHandler {
+  return async (message) => {
+    const limit = getContextLimit();
+    let prompt = message.content;
+
+    if (limit > 0) {
+      try {
+        const channel = await client.channels.fetch(message.channelId);
+        if (channel?.messages) {
+          // Fetch limit*2 raw messages to cover `limit` user+assistant turn pairs,
+          // matching the turn-based semantics of chat-bubble's listRecent(limit).
+          const fetched = await channel.messages.fetch({ limit: limit * 2, before: message.id });
+          // Discord returns newest-first; reverse to get oldest-first for the prompt.
+          const ordered = [...fetched.values()].reverse();
+          const historyMsgs: HistoryMessage[] = ordered.map((m) => ({
+            role: m.author.bot ? "assistant" : "user",
+            content: m.content,
+          }));
+          prompt = buildPromptWithHistory(historyMsgs, message.content);
+        }
+      } catch (err) {
+        logError("channel history fetch failed, falling back to single-turn:", err);
+      }
+    }
+
+    const result = await route({ prompt });
+    return result.text;
+  };
+}
 
 function isDirectMessage(message: DiscordMessageLike): boolean {
   // discord.js sets guildId to null for DMs. Some mocks omit the field
@@ -117,7 +152,8 @@ export function attachMessageListener(
   client: DiscordClientLike,
   options: AttachListenerOptions = {}
 ): () => void {
-  const handler = options.handler ?? defaultLlmHandler;
+  const getContextLimit = options.getContextLimit ?? (() => 0);
+  const handler = options.handler ?? defaultLlmHandler(client, getContextLimit);
   const ignoreBots = options.ignoreBots ?? true;
   const dmPolicy: DiscordDmPolicy = options.dmPolicy ?? "pairing";
   const resolvePairingStore = (): PairingStore | null =>
