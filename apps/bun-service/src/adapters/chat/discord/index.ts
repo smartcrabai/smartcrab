@@ -94,6 +94,10 @@ export class DiscordChatAdapter implements ChatAdapter {
       // Explicit options win, but if the caller didn't pin dmPolicy we
       // take it from the persisted config so the Settings tab drives it.
       dmPolicy: this.options.listenerOptions?.dmPolicy ?? dmPolicy,
+      // Explicit options win; fall back to the module-level getter wired by
+      // server.ts so the Settings tab's chatContextLimit is respected.
+      getContextLimit:
+        this.options.listenerOptions?.getContextLimit ?? contextLimitGetter ?? undefined,
     };
     this.detachListener = attachMessageListener(client, listenerOptions);
     await client.login(token);
@@ -165,6 +169,14 @@ export function setDiscordConfigLoader(
   loader: (() => Promise<unknown> | unknown) | null,
 ): void {
   defaultLoader = loader;
+}
+
+let contextLimitGetter: (() => number) | null = null;
+
+/** Wire the module-level context limit getter. server.ts uses this to read
+ *  chatContextLimit from the seher_config row so the Settings tab drives it. */
+export function setDiscordContextLimitGetter(getter: (() => number) | null): void {
+  contextLimitGetter = getter;
 }
 
 // Self-register so dispatcher's eager glob auto-imports wire this up.

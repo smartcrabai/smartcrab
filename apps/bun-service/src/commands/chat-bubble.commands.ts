@@ -18,6 +18,7 @@ import type { Database } from "bun:sqlite";
 import YAML from "yaml";
 
 import { getSharedMemoryStore } from "../memory/shared-store.ts";
+import { buildPromptWithHistory, type HistoryMessage } from "../adapters/chat/format-history.ts";
 import { route } from "../router.ts";
 
 interface ChatBubble {
@@ -37,13 +38,16 @@ export function setMemoryHookEnabled(enabled: boolean): void {
 interface BubbleStore {
   list(): ChatBubble[];
   insert(bubble: ChatBubble): void;
+  /** Return the N most recent bubbles in ascending chronological order. */
+  listRecent(n: number): ChatBubble[];
 }
 
 class InMemoryBubbleStore implements BubbleStore {
   private readonly bubbles: ChatBubble[] = [
     {
       id: crypto.randomUUID(),
-      role: "assistant",
+      // "system" role so this UI-only message is excluded from LLM history.
+      role: "system",
       content: "Welcome to SmartCrab. Configure an LLM provider in Settings to start chatting.",
       createdAt: new Date().toISOString(),
     },
@@ -55,6 +59,14 @@ class InMemoryBubbleStore implements BubbleStore {
 
   insert(bubble: ChatBubble): void {
     this.bubbles.push(bubble);
+  }
+
+  listRecent(n: number): ChatBubble[] {
+    if (n <= 0) return [];
+    // Exclude system messages (e.g. UI-only welcome bubble) from LLM context.
+    // Each "turn" is a user + assistant pair; fetch 2n messages to cover n turns.
+    const conversational = this.bubbles.filter((b) => b.role !== "system");
+    return conversational.slice(-(n * 2));
   }
 }
 
@@ -68,7 +80,8 @@ class SqliteBubbleStore implements BubbleStore {
     if (!count || count.n === 0) {
       this.insert({
         id: crypto.randomUUID(),
-        role: "assistant",
+        // "system" role so this UI-only message is excluded from LLM history.
+        role: "system",
         content: "Welcome to SmartCrab. Configure an LLM provider in Settings to start chatting.",
         createdAt: new Date().toISOString(),
       });
@@ -88,12 +101,32 @@ class SqliteBubbleStore implements BubbleStore {
       .query("INSERT INTO chat_bubbles (id, role, content, created_at) VALUES (?1, ?2, ?3, ?4)")
       .run(bubble.id, bubble.role, bubble.content, bubble.createdAt);
   }
+
+  listRecent(n: number): ChatBubble[] {
+    if (n <= 0) return [];
+    // Exclude system messages (e.g. UI-only welcome bubble) from LLM context.
+    // Fetch 2n messages (n turns) newest-first, then reverse to chronological order.
+    const rows = this.db
+      .query<ChatBubble, [number]>(
+        "SELECT id, role, content, created_at AS createdAt FROM chat_bubbles WHERE role != 'system' ORDER BY created_at DESC, id DESC LIMIT ?",
+      )
+      .all(n * 2);
+    return rows.reverse();
+  }
 }
 
-let store: BubbleStore = new InMemoryBubbleStore();
+export const DEFAULT_CHAT_CONTEXT_LIMIT = 10;
 
-export function configureChatBubbleCommands(opts: { db?: Database } = {}): void {
+let store: BubbleStore = new InMemoryBubbleStore();
+let getContextLimit: () => number = () => DEFAULT_CHAT_CONTEXT_LIMIT;
+
+export function configureChatBubbleCommands(opts: {
+  db?: Database;
+  /** Returns the number of previous messages to include in the LLM prompt. Queried per-request. */
+  getContextLimit?: () => number;
+} = {}): void {
   store = opts.db ? new SqliteBubbleStore(opts.db) : new InMemoryBubbleStore();
+  getContextLimit = opts.getContextLimit ?? (() => DEFAULT_CHAT_CONTEXT_LIMIT);
 }
 
 /**
@@ -220,6 +253,13 @@ const handlers = {
     if (typeof content !== "string" || content.trim().length === 0) {
       throw new Error("chat.bubble-send: 'content' is required");
     }
+    const limit = getContextLimit();
+    const recentHistory: HistoryMessage[] = store.listRecent(limit).map((b) => ({
+      role: b.role,
+      content: b.content,
+    }));
+    const prompt = buildPromptWithHistory(recentHistory, content);
+
     const userBubble: ChatBubble = {
       id: crypto.randomUUID(),
       role: "user",
@@ -231,7 +271,7 @@ const handlers = {
     let assistantText: string;
     try {
       const result = await route({
-        prompt: content,
+        prompt,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         tools: (await pipelineTools()) as any,
       });

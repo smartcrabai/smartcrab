@@ -112,7 +112,10 @@ fn status_reflects_seeded_credentials() {
 fn login_with_unsupported_provider_yields_auth_error() {
     let dir = tempfile::tempdir().expect("tempdir");
     let out = run_auth(dir.path(), &["login", "anthropic"]);
-    assert!(!out.status.success(), "unsupported login should exit non-zero");
+    assert!(
+        !out.status.success(),
+        "unsupported login should exit non-zero"
+    );
 
     let frames = frames(&out);
     assert_eq!(frames.len(), 1, "frames: {frames:?}");
