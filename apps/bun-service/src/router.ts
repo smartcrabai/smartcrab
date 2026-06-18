@@ -295,7 +295,11 @@ export async function route(request: RouteRequest): Promise<RouteResponse> {
         const tool = toolMap.get(call.name);
         if (tool) {
           try {
-            const parsed = (tool.parameters as { parse: (v: unknown) => unknown }).parse(call.input);
+            const params = tool.parameters as { parse: (v: unknown) => unknown };
+            if (typeof params?.parse !== "function") {
+              throw new Error(`tool '${call.name}' parameters schema must expose a .parse method`);
+            }
+            const parsed = params.parse(call.input);
             const raw = await tool.handler(parsed);
             return typeof raw === "string" ? raw : JSON.stringify(raw);
           } catch (err) {

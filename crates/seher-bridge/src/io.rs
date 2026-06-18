@@ -209,7 +209,8 @@ mod tests {
 
         // Reader thread feeds a matching tool_result.
         let reader_router = router.clone();
-        let stdin = Cursor::new(r#"{"type":"tool_result","id":"id-1","output":"pong"}"#.to_string());
+        let stdin =
+            Cursor::new(r#"{"type":"tool_result","id":"id-1","output":"pong"}"#.to_string());
         let reader = thread::spawn(move || run_stdin_reader(stdin, &reader_router));
 
         let outcome = dispatch_tool_call(
