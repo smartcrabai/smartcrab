@@ -46,6 +46,8 @@ interface InAppPriorityRule {
 interface InAppDefaults {
   fallbackProviderId: string;
   rateLimitBackoffSeconds: number;
+  /** Number of previous chat messages to include in the LLM prompt context. 0 disables history. */
+  chatContextLimit?: number;
 }
 
 export interface InAppSeherConfig {

@@ -25,6 +25,10 @@ export interface DiscordMessageLike {
 
 export interface DiscordChannelLike {
   send: (content: string) => Promise<unknown>;
+  /** Optional — only present on text channels. Absent in channels that don't support message history. */
+  messages?: {
+    fetch: (opts: { limit: number; before?: string }) => Promise<Map<string, DiscordMessageLike>>;
+  };
 }
 
 export interface DiscordClientLike {
