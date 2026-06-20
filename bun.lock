@@ -9,7 +9,7 @@
       "name": "@smartcrab/bun-service",
       "version": "0.0.1",
       "dependencies": {
-        "@anthropic-ai/claude-agent-sdk": "^0.3.178",
+        "@anthropic-ai/claude-agent-sdk": "^0.3.179",
         "cron-parser": "^5.5.0",
         "discord.js": "^14.26.4",
         "gray-matter": "^4.0.3",
@@ -20,7 +20,7 @@
         "bun-types": "latest",
       },
       "optionalDependencies": {
-        "@earendil-works/pi-coding-agent": "^0.79.4",
+        "@earendil-works/pi-coding-agent": "^0.79.6",
         "@smartcrab/ipc-protocol": "*",
         "@smartcrab/seher-config-schema": "*",
       },
