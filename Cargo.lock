@@ -3812,7 +3812,7 @@ dependencies = [
 
 [[package]]
 name = "seher-bridge"
-version = "0.1.11"
+version = "0.1.12"
 dependencies = [
  "pi_agent_rust",
  "seher-sdk",
