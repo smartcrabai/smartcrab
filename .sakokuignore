@@ -1,0 +1,7 @@
+# Binary image and icon assets
+docs/static/cover.jpg
+apps/macos/Resources/AppIcon.icns
+apps/macos/SmartCrab/Assets.xcassets/AppIcon.appiconset/*.png
+
+# Intentionally non-ASCII (Japanese) legacy documentation
+docs/content/legacy/**/*.ja.md
