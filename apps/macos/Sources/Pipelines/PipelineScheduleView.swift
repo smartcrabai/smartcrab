@@ -66,7 +66,9 @@ public struct PipelineScheduleView: View {
                     .lineLimit(1)
             }
             Spacer()
-            if isLoading { ProgressView().controlSize(.small) }
+            if isLoading {
+                ProgressView().controlSize(.small)
+            }
             Button {
                 Task { await reload() }
             } label: {
@@ -197,7 +199,9 @@ enum CronEditTarget: Identifiable {
     }
 
     var job: CronJob? {
-        if case let .existing(job) = self { return job }
+        if case let .existing(job) = self {
+            return job
+        }
         return nil
     }
 }

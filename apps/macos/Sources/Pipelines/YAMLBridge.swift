@@ -99,9 +99,14 @@ public extension PipelineGraph {
                     continue
                 }
             }
-            if line.hasPrefix("nodes:") { inNodes = true; continue }
+            if line.hasPrefix("nodes:") {
+                inNodes = true
+                continue
+            }
             guard inNodes else { continue }
-            if line.isEmpty { continue }
+            if line.isEmpty {
+                continue
+            }
 
             if line.hasPrefix("- id:") {
                 let id = line.dropFirst("- id:".count).trimmingCharacters(in: .whitespaces)
@@ -121,14 +126,18 @@ public extension PipelineGraph {
                 if conditionsIndent != nil {
                     if line.hasPrefix("next:") {
                         let v = line.dropFirst("next:".count).trimmingCharacters(in: .whitespaces)
-                        if !v.isEmpty { collected[idx].conditionalNext.append(contentsOf: stripInlineList(v)) }
+                        if !v.isEmpty {
+                            collected[idx].conditionalNext.append(contentsOf: stripInlineList(v))
+                        }
                     }
                     continue
                 }
 
                 if inNextBlock, line.hasPrefix("- ") {
                     let v = line.dropFirst(2).trimmingCharacters(in: .whitespaces)
-                    if !v.isEmpty, !v.contains(":") { collected[idx].next.append(v) }
+                    if !v.isEmpty, !v.contains(":") {
+                        collected[idx].next.append(v)
+                    }
                     continue
                 }
                 inNextBlock = false
@@ -154,10 +163,14 @@ public extension PipelineGraph {
                 } else if line.hasPrefix("provider:"), case .llm = collected[idx].action {
                     // Replace the placeholder provider with the real one.
                     let v = unquote(line.dropFirst("provider:".count))
-                    if !v.isEmpty { collected[idx].action = .llm(provider: v) }
+                    if !v.isEmpty {
+                        collected[idx].action = .llm(provider: v)
+                    }
                 } else if line.hasPrefix("method:"), case .http = collected[idx].action {
                     let v = unquote(line.dropFirst("method:".count))
-                    if !v.isEmpty { collected[idx].action = .http(method: v) }
+                    if !v.isEmpty {
+                        collected[idx].action = .http(method: v)
+                    }
                 } else if line.hasPrefix("adapter:"), case .chatSend = collected[idx].action {
                     let v = unquote(line.dropFirst("adapter:".count))
                     collected[idx].action = .chatSend(adapter: v)

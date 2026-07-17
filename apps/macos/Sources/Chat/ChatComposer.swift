@@ -85,7 +85,9 @@ public struct ChatComposer: View {
 
     private var editorHeight: CGFloat {
         let newlines = draft.reduce(into: 1) { count, ch in
-            if ch == "\n" { count += 1 }
+            if ch == "\n" {
+                count += 1
+            }
         }
         let lines = min(max(newlines, 1), maxVisibleLines)
         return CGFloat(lines) * lineHeight + 14

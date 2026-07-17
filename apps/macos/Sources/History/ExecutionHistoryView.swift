@@ -76,7 +76,9 @@ public struct ExecutionHistoryView: View {
             .labelsHidden()
             .frame(maxWidth: 360)
 
-            if isLoading { ProgressView().controlSize(.small) }
+            if isLoading {
+                ProgressView().controlSize(.small)
+            }
 
             Button {
                 Task { await reload() }

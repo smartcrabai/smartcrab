@@ -411,7 +411,9 @@ public struct PipelineAuthoringView: View {
         for raw in yaml.split(separator: "\n", omittingEmptySubsequences: false) {
             let line = String(raw)
             // Only top-level keys: must not start with whitespace.
-            if line.first?.isWhitespace == true { continue }
+            if line.first?.isWhitespace == true {
+                continue
+            }
             let prefix = "\(key):"
             guard line.hasPrefix(prefix) else { continue }
             var value = String(line.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)

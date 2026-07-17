@@ -69,7 +69,9 @@ public enum KeychainStore {
             kSecValueData as String: data,
         ]
         let updateStatus = SecItemUpdate(baseQuery as CFDictionary, updateAttributes as CFDictionary)
-        if updateStatus == errSecSuccess { return }
+        if updateStatus == errSecSuccess {
+            return
+        }
         if updateStatus != errSecItemNotFound {
             throw KeychainError.unexpectedStatus(updateStatus)
         }

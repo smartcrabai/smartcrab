@@ -177,12 +177,16 @@ private final class SpyBunService: BunServiceProtocol {
 
     func adapterLoad(adapterId: String) async throws -> DiscordAdapterConfig {
         adapterLoadAdapterIds.append(adapterId)
-        if let error = adapterLoadShouldThrow { throw error }
+        if let error = adapterLoadShouldThrow {
+            throw error
+        }
         return adapterLoadStub
     }
 
     func chatStart(adapterId: String, token: String?) async throws -> Bool {
-        if let error = chatStartShouldThrow { throw error }
+        if let error = chatStartShouldThrow {
+            throw error
+        }
         chatStartCallCount += 1
         chatStartAdapterIds.append(adapterId)
         chatStartTokens.append(token)

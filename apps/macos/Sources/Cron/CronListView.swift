@@ -59,7 +59,9 @@ public struct CronListView: View {
         HStack(spacing: 12) {
             Text("Cron Jobs").font(.title2).bold()
             Spacer()
-            if isLoading { ProgressView().controlSize(.small) }
+            if isLoading {
+                ProgressView().controlSize(.small)
+            }
             Button {
                 Task { await reload() }
             } label: {

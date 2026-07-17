@@ -37,7 +37,9 @@ public struct PipelineListView: View {
             }
             .navigationTitle("Pipelines")
             .onChange(of: selection) { _, newValue in
-                if newValue != nil { isCreating = false }
+                if newValue != nil {
+                    isCreating = false
+                }
             }
             .toolbar {
                 ToolbarItemGroup(placement: .primaryAction) {

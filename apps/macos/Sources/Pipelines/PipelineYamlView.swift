@@ -67,7 +67,9 @@ enum YamlSyntaxTokenizer {
         while lineStart < source.endIndex {
             let lineEnd = source[lineStart...].firstIndex(of: "\n") ?? source.endIndex
             tokenizeLine(source, lineRange: lineStart ..< lineEnd, into: &tokens)
-            if lineEnd == source.endIndex { break }
+            if lineEnd == source.endIndex {
+                break
+            }
             lineStart = source.index(after: lineEnd)
         }
         return tokens
@@ -83,7 +85,9 @@ enum YamlSyntaxTokenizer {
         while cursor < lineRange.upperBound, source[cursor].isWhitespace {
             cursor = source.index(after: cursor)
         }
-        if cursor == lineRange.upperBound { return }
+        if cursor == lineRange.upperBound {
+            return
+        }
 
         // Comment line / trailing comment.
         if source[cursor] == "#" {
@@ -101,7 +105,9 @@ enum YamlSyntaxTokenizer {
                 while cursor < lineRange.upperBound, source[cursor].isWhitespace {
                     cursor = source.index(after: cursor)
                 }
-                if cursor == lineRange.upperBound { return }
+                if cursor == lineRange.upperBound {
+                    return
+                }
             }
         }
 
@@ -135,7 +141,9 @@ enum YamlSyntaxTokenizer {
         while i < range.upperBound {
             let ch = source[i]
             if let q = insideQuote {
-                if ch == q { insideQuote = nil }
+                if ch == q {
+                    insideQuote = nil
+                }
             } else if ch == "\"" || ch == "'" {
                 insideQuote = ch
             } else if ch == ":" {
@@ -155,9 +163,13 @@ enum YamlSyntaxTokenizer {
         into tokens: inout [YamlToken]
     ) {
         let trimmedStart = trimLeadingWhitespace(source, range: range)
-        if trimmedStart >= range.upperBound { return }
+        if trimmedStart >= range.upperBound {
+            return
+        }
         let value = source[trimmedStart ..< range.upperBound]
-        if value.isEmpty { return }
+        if value.isEmpty {
+            return
+        }
 
         let first = source[trimmedStart]
         if first == "\"" || first == "'" {
@@ -181,7 +193,9 @@ enum YamlSyntaxTokenizer {
 
     private static func isNumeric(_ s: String) -> Bool {
         let trimmed = s.trimmingCharacters(in: .whitespaces)
-        if trimmed.isEmpty { return false }
+        if trimmed.isEmpty {
+            return false
+        }
         return Double(trimmed) != nil
     }
 }
