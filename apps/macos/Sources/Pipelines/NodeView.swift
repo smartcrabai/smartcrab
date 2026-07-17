@@ -62,7 +62,9 @@ public struct NodeView: View {
     /// Trigger summary wins over the action label (input nodes carry no
     /// action, so in practice the two never compete).
     private var subtitle: String {
-        if let triggerLabel, !triggerLabel.isEmpty { return triggerLabel }
+        if let triggerLabel, !triggerLabel.isEmpty {
+            return triggerLabel
+        }
         return node.action.label
     }
 

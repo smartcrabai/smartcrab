@@ -15,7 +15,9 @@ public struct ChatBubbleRow: View {
     public var body: some View {
         TimelineView(.periodic(from: Calendar.autoupdatingCurrent.startOfDay(for: .now), by: 86400)) { context in
             HStack(alignment: .bottom) {
-                if isFromUser { Spacer(minLength: 40) }
+                if isFromUser {
+                    Spacer(minLength: 40)
+                }
 
                 VStack(alignment: alignment, spacing: 4) {
                     Text(message.content)
@@ -33,7 +35,9 @@ public struct ChatBubbleRow: View {
                 // Keep bubbles at a chat-like width instead of spanning the row.
                 .frame(maxWidth: 560, alignment: isFromUser ? .trailing : .leading)
 
-                if !isFromUser { Spacer(minLength: 40) }
+                if !isFromUser {
+                    Spacer(minLength: 40)
+                }
             }
             .frame(maxWidth: .infinity, alignment: isFromUser ? .trailing : .leading)
             .accessibilityElement(children: .combine)

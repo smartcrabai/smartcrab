@@ -132,7 +132,9 @@ private struct LogsView: View {
             let attrs = try FileManager.default.attributesOfItem(atPath: logURL.path)
             let size = (attrs[.size] as? NSNumber)?.intValue ?? 0
             let mtime = attrs[.modificationDate] as? Date
-            if !force, size == lastSize, mtime == lastMtime { return }
+            if !force, size == lastSize, mtime == lastMtime {
+                return
+            }
 
             let handle = try FileHandle(forReadingFrom: logURL)
             defer { try? handle.close() }

@@ -195,7 +195,9 @@ public struct ExecutionLogView: View {
 
     private func filteredLogs(_ logs: [ExecutionLog]) -> [ExecutionLog] {
         logs.filter { log in
-            if let nodeFilter, log.nodeId != nodeFilter { return false }
+            if let nodeFilter, log.nodeId != nodeFilter {
+                return false
+            }
             if let required = logLevelFilter.rpcValue,
                log.level.lowercased() != required
             {

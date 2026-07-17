@@ -172,7 +172,9 @@
                 try? stderrLogHandle?.synchronize()
                 try? stderrLogHandle?.close()
                 stderrLogHandle = nil
-                if process.isRunning { process.terminate() }
+                if process.isRunning {
+                    process.terminate()
+                }
                 started = false
             }
         }
@@ -637,7 +639,9 @@
             let decoder = JSONDecoder()
             decoder.keyDecodingStrategy = .convertFromSnakeCase
             let decoded = try decoder.decode(RPCResponseEnvelope<R>.self, from: raw)
-            if let err = decoded.error { throw err }
+            if let err = decoded.error {
+                throw err
+            }
             return decoded.result
         }
 

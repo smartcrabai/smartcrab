@@ -832,7 +832,9 @@ public final class StubBunService: BunServiceProtocol {
         let normalized = code.uppercased()
         let pending = pairingRequests[adapterId] ?? []
         let next = pending.filter { $0.code != normalized }
-        if next.count == pending.count { return false }
+        if next.count == pending.count {
+            return false
+        }
         pairingRequests[adapterId] = next
         return true
     }
@@ -844,7 +846,9 @@ public final class StubBunService: BunServiceProtocol {
     public func chatPairingAllowlistRemove(adapterId: String, senderId: String) async throws -> Bool {
         let list = pairingAllowlist[adapterId] ?? []
         let next = list.filter { $0.senderId != senderId }
-        if next.count == list.count { return false }
+        if next.count == list.count {
+            return false
+        }
         pairingAllowlist[adapterId] = next
         return true
     }

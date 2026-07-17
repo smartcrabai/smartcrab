@@ -326,8 +326,12 @@ public struct AdapterSettings: View {
             let nextAllowed = try await allowed
             // Guard SwiftUI re-renders: the 5s poll otherwise dirties the
             // two ForEach sections every tick even when nothing changed.
-            if nextPending != pendingRequests { pendingRequests = nextPending }
-            if nextAllowed != allowlist { allowlist = nextAllowed }
+            if nextPending != pendingRequests {
+                pendingRequests = nextPending
+            }
+            if nextAllowed != allowlist {
+                allowlist = nextAllowed
+            }
         } catch {
             pairingError = "Failed to load pairing state: \(error.localizedDescription)"
         }

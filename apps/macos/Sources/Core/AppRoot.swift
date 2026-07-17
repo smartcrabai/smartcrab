@@ -131,7 +131,9 @@ extension Binding {
         Binding<Bool>(
             get: { source.wrappedValue != nil },
             set: { isPresented in
-                if !isPresented { source.wrappedValue = nil }
+                if !isPresented {
+                    source.wrappedValue = nil
+                }
             }
         )
     }
