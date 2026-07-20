@@ -21,7 +21,7 @@
     "bun-types": "latest"
   },
   "optionalDependencies": {
-    "@earendil-works/pi-coding-agent": "^0.80.9",
+    "@earendil-works/pi-coding-agent": "^0.80.10",
     "@smartcrab/ipc-protocol": "*",
     "@smartcrab/seher-config-schema": "*"
   }
