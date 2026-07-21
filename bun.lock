@@ -9,7 +9,7 @@
       "name": "@smartcrab/bun-service",
       "version": "0.0.1",
       "dependencies": {
-        "@anthropic-ai/claude-agent-sdk": "^0.3.212",
+        "@anthropic-ai/claude-agent-sdk": "^0.3.214",
         "cron-parser": "^5.6.2",
         "discord.js": "^14.27.0",
         "gray-matter": "^4.0.3",
