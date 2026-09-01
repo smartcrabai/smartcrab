@@ -15,13 +15,13 @@
     "discord.js": "^14.27.0",
     "gray-matter": "^4.0.3",
     "yaml": "^2.9.0",
-    "zod": "^4.4.3"
+    "zod": "^4.5.2"
   },
   "devDependencies": {
     "bun-types": "latest"
   },
   "optionalDependencies": {
-    "@earendil-works/pi-coding-agent": "^0.84.3",
+    "@earendil-works/pi-coding-agent": "^0.84.4",
     "@smartcrab/ipc-protocol": "*",
     "@smartcrab/seher-config-schema": "*"
   }
