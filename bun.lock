@@ -14,7 +14,7 @@
         "discord.js": "^14.27.0",
         "gray-matter": "^4.0.3",
         "yaml": "^2.9.1",
-        "zod": "^4.6.4",
+        "zod": "^4.6.5",
       },
       "devDependencies": {
         "bun-types": "latest",
