@@ -1,15 +1,17 @@
 {
   extends: [
-    "config:best-practices"
+    'config:best-practices',
   ],
-  dependencyDashboard: false,
+  dependencyDashboard: {
+    enabled: false,
+  },
   enabledManagers: [
-    "npm",
-    "bun",
-    "github-actions",
-    "dockerfile"
+    'npm',
+    'bun',
+    'github-actions',
+    'dockerfile',
   ],
-  minimumReleaseAge: "3 days",
+  minimumReleaseAge: '3 days',
   lockFileMaintenance: {
     minimumReleaseAge: null,
   },
@@ -19,32 +21,32 @@
   packageRules: [
     {
       matchUpdateTypes: [
-        "minor",
-        "patch",
-        "digest",
-        "pinDigest"
+        'minor',
+        'patch',
+        'digest',
+        'pinDigest',
       ],
-      groupName: "all minor, patch, and digest updates",
-      groupSlug: "all-minor-patch-digest-updates",
+      groupName: 'all minor, patch, and digest updates',
+      groupSlug: 'all-minor-patch-digest-updates',
     },
     {
       matchManagers: [
-        "github-actions"
+        'github-actions',
       ],
-      minimumReleaseAge: "7 days"
+      minimumReleaseAge: '7 days',
     },
     {
       matchManagers: [
-        "npm",
-        "bun"
+        'npm',
+        'bun',
       ],
       matchFileNames: [
-        "apps/**",
-        "packages/**",
-        "package.json"
+        'apps/**',
+        'packages/**',
+        'package.json',
       ],
-      groupName: "JavaScript/TypeScript dependencies",
-      rangeStrategy: "bump"
-    }
-  ]
+      groupName: 'JavaScript/TypeScript dependencies',
+      rangeStrategy: 'bump',
+    },
+  ],
 }
