@@ -417,7 +417,7 @@ public struct PipelineAuthoringView: View {
             let prefix = "\(key):"
             guard line.hasPrefix(prefix) else { continue }
             var value = String(line.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
-            if value.hasPrefix("\"") && value.hasSuffix("\"") && value.count >= 2 {
+            if value.hasPrefix("\""), value.hasSuffix("\""), value.count >= 2 {
                 value = String(value.dropFirst().dropLast())
             }
             return value.isEmpty ? nil : value
